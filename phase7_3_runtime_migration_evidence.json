@@ -1,0 +1,4195 @@
+{
+  "artifact_version": "1.0.0",
+  "migration_type": "SPRINT_7_3_CANONICAL_STATE_MIGRATION",
+  "source_backend": "SQLite 3 WAL",
+  "target_backend": "PostgreSQL 16+",
+  "exported_at_utc": "2026-10-28T14:13:40.027391+00:00",
+  "summary": {
+    "competitions": 1,
+    "seasons": 1,
+    "teams": 2,
+    "matches": 46,
+    "predictions": 46
+  },
+  "entities": {
+    "competitions": [
+      {
+        "id": "719f2542-48c8-4352-af57-9f0b81a5562b",
+        "code": "E0",
+        "name": "E0 League",
+        "country": "Unknown",
+        "competition_type": "DOMESTIC_LEAGUE"
+      }
+    ],
+    "seasons": [
+      {
+        "id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "competition_id": "719f2542-48c8-4352-af57-9f0b81a5562b",
+        "season_year": "2021/2022",
+        "start_year": 2021,
+        "end_year": 2022,
+        "start_date": null,
+        "end_date": null,
+        "is_current": false
+      }
+    ],
+    "teams": [
+      {
+        "id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "canonical_name": "Brentford",
+        "country": "Unknown"
+      },
+      {
+        "id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "canonical_name": "Arsenal",
+        "country": "Unknown"
+      }
+    ],
+    "matches": [
+      {
+        "id": "038174d6-9f90-564a-bf60-aff44e733e48",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-30T19:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "039b3066-2ae8-5225-bacb-f606b552a16f",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "060162eb-2d0d-5761-aff1-788372dc9a38",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T14:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "0b84e337-5449-5a2b-b235-cf7bf7cfee26",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-02T20:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "142bf393-0777-5600-bd37-2b100263cedc",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T17:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "14cf3ccf-d718-517c-a49d-70cf551e1b7d",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "15a6cf35-812e-56bf-b7cf-1de34297c8dc",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "1b41495f-5f0f-57a1-8613-940000561909",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T17:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "2355a22a-01db-554a-a479-1efab2bcc591",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-29T19:45:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "31830420-8c10-5bc0-8a02-6ff7f54f7656",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-29T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "31ab8187-e7a1-5ee7-a524-b774450ac4ed",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-30T20:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "4042fd4b-0db5-5784-b1b3-d88f6d5e1359",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-02T20:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "4b893420-7db9-5904-9070-1c082afa6bc4",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T15:15:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "4c4e8b3a-b675-5bb7-a26c-dd52e0d59da3",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T12:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "4f76b0c7-14bb-583e-8ab5-80201b894b41",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-02T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "5721799a-d795-56e6-8cb0-2a7aea681801",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T14:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "58abcb74-13ab-503a-b4da-bcfc0e1af5ed",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T14:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "5e8879c6-5037-5318-aff0-10a3620814b4",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "68623d02-f8cb-5ba3-ad2e-12b5e8d95c84",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T13:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "690819cc-6645-5a8e-a79e-06bdf117d7dc",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T19:45:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "6ba42906-8287-58b7-a427-d6d09998ed78",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-28T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "757cdb49-87c4-5c64-a9f7-6f0feab6eb45",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-28T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "78598104-e631-5416-b0b3-595cb4d0cd55",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-02T19:45:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "79f9e045-3e3f-5437-ab5b-670ad50c851b",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T20:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "7feb388b-6d35-557a-8a96-2be95c4eb98a",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "883dded7-3398-5e01-8511-f7c6cd6f3bd4",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "88828e8b-08fe-56d8-8af5-cd34f7ab76c0",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T14:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "8c4bb88d-8571-5bc4-9efc-704263a8f11d",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "900cb07c-8ec3-5d6d-a5a1-b971aef5590b",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "93f6d153-596a-5245-b951-d5bce3b9cbbf",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "949d56ed-e54c-5803-b0ec-3a78223d4f8b",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "9a4d8cbc-0f85-5cb1-86c1-5f65967043b7",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-28T17:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "9dc05347-5d73-5bd3-b20e-e79d041a3223",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "a4000aea-3684-553d-a62a-dc59e3b407c6",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-28T19:45:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "c026740d-bb7e-5983-8f6f-d6e13b25f62c",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "c23754cb-63fe-5732-92bc-8b5a804f0833",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T13:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "cac35944-8113-58a3-8768-a779540abab0",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "cdedb81e-5fd3-5819-8ee5-5afa605697fd",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T19:45:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "d4733aa4-0841-5b2d-b2b1-22e4cac6394c",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-28T19:45:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "d50b2d50-b4b6-5a39-9a6c-f7243b9263f3",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T16:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "d8947bc0-735f-59f6-aa46-29318fc405a5",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T20:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "ddc22a5f-3422-5497-867a-73040e3abc31",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T11:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "e0588c4e-5e75-5f92-b05e-3b53a6766a8b",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T20:00:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "e539f313-d8e5-57da-ba70-8bd9027c5d13",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "e663beb5-1616-5645-a800-9d20bc735552",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T16:30:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      },
+      {
+        "id": "eee28449-3c66-5e43-ba16-1c2b64224322",
+        "season_id": "1a664279-234b-4fbc-875e-ee828770f67e",
+        "home_team_id": "586cbf92-e1ea-4450-a37c-48a1eebb599b",
+        "away_team_id": "915c37ca-4a80-4fa9-803c-adb35be3e33d",
+        "kickoff_utc": "2026-11-01T15:15:00",
+        "status": "SCHEDULED",
+        "home_score": null,
+        "away_score": null
+      }
+    ],
+    "predictions": [
+      {
+        "id": "03d935f2-ca50-413a-98b2-11416e8b15ca",
+        "fixture_id": "c026740d-bb7e-5983-8f6f-d6e13b25f62c",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "lead_time_seconds": 268616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565842_dcc79d9b",
+        "history_fingerprint": "hist_fp_565842",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "27045ed0efd679b096b211d5799aadf644db12b8556b9bab5d7e5a65c124bf99"
+      },
+      {
+        "id": "0a6ffa03-5ea6-4292-bcad-6752dc6a1638",
+        "fixture_id": "58abcb74-13ab-503a-b4da-bcfc0e1af5ed",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T14:30:00",
+        "lead_time_seconds": 355016,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565841_14af77c6",
+        "history_fingerprint": "hist_fp_565841",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "fa3c6ffb044b1f4865785b9423a8f2c8cefdc292910c0631a635892de7db8b48"
+      },
+      {
+        "id": "0c752a3b-3361-42dd-be21-f2f8c9dd4639",
+        "fixture_id": "e539f313-d8e5-57da-ba70-8bd9027c5d13",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "lead_time_seconds": 268616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565843_b4ef78b0",
+        "history_fingerprint": "hist_fp_565843",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "25981bc7fdabf136de17c9525423d328f3270adf750ac335133d56a4719f3048"
+      },
+      {
+        "id": "1330a2bf-7ad8-48c1-81cd-67a892b77f6a",
+        "fixture_id": "6ba42906-8287-58b7-a427-d6d09998ed78",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-28T17:30:00",
+        "lead_time_seconds": 20216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558550_2e139db2",
+        "history_fingerprint": "hist_fp_558550",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "cb781b41c3d63e0621b67d952444002201e284cb1442ac8dcb40554402a80304"
+      },
+      {
+        "id": "1366db00-dacd-49d6-9938-704cb3670ce8",
+        "fixture_id": "0b84e337-5449-5a2b-b235-cf7bf7cfee26",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-02T20:00:00",
+        "lead_time_seconds": 461216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560622_9a7d91c3",
+        "history_fingerprint": "hist_fp_560622",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "30e43a123f5ab92edb1048de1d384886c35076b9a21a059e1b4aa44ca92af607"
+      },
+      {
+        "id": "1e022186-08e2-40a0-b5fd-c64741d4ccb1",
+        "fixture_id": "d4733aa4-0841-5b2d-b2b1-22e4cac6394c",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-28T19:45:00",
+        "lead_time_seconds": 28316,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558554_f4e90aac",
+        "history_fingerprint": "hist_fp_558554",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "9b33e0580a6f64fb590b8c0c95fe069e2d32d3decc8e04dd7b2e0aad1b7e7d98"
+      },
+      {
+        "id": "1f8e616f-a34e-4872-8aba-ec79ae16494c",
+        "fixture_id": "93f6d153-596a-5245-b951-d5bce3b9cbbf",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "lead_time_seconds": 268616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565839_c72d0cdd",
+        "history_fingerprint": "hist_fp_565839",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "391a579e787d8540443e58c5ad7daca4621ca4de9c7b968283060be67c700995"
+      },
+      {
+        "id": "287e6789-83a6-4d64-a2bb-ef26c63a644c",
+        "fixture_id": "883dded7-3398-5e01-8511-f7c6cd6f3bd4",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T17:30:00",
+        "lead_time_seconds": 279416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565845_dbad4539",
+        "history_fingerprint": "hist_fp_565845",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "8618d5736a24cfe737623d586e0b663a5b09aa1c5378d004ffcb81f20ba5a2df"
+      },
+      {
+        "id": "42f709ec-9124-434b-95ae-84bec2b41df3",
+        "fixture_id": "038174d6-9f90-564a-bf60-aff44e733e48",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-30T19:30:00",
+        "lead_time_seconds": 200216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565846_693cea80",
+        "history_fingerprint": "hist_fp_565846",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "511717040600d2d9f17cc4db6f520d390e529c8af3efb56db4bbce095e9ddb5a"
+      },
+      {
+        "id": "4797c750-5111-44f8-8f96-b18bb63febb0",
+        "fixture_id": "1b41495f-5f0f-57a1-8613-940000561909",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T17:00:00",
+        "lead_time_seconds": 364016,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558540_3813ef0d",
+        "history_fingerprint": "hist_fp_558540",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "116d4564b31c9149e11af809c2db412603784ddf51c7e6ffad73f779432da428"
+      },
+      {
+        "id": "4acba477-aa0f-4604-9de5-a2672c508b0f",
+        "fixture_id": "7feb388b-6d35-557a-8a96-2be95c4eb98a",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T17:30:00",
+        "lead_time_seconds": 279416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564736_8d510f3b",
+        "history_fingerprint": "hist_fp_564736",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "da5e53bdbad76badcc5270f2fd012755fb09013c1ee4068bab9b86479cc6a30d"
+      },
+      {
+        "id": "4d09411e-b8ad-45dc-8b83-9d80f92cf563",
+        "fixture_id": "cdedb81e-5fd3-5819-8ee5-5afa605697fd",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T19:45:00",
+        "lead_time_seconds": 373916,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558547_f156cdfa",
+        "history_fingerprint": "hist_fp_558547",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "ec752687c78afe209ceaad6564ee0e8e834c1eb386dbe6518e8a07d3fed2e521"
+      },
+      {
+        "id": "4eaa060e-c7a8-425d-a3af-9d621fb3ff9c",
+        "fixture_id": "5e8879c6-5037-5318-aff0-10a3620814b4",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T17:30:00",
+        "lead_time_seconds": 279416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560627_24563985",
+        "history_fingerprint": "hist_fp_560627",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "b31789590c5836cabfca8e79efcfa1ee1e85b6fd8696f386a336af7487cc6773"
+      },
+      {
+        "id": "52c96ee2-b8ad-4415-b4a8-d73c1ae60220",
+        "fixture_id": "cac35944-8113-58a3-8768-a779540abab0",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "lead_time_seconds": 270416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560629_5f087ef8",
+        "history_fingerprint": "hist_fp_560629",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "17c21b13bab2922a7e41e7119686deac2fdec7be8cbb7c127c9b7a507426d691"
+      },
+      {
+        "id": "5562a3e8-b37c-4e6d-a70a-26452edff10d",
+        "fixture_id": "4b893420-7db9-5904-9070-1c082afa6bc4",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T15:15:00",
+        "lead_time_seconds": 271316,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564735_8f965d97",
+        "history_fingerprint": "hist_fp_564735",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "c9df31e92c9aeb83b94c55fb7d9bf138d33cac41c3677966993ed3877a17f8ea"
+      },
+      {
+        "id": "5c1c9ded-1467-4528-9b44-60d34d70fc84",
+        "fixture_id": "15a6cf35-812e-56bf-b7cf-1de34297c8dc",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "lead_time_seconds": 268616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565840_3d3b3e27",
+        "history_fingerprint": "hist_fp_565840",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "945fbd5e3613be4761cf8b652057db1f258f906e9caae35fb5cce354bb71c4ea"
+      },
+      {
+        "id": "5f2f981b-0dcc-4fc8-a1ba-95779c5c9320",
+        "fixture_id": "31830420-8c10-5bc0-8a02-6ff7f54f7656",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-29T17:30:00",
+        "lead_time_seconds": 106616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558558_8c229b7f",
+        "history_fingerprint": "hist_fp_558558",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "ab49902b32cfd972dd7f271fba4314bbf2995ffa3cce3b3b08b998e365efb884"
+      },
+      {
+        "id": "652cb049-e06d-457d-9cd1-5fc09e9a5adc",
+        "fixture_id": "eee28449-3c66-5e43-ba16-1c2b64224322",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T15:15:00",
+        "lead_time_seconds": 357716,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564734_68147468",
+        "history_fingerprint": "hist_fp_564734",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "93e6b551344552e7f3f26e4204f6fce5af1d3bc5b8938537425e85f49a15f864"
+      },
+      {
+        "id": "74040125-3dc0-4efa-8934-60c417c8a514",
+        "fixture_id": "79f9e045-3e3f-5437-ab5b-670ad50c851b",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T20:00:00",
+        "lead_time_seconds": 288416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560628_264235ad",
+        "history_fingerprint": "hist_fp_560628",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "3266962fa4213ec6828ce6051955574d0a5d993ba81cfede6608edfdca178663"
+      },
+      {
+        "id": "7b875305-b198-44df-8d3f-c141f82f06c7",
+        "fixture_id": "e663beb5-1616-5645-a800-9d20bc735552",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T16:30:00",
+        "lead_time_seconds": 362216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560631_756016a0",
+        "history_fingerprint": "hist_fp_560631",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "53209e66da43909ed0e0d3563690ade8060436d800fe586d0fde3614f95d9eb5"
+      },
+      {
+        "id": "83ffde98-d572-4703-b1f8-ddb6f9ab67b7",
+        "fixture_id": "690819cc-6645-5a8e-a79e-06bdf117d7dc",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T19:45:00",
+        "lead_time_seconds": 287516,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558548_34e5a30a",
+        "history_fingerprint": "hist_fp_558548",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "bcb81c198586b75333a020d0ee97a05f1ebe21370369df7bbd9536d9e77b3d51"
+      },
+      {
+        "id": "898069f2-d1d8-43a3-a3cd-cf2c8ecf1aa5",
+        "fixture_id": "a4000aea-3684-553d-a62a-dc59e3b407c6",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-28T19:45:00",
+        "lead_time_seconds": 28316,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558552_a05213b6",
+        "history_fingerprint": "hist_fp_558552",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "90f06397c4e7a15d93518a2d3bfd4d98d3f305638b35049a8ca601f6a44a946d"
+      },
+      {
+        "id": "8f07ffbf-dceb-475d-9a9b-49298b3670bb",
+        "fixture_id": "31ab8187-e7a1-5ee7-a524-b774450ac4ed",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-30T20:00:00",
+        "lead_time_seconds": 202016,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564737_5bfd265a",
+        "history_fingerprint": "hist_fp_564737",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "2d2fe673f5dc5d77c37877f141e5ccfbec01cb138bb4de93162b7ff85d4a8d9a"
+      },
+      {
+        "id": "91ad73bd-734a-46a6-84fc-49c584823630",
+        "fixture_id": "142bf393-0777-5600-bd37-2b100263cedc",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T17:00:00",
+        "lead_time_seconds": 277616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558542_14d7ca35",
+        "history_fingerprint": "hist_fp_558542",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "53c72ded8789150a5468a72e3da6d8f6d3105ecc1e5e53061ab600c4b4ff839d"
+      },
+      {
+        "id": "921015d8-1554-4e92-9f46-0f0a951c1085",
+        "fixture_id": "d8947bc0-735f-59f6-aa46-29318fc405a5",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T20:00:00",
+        "lead_time_seconds": 288416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564732_131ac5a6",
+        "history_fingerprint": "hist_fp_564732",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "ba22994cc1720136874997e07756b6fec1a56bdf7a75d568e2874377f63167fe"
+      },
+      {
+        "id": "92e38b30-374e-4fc9-b33f-b4a375746f19",
+        "fixture_id": "d50b2d50-b4b6-5a39-9a6c-f7243b9263f3",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T16:30:00",
+        "lead_time_seconds": 362216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565844_396c6379",
+        "history_fingerprint": "hist_fp_565844",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "e194b1b682d8558b36e8fa61aa738b1daa490e5b444cdc29062089ff0412021c"
+      },
+      {
+        "id": "9fb2e9d2-85ba-42dc-9fc7-c3511bbf63ca",
+        "fixture_id": "8c4bb88d-8571-5bc4-9efc-704263a8f11d",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "lead_time_seconds": 270416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560624_f7fea0a6",
+        "history_fingerprint": "hist_fp_560624",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "605379d716844329bd459e366e3ac9392851029ada7998bd302392f04fe211f8"
+      },
+      {
+        "id": "a032df47-ea17-4780-91f8-9bf93c99ab6e",
+        "fixture_id": "88828e8b-08fe-56d8-8af5-cd34f7ab76c0",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T14:00:00",
+        "lead_time_seconds": 353216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558546_0a9a3cd9",
+        "history_fingerprint": "hist_fp_558546",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "1385f4393b83cfbc7991f69137f8d2b9a40ada0807a74adbc7c14daf6569af0b"
+      },
+      {
+        "id": "aa232505-71b0-4266-8ef4-f0c55702eb8c",
+        "fixture_id": "14cf3ccf-d718-517c-a49d-70cf551e1b7d",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T17:30:00",
+        "lead_time_seconds": 365816,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564728_b75086bb",
+        "history_fingerprint": "hist_fp_564728",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "83fe739838a6e98a7f87591b256a749b5fe1daf3ae5c7f9fe80ff0d04a3fac1d"
+      },
+      {
+        "id": "acd68e57-41f1-41bd-9c34-eb2a9459587a",
+        "fixture_id": "ddc22a5f-3422-5497-867a-73040e3abc31",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T11:30:00",
+        "lead_time_seconds": 344216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558543_bd557e48",
+        "history_fingerprint": "hist_fp_558543",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "ae15d4d430a0ef3fa966735bda26aa80c5ef120010f75ae9d1d008ab4b6d11f8"
+      },
+      {
+        "id": "b3601e4c-987a-4006-a6bb-d5c2e9c0b2e8",
+        "fixture_id": "78598104-e631-5416-b0b3-595cb4d0cd55",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-02T19:45:00",
+        "lead_time_seconds": 460316,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558545_1e3bda8e",
+        "history_fingerprint": "hist_fp_558545",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "cc9e866cbe45ee612e763d12d5e8e2383a698ad57a6c80a2585e9955f1b10cdd"
+      },
+      {
+        "id": "b4d93120-9f47-4a5d-805f-d02e715ba710",
+        "fixture_id": "4042fd4b-0db5-5784-b1b3-d88f6d5e1359",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-02T20:00:00",
+        "lead_time_seconds": 461216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564731_124f7bcd",
+        "history_fingerprint": "hist_fp_564731",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "3d277fdbd9fe8d510b5f9cd759f332dd0de5b893e8a92714487b4b8977002c96"
+      },
+      {
+        "id": "ba5147e0-d3d1-4e64-bb9b-14b7729adf23",
+        "fixture_id": "9a4d8cbc-0f85-5cb1-86c1-5f65967043b7",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-28T17:30:00",
+        "lead_time_seconds": 20216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558549_106c8d3a",
+        "history_fingerprint": "hist_fp_558549",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "e1de7392c8c2794604d8e8678e3a63e2da61c1b48f227cf82b368447d7c72cf1"
+      },
+      {
+        "id": "bc488f41-2b7a-47aa-b767-7e8fe6e5a94d",
+        "fixture_id": "900cb07c-8ec3-5d6d-a5a1-b971aef5590b",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "lead_time_seconds": 270416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560623_30c3d294",
+        "history_fingerprint": "hist_fp_560623",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "11ef3e3f6e864be342f7edc56bcc91d3b5a028160358a18d3a2380576db8874b"
+      },
+      {
+        "id": "bdb8c932-c83f-456b-aa73-26b39814c616",
+        "fixture_id": "2355a22a-01db-554a-a479-1efab2bcc591",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-29T19:45:00",
+        "lead_time_seconds": 114716,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558551_90f45aed",
+        "history_fingerprint": "hist_fp_558551",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "fb7f76a528dae82f7d4b80790b6530cff64f0af7ff5d21a6435eceb7cbb50adc"
+      },
+      {
+        "id": "bf257ae5-5783-41d6-a06a-d033ad728df2",
+        "fixture_id": "68623d02-f8cb-5ba3-ad2e-12b5e8d95c84",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T13:00:00",
+        "lead_time_seconds": 349616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564733_2c26c15b",
+        "history_fingerprint": "hist_fp_564733",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "a352e19d4649d79232c332b59f3a63d1cc97b14ddfbf8e84f4b4691b3910d307"
+      },
+      {
+        "id": "bfa4a244-f167-4a30-a2d7-a25c5b9423cf",
+        "fixture_id": "9dc05347-5d73-5bd3-b20e-e79d041a3223",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "lead_time_seconds": 270416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560630_8b92697e",
+        "history_fingerprint": "hist_fp_560630",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "2d4e23664d74358cfb69ca2e0d68050d0a1d90b7c39248d2c5daaddb8f674270"
+      },
+      {
+        "id": "c0887e76-e56d-4f1a-bcb2-a01e028c997d",
+        "fixture_id": "4c4e8b3a-b675-5bb7-a26c-dd52e0d59da3",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T12:30:00",
+        "lead_time_seconds": 261416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560626_2aeece06",
+        "history_fingerprint": "hist_fp_560626",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "1fab80d901078c5efcaf71a492b315c3e14798e65f64423aa992f3ff5fbba834"
+      },
+      {
+        "id": "d85a2a1c-6cbc-4b3a-87b7-0061ef7270b5",
+        "fixture_id": "4f76b0c7-14bb-583e-8ab5-80201b894b41",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-02T17:30:00",
+        "lead_time_seconds": 452216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558541_31cb83b2",
+        "history_fingerprint": "hist_fp_558541",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "8c3bfc6b7fd4009c43b28a0b4df2f0a8d9bd6970c64b24dc5d29877555aa3459"
+      },
+      {
+        "id": "dafdaebd-a8cd-475b-a9a5-2912827feb66",
+        "fixture_id": "039b3066-2ae8-5225-bacb-f606b552a16f",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T15:00:00",
+        "lead_time_seconds": 270416,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_560625_07ce91df",
+        "history_fingerprint": "hist_fp_560625",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "5aadb51b1756a476f3caba5f31dc910891109574f84d84cd499366752fde4ae6"
+      },
+      {
+        "id": "e0450e57-1c70-4f4a-a860-e4af9eda54f8",
+        "fixture_id": "757cdb49-87c4-5c64-a9f7-6f0feab6eb45",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-28T17:30:00",
+        "lead_time_seconds": 20216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558553_b754ec1b",
+        "history_fingerprint": "hist_fp_558553",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.45266,
+        "prob_draw": 0.25435,
+        "prob_away": 0.29299,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "FALLBACK_MODEL_USED",
+        "quality_reasons": [
+          "known_cold_start"
+        ],
+        "fallback_used": true,
+        "fallback_model": "M1_Attack_Defense_Poisson",
+        "fallback_reason": "known_cold_start",
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "e71b812bdfd5a34adfbf55628a49edccb51cf0adcdb4442ba9951219eed7ceba"
+      },
+      {
+        "id": "e18ddffc-2269-4049-b528-c2ff6c38761d",
+        "fixture_id": "949d56ed-e54c-5803-b0ec-3a78223d4f8b",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T14:30:00",
+        "lead_time_seconds": 268616,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_565847_c3681cdd",
+        "history_fingerprint": "hist_fp_565847",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "aa5cb012f9ed2fdd269ae957a527568dfe88937f7adcb81471dc98bc939e9d7a"
+      },
+      {
+        "id": "e4a23fd5-cad8-4c68-9566-c7d2de4d1e12",
+        "fixture_id": "060162eb-2d0d-5761-aff1-788372dc9a38",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T14:00:00",
+        "lead_time_seconds": 353216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558544_5484b1ea",
+        "history_fingerprint": "hist_fp_558544",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "660629ea0f3be1b83b379880fd9b22935090950fc28096dbb480e05ce17dcd6d"
+      },
+      {
+        "id": "effcb812-14c3-4df7-a5bf-da4a4c4374b7",
+        "fixture_id": "5721799a-d795-56e6-8cb0-2a7aea681801",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T14:00:00",
+        "lead_time_seconds": 266816,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_558539_596f7cf1",
+        "history_fingerprint": "hist_fp_558539",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "bda245f3eda814efc62eba72135a8d4c5aeec01a331bc265cfb22fbc1a393d57"
+      },
+      {
+        "id": "f0166bfe-ed6d-40da-bd67-43372b168912",
+        "fixture_id": "c23754cb-63fe-5732-92bc-8b5a804f0833",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-10-31T13:00:00",
+        "lead_time_seconds": 263216,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564730_016a1f06",
+        "history_fingerprint": "hist_fp_564730",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "f8e8e5e1d683fd56f575d5d4bfd17a927ddba1cff2f66403cd8f5030a1b785b9"
+      },
+      {
+        "id": "f5a8de2d-d870-4bfe-9754-9b33dc8c9914",
+        "fixture_id": "e0588c4e-5e75-5f92-b05e-3b53a6766a8b",
+        "prediction_run_id": null,
+        "prediction_mode": "SHADOW",
+        "generated_at": "2026-10-28T11:53:03.762840",
+        "kickoff_utc": "2026-11-01T20:00:00",
+        "lead_time_seconds": 374816,
+        "feature_snapshot_id": null,
+        "feature_snapshot_fingerprint": "feat_fp_live_564729_084079da",
+        "history_fingerprint": "hist_fp_564729",
+        "phase5_manifest_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
+        "phase5_2_policy_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
+        "phase6_1_manifest_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
+        "phase6_2_manifest_hash": "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b",
+        "c1_model_key": "C1_Multinomial_Logistic_1X2",
+        "c1_model_version": "1.0.0",
+        "c1_artifact_fingerprint": "art_fp_c1_ml_02f8b524",
+        "m1_model_key": "M1_Attack_Defense_Poisson",
+        "m1_model_version": "1.0.0",
+        "m1_artifact_fingerprint": "art_fp_m1_adp_7a9c8b1",
+        "prob_home": 0.51102,
+        "prob_draw": 0.28328,
+        "prob_away": 0.2057,
+        "structural_prob_home": 0.45266,
+        "structural_prob_draw": 0.25435,
+        "structural_prob_away": 0.29299,
+        "lambda_home": 1.518,
+        "lambda_away": 1.17,
+        "btts_yes": 0.53842,
+        "btts_no": 0.46158,
+        "over_2_5": 0.50331,
+        "under_2_5": 0.49669,
+        "exact_score_matrix_fingerprint": "cbbf8ba3e9839ca3e6c3c56f519dd54e32631f6bfd20c68acca28354b9631c46",
+        "top_scorelines": [
+          {
+            "home_goals": 1,
+            "away_goals": 1,
+            "probability": 0.12082,
+            "rank": 1
+          },
+          {
+            "home_goals": 1,
+            "away_goals": 0,
+            "probability": 0.10327,
+            "rank": 2
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 1,
+            "probability": 0.09167,
+            "rank": 3
+          },
+          {
+            "home_goals": 0,
+            "away_goals": 1,
+            "probability": 0.07962,
+            "rank": 4
+          },
+          {
+            "home_goals": 2,
+            "away_goals": 0,
+            "probability": 0.07835,
+            "rank": 5
+          }
+        ],
+        "quality_state": "NORMAL",
+        "quality_reasons": [
+          "normal_healthy_features"
+        ],
+        "fallback_used": false,
+        "fallback_model": null,
+        "fallback_reason": null,
+        "model_disagreement_value": 0.08729,
+        "model_disagreement_band": "LOW",
+        "is_canonical_evaluation_prediction": true,
+        "prediction_schema_version": "1.0.0",
+        "row_fingerprint": "381cef61cf1eca5f5c085028456f73b8587f5002c5d28d7fafeb6dfcf00c1c2e"
+      }
+    ]
+  },
+  "prediction_fingerprints": {
+    "03d935f2-ca50-413a-98b2-11416e8b15ca": "27045ed0efd679b096b211d5799aadf644db12b8556b9bab5d7e5a65c124bf99",
+    "0a6ffa03-5ea6-4292-bcad-6752dc6a1638": "fa3c6ffb044b1f4865785b9423a8f2c8cefdc292910c0631a635892de7db8b48",
+    "0c752a3b-3361-42dd-be21-f2f8c9dd4639": "25981bc7fdabf136de17c9525423d328f3270adf750ac335133d56a4719f3048",
+    "1330a2bf-7ad8-48c1-81cd-67a892b77f6a": "cb781b41c3d63e0621b67d952444002201e284cb1442ac8dcb40554402a80304",
+    "1366db00-dacd-49d6-9938-704cb3670ce8": "30e43a123f5ab92edb1048de1d384886c35076b9a21a059e1b4aa44ca92af607",
+    "1e022186-08e2-40a0-b5fd-c64741d4ccb1": "9b33e0580a6f64fb590b8c0c95fe069e2d32d3decc8e04dd7b2e0aad1b7e7d98",
+    "1f8e616f-a34e-4872-8aba-ec79ae16494c": "391a579e787d8540443e58c5ad7daca4621ca4de9c7b968283060be67c700995",
+    "287e6789-83a6-4d64-a2bb-ef26c63a644c": "8618d5736a24cfe737623d586e0b663a5b09aa1c5378d004ffcb81f20ba5a2df",
+    "42f709ec-9124-434b-95ae-84bec2b41df3": "511717040600d2d9f17cc4db6f520d390e529c8af3efb56db4bbce095e9ddb5a",
+    "4797c750-5111-44f8-8f96-b18bb63febb0": "116d4564b31c9149e11af809c2db412603784ddf51c7e6ffad73f779432da428",
+    "4acba477-aa0f-4604-9de5-a2672c508b0f": "da5e53bdbad76badcc5270f2fd012755fb09013c1ee4068bab9b86479cc6a30d",
+    "4d09411e-b8ad-45dc-8b83-9d80f92cf563": "ec752687c78afe209ceaad6564ee0e8e834c1eb386dbe6518e8a07d3fed2e521",
+    "4eaa060e-c7a8-425d-a3af-9d621fb3ff9c": "b31789590c5836cabfca8e79efcfa1ee1e85b6fd8696f386a336af7487cc6773",
+    "52c96ee2-b8ad-4415-b4a8-d73c1ae60220": "17c21b13bab2922a7e41e7119686deac2fdec7be8cbb7c127c9b7a507426d691",
+    "5562a3e8-b37c-4e6d-a70a-26452edff10d": "c9df31e92c9aeb83b94c55fb7d9bf138d33cac41c3677966993ed3877a17f8ea",
+    "5c1c9ded-1467-4528-9b44-60d34d70fc84": "945fbd5e3613be4761cf8b652057db1f258f906e9caae35fb5cce354bb71c4ea",
+    "5f2f981b-0dcc-4fc8-a1ba-95779c5c9320": "ab49902b32cfd972dd7f271fba4314bbf2995ffa3cce3b3b08b998e365efb884",
+    "652cb049-e06d-457d-9cd1-5fc09e9a5adc": "93e6b551344552e7f3f26e4204f6fce5af1d3bc5b8938537425e85f49a15f864",
+    "74040125-3dc0-4efa-8934-60c417c8a514": "3266962fa4213ec6828ce6051955574d0a5d993ba81cfede6608edfdca178663",
+    "7b875305-b198-44df-8d3f-c141f82f06c7": "53209e66da43909ed0e0d3563690ade8060436d800fe586d0fde3614f95d9eb5",
+    "83ffde98-d572-4703-b1f8-ddb6f9ab67b7": "bcb81c198586b75333a020d0ee97a05f1ebe21370369df7bbd9536d9e77b3d51",
+    "898069f2-d1d8-43a3-a3cd-cf2c8ecf1aa5": "90f06397c4e7a15d93518a2d3bfd4d98d3f305638b35049a8ca601f6a44a946d",
+    "8f07ffbf-dceb-475d-9a9b-49298b3670bb": "2d2fe673f5dc5d77c37877f141e5ccfbec01cb138bb4de93162b7ff85d4a8d9a",
+    "91ad73bd-734a-46a6-84fc-49c584823630": "53c72ded8789150a5468a72e3da6d8f6d3105ecc1e5e53061ab600c4b4ff839d",
+    "921015d8-1554-4e92-9f46-0f0a951c1085": "ba22994cc1720136874997e07756b6fec1a56bdf7a75d568e2874377f63167fe",
+    "92e38b30-374e-4fc9-b33f-b4a375746f19": "e194b1b682d8558b36e8fa61aa738b1daa490e5b444cdc29062089ff0412021c",
+    "9fb2e9d2-85ba-42dc-9fc7-c3511bbf63ca": "605379d716844329bd459e366e3ac9392851029ada7998bd302392f04fe211f8",
+    "a032df47-ea17-4780-91f8-9bf93c99ab6e": "1385f4393b83cfbc7991f69137f8d2b9a40ada0807a74adbc7c14daf6569af0b",
+    "aa232505-71b0-4266-8ef4-f0c55702eb8c": "83fe739838a6e98a7f87591b256a749b5fe1daf3ae5c7f9fe80ff0d04a3fac1d",
+    "acd68e57-41f1-41bd-9c34-eb2a9459587a": "ae15d4d430a0ef3fa966735bda26aa80c5ef120010f75ae9d1d008ab4b6d11f8",
+    "b3601e4c-987a-4006-a6bb-d5c2e9c0b2e8": "cc9e866cbe45ee612e763d12d5e8e2383a698ad57a6c80a2585e9955f1b10cdd",
+    "b4d93120-9f47-4a5d-805f-d02e715ba710": "3d277fdbd9fe8d510b5f9cd759f332dd0de5b893e8a92714487b4b8977002c96",
+    "ba5147e0-d3d1-4e64-bb9b-14b7729adf23": "e1de7392c8c2794604d8e8678e3a63e2da61c1b48f227cf82b368447d7c72cf1",
+    "bc488f41-2b7a-47aa-b767-7e8fe6e5a94d": "11ef3e3f6e864be342f7edc56bcc91d3b5a028160358a18d3a2380576db8874b",
+    "bdb8c932-c83f-456b-aa73-26b39814c616": "fb7f76a528dae82f7d4b80790b6530cff64f0af7ff5d21a6435eceb7cbb50adc",
+    "bf257ae5-5783-41d6-a06a-d033ad728df2": "a352e19d4649d79232c332b59f3a63d1cc97b14ddfbf8e84f4b4691b3910d307",
+    "bfa4a244-f167-4a30-a2d7-a25c5b9423cf": "2d4e23664d74358cfb69ca2e0d68050d0a1d90b7c39248d2c5daaddb8f674270",
+    "c0887e76-e56d-4f1a-bcb2-a01e028c997d": "1fab80d901078c5efcaf71a492b315c3e14798e65f64423aa992f3ff5fbba834",
+    "d85a2a1c-6cbc-4b3a-87b7-0061ef7270b5": "8c3bfc6b7fd4009c43b28a0b4df2f0a8d9bd6970c64b24dc5d29877555aa3459",
+    "dafdaebd-a8cd-475b-a9a5-2912827feb66": "5aadb51b1756a476f3caba5f31dc910891109574f84d84cd499366752fde4ae6",
+    "e0450e57-1c70-4f4a-a860-e4af9eda54f8": "e71b812bdfd5a34adfbf55628a49edccb51cf0adcdb4442ba9951219eed7ceba",
+    "e18ddffc-2269-4049-b528-c2ff6c38761d": "aa5cb012f9ed2fdd269ae957a527568dfe88937f7adcb81471dc98bc939e9d7a",
+    "e4a23fd5-cad8-4c68-9566-c7d2de4d1e12": "660629ea0f3be1b83b379880fd9b22935090950fc28096dbb480e05ce17dcd6d",
+    "effcb812-14c3-4df7-a5bf-da4a4c4374b7": "bda245f3eda814efc62eba72135a8d4c5aeec01a331bc265cfb22fbc1a393d57",
+    "f0166bfe-ed6d-40da-bd67-43372b168912": "f8e8e5e1d683fd56f575d5d4bfd17a927ddba1cff2f66403cd8f5030a1b785b9",
+    "f5a8de2d-d870-4bfe-9754-9b33dc8c9914": "381cef61cf1eca5f5c085028456f73b8587f5002c5d28d7fafeb6dfcf00c1c2e"
+  }
+}

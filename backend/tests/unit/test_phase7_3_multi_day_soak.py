@@ -43,6 +43,9 @@ PHASE7_3_MANIFEST_PATH = (
 PHASE7_3_EVIDENCE_PATH = (
     Path(__file__).resolve().parents[3] / "phase7_3_live_soak_evidence.json"
 )
+PHASE7_3_MIGRATION_PATH = (
+    Path(__file__).resolve().parents[3] / "phase7_3_runtime_migration_evidence.json"
+)
 
 
 @pytest.fixture
@@ -249,7 +252,7 @@ def test_phase7_3_manifest_is_deterministic():
     h2 = hashlib.sha256(canon2).hexdigest()
     assert h1 == h2
     assert len(h1) == 64
-    assert h1 == "d63b0913605ea115113dd3eb35bb9b2f7a7fd10e1080afeea6431ab00d96177d"
+    assert h1 == "a3aecb26ca8f9f108e1845a5e215232c0f275644c8830425cd83e2936a297dc7"
 
     # CRLF vs LF invariance
     crlf_str = json.dumps(data, indent=2).replace("\n", "\r\n")
@@ -275,3 +278,61 @@ def test_phase7_3_manifest_binds_soak_evidence():
 
     assert manifest_data["soak_evidence_sha256"] == expected_ev_hash
     assert manifest_data["soak_evidence_artifact_path"] == "phase7_3_live_soak_evidence.json"
+
+
+# 9. Migration preserves 46/46 canonical row fingerprints
+def test_phase7_3_migration_preserves_canonical_fingerprints(clean_db_factory):
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from scripts.migration.state_migrator import CanonicalStateImporter
+
+    assert PHASE7_3_MIGRATION_PATH.exists()
+    with open(PHASE7_3_MIGRATION_PATH, encoding="utf-8") as f:
+        payload = json.load(f)
+
+    with clean_db_factory() as session:
+        res = CanonicalStateImporter.import_state(session, payload)
+        assert res["status"] == "PASS"
+        assert res["created_predictions"] == 46
+        assert res["fingerprint_mismatches"] == 0
+        assert res["total_destination_predictions"] == 46
+
+
+# 10. Migration is strictly idempotent
+def test_phase7_3_migration_is_strictly_idempotent(clean_db_factory):
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from scripts.migration.state_migrator import CanonicalStateImporter
+
+    with open(PHASE7_3_MIGRATION_PATH, encoding="utf-8") as f:
+        payload = json.load(f)
+
+    with clean_db_factory() as session:
+        # Run 1: Initial import
+        res1 = CanonicalStateImporter.import_state(session, payload)
+        assert res1["created_predictions"] == 46
+
+        # Run 2: Re-import identical payload
+        res2 = CanonicalStateImporter.import_state(session, payload)
+        assert res2["status"] == "PASS"
+        assert res2["created_predictions"] == 0
+        assert res2["reused_predictions"] == 46
+        assert res2["fingerprint_mismatches"] == 0
+        assert res2["total_destination_predictions"] == 46
+
+
+# 11. Manifest cryptographically binds migration evidence
+def test_phase7_3_manifest_binds_migration_evidence():
+    assert PHASE7_3_MIGRATION_PATH.exists()
+    with open(PHASE7_3_MIGRATION_PATH, encoding="utf-8") as f:
+        mig_data = json.load(f)
+
+    canon_mig = json.dumps(mig_data, sort_keys=True).encode("utf-8")
+    expected_mig_hash = hashlib.sha256(canon_mig).hexdigest()
+
+    with open(PHASE7_3_MANIFEST_PATH, encoding="utf-8") as f:
+        manifest_data = json.load(f)
+
+    assert manifest_data["runtime_migration_evidence_sha256"] == expected_mig_hash
+    assert manifest_data["runtime_migration_evidence_path"] == "phase7_3_runtime_migration_evidence.json"
+
