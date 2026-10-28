@@ -3,7 +3,7 @@
   "certification_type": "SPRINT_7_2_FINAL_IMPLEMENTATION_CERTIFICATION",
   "sprint": "Sprint 7.2 Final Live Activation Hardening",
   "description": "Final immutable implementation-bound certification manifest for Sprint 7.2 real provider live operations, relational persistence, and clean deployment reproducibility.",
-  "git_commit": "396557f",
+  "git_commit": "050a806",
   "phase5_master_hash": "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524",
   "phase5_2_hash": "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b",
   "phase6_1_hash": "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d715a8ee5a2df0423d7",
@@ -40,9 +40,9 @@
   "betting_logic": "FORBIDDEN",
   "local_test_count": 521,
   "local_test_result": "PASS",
-  "remote_ci_run_id": "40684241855",
-  "remote_ci_commit": "396557f",
+  "remote_ci_run_id": "40689051565",
+  "remote_ci_commit": "050a806",
   "remote_postgresql_version": "16.15",
-  "remote_test_result": "PASS",
+  "remote_test_result": "510 passed, 11 skipped, 0 failed",
   "certified_at_utc": "2026-10-28T15:25:00+00:00"
 }

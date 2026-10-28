@@ -280,7 +280,7 @@ def test_phase7_2_final_manifest_is_deterministic():
     h2 = hashlib.sha256(canon2).hexdigest()
     assert h1 == h2
     assert len(h1) == 64
-    assert h1 == "f56241def27fd72a4f6ad77df349216c02882dce44fb861eda5c937411c5b7cd"
+    assert h1 == "59561579e0989202509465536fa82c2daab5df11bbcfab9aa12bd795c26f244d"
 
     # CRLF vs LF invariance
     crlf_str = json.dumps(data, indent=2).replace("\n", "\r\n")
