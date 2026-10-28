@@ -23,7 +23,11 @@
     "real_evaluations_created": 0,
     "earliest_kickoff_utc": "2026-10-28T17:30:00+00:00",
     "latest_kickoff_utc": "2026-11-02T20:00:00+00:00",
-    "closure_blocker": "NATURAL_TIME_AWAITING_MATCH_COMPLETION (Earliest kickoff at 17:30 UTC today)"
+    "closure_blocker": "NATURAL_TIME_AWAITING_MATCH_COMPLETION (Earliest kickoff at 17:30 UTC today)",
+    "last_continuation_audit_utc": "2026-10-28T13:12:00+00:00",
+    "elapsed_soak_hours": 3.2,
+    "actual_calendar_days_elapsed": 0,
+    "fixture_horizon_days_remaining": 5.28
   },
   "predictions": [
     {
@@ -1130,5 +1134,89 @@
       "result_ingested": false,
       "evaluation_status": "PENDING_MATCH_COMPLETION"
     }
-  ]
+  ],
+  "continuation_audit_evidence": {
+    "controlled_live_contention_test": {
+      "provenance": "CONTROLLED_LIVE_TEST",
+      "executed_at_utc": "2026-10-28T13:12:00+00:00",
+      "worker_a": {
+        "owner": "worker-node-A-primary",
+        "acquired": true,
+        "fencing_token": 30
+      },
+      "worker_b": {
+        "owner": "worker-node-B-contending",
+        "run_status": "ABORTED",
+        "failure_code": "LEASE_NOT_ACQUIRED",
+        "predictions_created": 0,
+        "predictions_reused": 0
+      },
+      "worker_a_released": true,
+      "verdict": "PASS"
+    },
+    "post_contention_scheduler_run": {
+      "provenance": "LIVE_OBSERVED",
+      "executed_at_utc": "2026-10-28T13:12:00+00:00",
+      "run_id": "b81329da-0c18-4348-81d5-e846decaff7a",
+      "fencing_token": 31,
+      "run_status": "SUCCESS",
+      "predictions_created": 0,
+      "predictions_reused": 46,
+      "token_monotonicity": "PASS (31 > 30)"
+    },
+    "database_backup_and_restore_smoke": {
+      "provenance": "CONTROLLED_LIVE_TEST",
+      "executed_at_utc": "2026-10-28T13:12:00+00:00",
+      "backup_file": "backend/backups/football_live_backup_20261028_131207.db",
+      "backup_size_bytes": 211976192,
+      "tables_verified": {
+        "teams": {
+          "original": 107,
+          "restored": 107
+        },
+        "matches": {
+          "original": 4384,
+          "restored": 4384
+        },
+        "feature_snapshots": {
+          "original": 4338,
+          "restored": 4338
+        },
+        "shadow_predictions": {
+          "original": 46,
+          "restored": 46
+        },
+        "operational_runs": {
+          "original": 31,
+          "restored": 31
+        },
+        "scheduler_leases": {
+          "original": 24,
+          "restored": 24
+        }
+      },
+      "verdict": "PASS"
+    },
+    "host_forensics": {
+      "provenance": "LIVE_OBSERVED",
+      "host_type": "Windows Workstation & Primary Development Node",
+      "operating_system": "Microsoft Windows 11 Pro (10.0.26100, 64-bit)",
+      "last_boot_time_utc": "2026-10-23T08:23:42",
+      "uptime_description": "~5 days 7 hours",
+      "runtime_user": "kibaj",
+      "git_commit": "13f68c7"
+    },
+    "systemd_scheduler_status": {
+      "provenance": "CONFIGURATION_VERIFIED",
+      "service_unit": "scripts/scheduler/football_live_shadow.service",
+      "timer_unit": "scripts/scheduler/football_live_shadow.timer",
+      "target_os": "Linux VPS (Ubuntu 24.04 LTS / Debian 12)",
+      "host_status": "NOT_APPLICABLE_ON_WINDOWS_HOST"
+    },
+    "database_restart_status": {
+      "provenance": "NOT_YET_OBSERVED",
+      "status": "NOT_PERFORMED",
+      "reason": "Workstation SQLite WAL active; unauthenticated service restart refrained to protect active soak"
+    }
+  }
 }
