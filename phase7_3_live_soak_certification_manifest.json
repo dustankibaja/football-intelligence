@@ -55,7 +55,7 @@
   "bookmaker_odds": "FORBIDDEN",
   "betting_logic": "FORBIDDEN",
   "soak_evidence_artifact_path": "phase7_3_live_soak_evidence.json",
-  "soak_evidence_sha256": "72c8aa65117ab072cce3af9979cb8ec72b331f1cfc70ce867128beb080684c5e",
+  "soak_evidence_sha256": "7c4f5dcf3fbff608fb49b0e62ba2c25c67f9e2241c401136e154c96a3494c884",
   "operational_implementation_fingerprints": {
     "lease_implementation_fingerprint": "cd22a03c7d6781c60fabc1c13af0bf22cff483c255a603bd0f73c8f35de89b99",
     "orchestrator_implementation_fingerprint": "4d12f90ca99f482392a2e4eb7886f9aa0a9cc9ad93630cd7107be6b2b2a368c0",

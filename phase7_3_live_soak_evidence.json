@@ -24,8 +24,8 @@
     "earliest_kickoff_utc": "2026-10-28T17:30:00+00:00",
     "latest_kickoff_utc": "2026-11-02T20:00:00+00:00",
     "closure_blocker": "NATURAL_TIME_AWAITING_MATCH_COMPLETION (Earliest kickoff at 17:30 UTC today)",
-    "last_continuation_audit_utc": "2026-10-28T13:12:00+00:00",
-    "elapsed_soak_hours": 3.2,
+    "last_continuation_audit_utc": "2026-10-28T13:20:30+00:00",
+    "elapsed_soak_hours": 3.34,
     "actual_calendar_days_elapsed": 0,
     "fixture_horizon_days_remaining": 5.28
   },
@@ -1217,6 +1217,24 @@
       "provenance": "NOT_YET_OBSERVED",
       "status": "NOT_PERFORMED",
       "reason": "Workstation SQLite WAL active; unauthenticated service restart refrained to protect active soak"
+    },
+    "live_provider_poll": {
+      "provenance": "LIVE_OBSERVED",
+      "polled_at_utc": "2026-10-28T13:20:30+00:00",
+      "provider_name": "football-data.org v4",
+      "endpoint": "/v4/matches",
+      "health_status": "PASS",
+      "clock_skew_seconds": -0.531657,
+      "rate_limit_remaining": 9,
+      "upcoming_fixtures_polled": 46,
+      "status_distribution": {
+        "TIMED": 46,
+        "IN_PLAY": 0,
+        "PAUSED": 0,
+        "FINISHED": 0
+      },
+      "earliest_match_time_remaining_hours": 4.16,
+      "verdict": "ALL_FIXTURES_CONFIRMED_PRE_KICKOFF"
     }
   }
 }
