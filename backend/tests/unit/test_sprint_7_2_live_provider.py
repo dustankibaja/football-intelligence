@@ -719,8 +719,18 @@ def test_cold_start_routing_routes_to_m1_fallback(fake_clock: FakeClock):
     from app.prediction.service import Phase5_2_PolicyEngine
 
     session = SessionLocal()
-    # Como was newly inserted and has 0 historical matches
+    # Como is a promoted/cold-start team with 0 historical matches
     como = session.query(Team).filter_by(canonical_name="Como").first()
+    if como is None:
+        como = Team(
+            id=UUID("29a9ee53-9012-51af-8556-ccfc8573df78"),
+            canonical_name="Como",
+            short_name="Como",
+            country="Italy",
+            is_active=True,
+        )
+        session.add(como)
+        session.commit()
     assert como is not None
 
     adapter = LiveIngestionAdapter(clock=fake_clock, session_factory=SessionLocal)
