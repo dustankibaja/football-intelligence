@@ -1,0 +1,86 @@
+[
+  {
+    "id": "29a9ee53-9012-51af-8556-ccfc8573df78",
+    "canonical_name": "Como",
+    "short_name": "Como",
+    "country": "Italy",
+    "is_active": true
+  },
+  {
+    "id": "fb416f0f-4385-5589-90a9-05e7e4794d0e",
+    "canonical_name": "Parma",
+    "short_name": "Parma",
+    "country": "Italy",
+    "is_active": true
+  },
+  {
+    "id": "6f3f175b-71a0-550e-8f79-12365da04145",
+    "canonical_name": "Ipswich",
+    "short_name": "Ipswich",
+    "country": "England",
+    "is_active": true
+  },
+  {
+    "id": "7a1ca804-63c8-5d74-adb9-1863c95b310b",
+    "canonical_name": "Coventry",
+    "short_name": "Coventry",
+    "country": "England",
+    "is_active": true
+  },
+  {
+    "id": "0f1932a6-d7a7-5a0d-a62b-8ec0c1a38f4f",
+    "canonical_name": "Hull",
+    "short_name": "Hull",
+    "country": "England",
+    "is_active": true
+  },
+  {
+    "id": "b30f05e6-f12f-5bb1-8050-185f9e7c1f62",
+    "canonical_name": "Sunderland",
+    "short_name": "Sunderland",
+    "country": "England",
+    "is_active": true
+  },
+  {
+    "id": "49b7b4e2-687c-543e-a5df-2c154cbbe189",
+    "canonical_name": "Hamburg",
+    "short_name": "Hamburg",
+    "country": "Germany",
+    "is_active": true
+  },
+  {
+    "id": "1cd3abda-a5f5-59cc-95b8-88bced5f15aa",
+    "canonical_name": "Paderborn",
+    "short_name": "Paderborn",
+    "country": "Germany",
+    "is_active": true
+  },
+  {
+    "id": "89f93086-c665-5193-9371-55edee7c7832",
+    "canonical_name": "Elversberg",
+    "short_name": "Elversberg",
+    "country": "Germany",
+    "is_active": true
+  },
+  {
+    "id": "f3d97136-64a8-5bc2-aede-e2a5acc45224",
+    "canonical_name": "Malaga",
+    "short_name": "Malaga",
+    "country": "Spain",
+    "is_active": true
+  },
+  {
+    "id": "e6ea023a-2588-5dbc-a420-4a40e289a72e",
+    "canonical_name": "La Coruna",
+    "short_name": "La Coruna",
+    "country": "Spain",
+    "is_active": true
+  },
+  {
+    "id": "f26c0af4-4423-58cb-9042-7a4066553bad",
+    "canonical_name": "Santander",
+    "short_name": "Santander",
+    "country": "Spain",
+    "is_active": true
+  }
+]

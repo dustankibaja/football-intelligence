@@ -47,6 +47,7 @@ from app.prediction.service import (
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.db.models.automation import OperationalRun
+from app.db.repositories.shadow import ShadowPredictionRepository
 from app.providers.live.base import LiveFootballDataProvider
 
 FROZEN_PHASE5_MASTER_HASH = "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524"
@@ -331,7 +332,10 @@ class OperationalOrchestrator:
                     summary.predictions_blocked += 1
 
             if self.execution_mode == ExecutionMode.LIVE_SHADOW and not dry_run:
-                self._save_live_shadow_predictions()
+                fixture_meta_map = {
+                    f.get("fixture_id"): f for f in raw_fixtures if isinstance(f, dict) and "fixture_id" in f
+                }
+                self._save_live_shadow_predictions(fixture_meta_map=fixture_meta_map)
 
             # Stage 10: Synchronize Result State (Phase 6.1)
             raw_results = results_due or []
@@ -594,6 +598,23 @@ class OperationalOrchestrator:
         return Path("data/processed/live_shadow_predictions.json")
 
     def _load_live_shadow_predictions(self) -> None:
+        """
+        Loads live shadow predictions.
+        Primary authoritative store: Relational database (shadow_predictions table).
+        Secondary cache/export store: JSON file (data/processed/live_shadow_predictions.json).
+        """
+        # 1. Primary: Load from relational database if session factory is available
+        if self.session_factory is not None:
+            try:
+                with self.session_factory() as session:
+                    db_preds = ShadowPredictionRepository.load_all_predictions(session)
+                    if db_preds:
+                        self.prediction_service._persisted_predictions.update(db_preds)
+                        return
+            except Exception:
+                pass
+
+        # 2. Secondary: Load from JSON cache/export artifact (offline/dry-run replay fallback)
         store_path = self._get_live_store_path()
         if not store_path.exists():
             return
@@ -613,7 +634,25 @@ class OperationalOrchestrator:
         except Exception:
             pass
 
-    def _save_live_shadow_predictions(self) -> None:
+    def _save_live_shadow_predictions(
+        self, fixture_meta_map: dict[UUID, dict[str, Any]] | None = None
+    ) -> None:
+        """
+        Saves live shadow predictions.
+        Primary authoritative write: Relational database (shadow_predictions table).
+        Secondary cache/export write: JSON file (data/processed/live_shadow_predictions.json).
+        """
+        # 1. Primary: Persist to relational database
+        if self.session_factory is not None:
+            try:
+                with self.session_factory() as session:
+                    for p in self.prediction_service._persisted_predictions.values():
+                        meta = (fixture_meta_map or {}).get(p.fixture_id)
+                        ShadowPredictionRepository.persist_prediction(session, p, fixture_meta=meta)
+            except Exception:
+                pass
+
+        # 2. Secondary: Export to JSON cache artifact
         store_path = self._get_live_store_path()
         try:
             store_path.parent.mkdir(parents=True, exist_ok=True)
