@@ -45,6 +45,8 @@ from app.prediction.service import (
     ShadowPredictionService,
 )
 from app.core.config import settings
+from app.db.session import SessionLocal
+from app.db.models.automation import OperationalRun
 from app.providers.live.base import LiveFootballDataProvider
 
 FROZEN_PHASE5_MASTER_HASH = "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524"
@@ -82,13 +84,14 @@ class OperationalOrchestrator:
         session_factory: Any = None,
     ) -> None:
         self.clock = clock or SystemClock()
-        self.lease_manager = lease_manager or LeaseManager(clock=self.clock)
+        self.execution_mode = execution_mode
+        self.session_factory = session_factory or (SessionLocal if self.execution_mode == ExecutionMode.LIVE_SHADOW else None)
+        self.lease_manager = lease_manager or LeaseManager(clock=self.clock, session_factory=self.session_factory)
         self.prediction_service = prediction_service or ShadowPredictionService()
         self.scoring_service = scoring_service or PostMatchScoringService()
         self.monitoring_service = monitoring_service or ShadowMonitoringService()
         self.retry_policy = retry_policy or RetryPolicy(clock=self.clock)
         self.circuit_breaker = circuit_breaker or CircuitBreaker(clock=self.clock)
-        self.execution_mode = execution_mode
         self.scheduler_instance_id = scheduler_instance_id
         self.git_commit = git_commit
         self.pipeline_version = pipeline_version
@@ -104,7 +107,6 @@ class OperationalOrchestrator:
             self.live_provider = LiveFootballDataClient(api_key=self.live_api_key, clock=self.clock)
         else:
             self.live_provider = None
-        self.session_factory = session_factory
 
         # Restore previously persisted shadow predictions in LIVE_SHADOW mode
         if self.execution_mode == ExecutionMode.LIVE_SHADOW:
@@ -192,7 +194,7 @@ class OperationalOrchestrator:
             if raw_fixtures is None and self.execution_mode == ExecutionMode.LIVE_SHADOW and self.live_provider is not None:
                 summary.provider_status = "CONNECTED"
                 from app.providers.live.adapter import LiveIngestionAdapter
-                adapter = LiveIngestionAdapter(clock=self.clock)
+                adapter = LiveIngestionAdapter(clock=self.clock, session_factory=self.session_factory)
                 live_dtos = self._handle_provider_call_with_retry(
                     lambda: self.live_provider.get_upcoming_fixtures(), summary
                 )
@@ -439,7 +441,52 @@ class OperationalOrchestrator:
                     fencing_token=current_lease.fencing_token,
                 )
 
+            # Persist OperationalRun record if session_factory is active
+            if self.session_factory is not None:
+                self._persist_operational_run_summary(summary)
+
         return summary
+
+    def _persist_operational_run_summary(self, summary: OperationalRunSummary) -> None:
+        """Durable operational run persistence (Sprint 7.1 / 7.2)."""
+        try:
+            with self.session_factory() as session:
+                op_run = OperationalRun(
+                    id=summary.run_id,
+                    started_at=summary.started_at,
+                    completed_at=summary.completed_at,
+                    scheduler_instance_id=summary.scheduler_instance_id,
+                    git_commit=summary.git_commit,
+                    pipeline_version=summary.pipeline_version,
+                    execution_mode=summary.execution_mode.value if hasattr(summary.execution_mode, "value") else str(summary.execution_mode),
+                    trigger_type=summary.trigger_type,
+                    lease_id=summary.lease_id,
+                    fencing_token=summary.fencing_token,
+                    provider_status=summary.provider_status,
+                    fixtures_discovered=summary.fixtures_discovered,
+                    fixtures_refreshed=summary.fixtures_refreshed,
+                    snapshots_created=summary.snapshots_created,
+                    snapshots_reused=summary.snapshots_reused,
+                    snapshots_failed=summary.snapshots_failed,
+                    predictions_created=summary.predictions_created,
+                    predictions_reused=summary.predictions_reused,
+                    predictions_blocked=summary.predictions_blocked,
+                    predictions_missed_window=summary.predictions_missed_window,
+                    predictions_failed=summary.predictions_failed,
+                    results_processed=summary.results_processed,
+                    evaluations_created=summary.evaluations_created,
+                    evaluations_reused=summary.evaluations_reused,
+                    evaluations_failed=summary.evaluations_failed,
+                    alerts_created=summary.alerts_created,
+                    retry_count=summary.retry_count,
+                    run_status=summary.run_status.value if hasattr(summary.run_status, "value") else str(summary.run_status),
+                    failure_code=summary.failure_code,
+                    failure_summary=summary.failure_summary,
+                )
+                session.add(op_run)
+                session.commit()
+        except Exception:
+            pass
 
     def _verify_scientific_manifests(self, manifest_override: dict[str, str] | None = None) -> None:
         """Verify five frozen parent manifest hashes. Aborts on any discrepancy."""

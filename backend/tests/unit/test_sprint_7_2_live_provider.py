@@ -612,3 +612,189 @@ def test_live_provider_pre_registered_mappings_resolve_certified_clubs():
     assert manutd_id is not None
     assert chelsea_id != manutd_id
 
+
+# 34. Database-backed lease acquisition produces strictly monotonic fencing tokens across instances
+def test_db_backed_lease_acquisition_monotonic_across_instances(fake_clock: FakeClock):
+    from app.db.session import SessionLocal
+
+    lease_name = f"unit_test_monotonic_lease_{uuid4().hex[:8]}"
+    mgr1 = LeaseManager(clock=fake_clock, session_factory=SessionLocal)
+    ok1, l1 = mgr1.acquire(lease_name, "worker-1", ttl_seconds=30.0)
+    assert ok1 is True
+    assert l1.fencing_token >= 1
+
+    # Graceful release
+    assert mgr1.release(lease_name, "worker-1", l1.fencing_token) is True
+
+    # Independent second manager instance acquires
+    mgr2 = LeaseManager(clock=fake_clock, session_factory=SessionLocal)
+    ok2, l2 = mgr2.acquire(lease_name, "worker-2", ttl_seconds=30.0)
+    assert ok2 is True
+    assert l2.fencing_token == l1.fencing_token + 1
+    assert l2.lease_owner == "worker-2"
+    assert mgr2.release(lease_name, "worker-2", l2.fencing_token) is True
+
+
+# 35. Overlapping worker rejected with LEASE_NOT_ACQUIRED and 0 predictions
+def test_db_backed_lease_contention_rejects_overlapping_worker(fake_clock: FakeClock):
+    from app.db.session import SessionLocal
+
+    lease_name = f"unit_test_contention_{uuid4().hex[:8]}"
+    mgr1 = LeaseManager(clock=fake_clock, session_factory=SessionLocal)
+    ok1, l1 = mgr1.acquire(lease_name, "active-holder", ttl_seconds=60.0)
+    assert ok1 is True
+
+    # Second manager instance attempts contention
+    mgr2 = LeaseManager(clock=fake_clock, session_factory=SessionLocal)
+    ok2, current_l = mgr2.acquire(lease_name, "overlapping-worker", ttl_seconds=60.0)
+    assert ok2 is False
+    assert current_l.lease_owner == "active-holder"
+    assert current_l.fencing_token == l1.fencing_token
+
+    mgr1.release(lease_name, "active-holder", l1.fencing_token)
+
+
+# 36. Stale worker cannot validate token after reacquisition
+def test_db_backed_stale_worker_rejected(fake_clock: FakeClock):
+    from app.db.session import SessionLocal
+
+    lease_name = f"unit_test_stale_{uuid4().hex[:8]}"
+    mgr1 = LeaseManager(clock=fake_clock, session_factory=SessionLocal)
+    ok1, l1 = mgr1.acquire(lease_name, "worker-stale", ttl_seconds=10.0)
+    assert ok1 is True
+
+    # Fast forward clock past expiry
+    fake_clock.advance(15.0)
+
+    # Worker 2 acquires expired lease
+    mgr2 = LeaseManager(clock=fake_clock, session_factory=SessionLocal)
+    ok2, l2 = mgr2.acquire(lease_name, "worker-fresh", ttl_seconds=30.0)
+    assert ok2 is True
+    assert l2.fencing_token > l1.fencing_token
+
+    # Stale worker 1 attempts token validation
+    assert mgr1.validate_token(lease_name, "worker-stale", l1.fencing_token) is False
+    # Fresh worker 2 is valid
+    assert mgr2.validate_token(lease_name, "worker-fresh", l2.fencing_token) is True
+
+    mgr2.release(lease_name, "worker-fresh", l2.fencing_token)
+
+
+# 37. ProviderTeamMapper resolves newly reconciled teams across all four supported competitions
+def test_provider_team_mapper_resolves_reconciled_teams_all_competitions():
+    mapper = ProviderTeamMapper()
+
+    # E0: Ipswich, Bournemouth, Brighton
+    assert mapper.map_team("349", "Ipswich Town FC") is not None
+    assert mapper.map_team("1044", "AFC Bournemouth") is not None
+    assert mapper.map_team("397", "Brighton & Hove Albion FC") is not None
+
+    # D1: Köln, Mainz, Freiburg, Augsburg, Hoffenheim
+    assert mapper.map_team("1", "1. FC Köln") is not None
+    assert mapper.map_team("15", "1. FSV Mainz 05") is not None
+    assert mapper.map_team("17", "SC Freiburg") is not None
+    assert mapper.map_team("16", "FC Augsburg") is not None
+    assert mapper.map_team("2", "TSG 1899 Hoffenheim") is not None
+
+    # I1: Como, Parma, Monza, Lazio, Torino
+    assert mapper.map_team("7397", "Como 1907") is not None
+    assert mapper.map_team("112", "Parma Calcio 1913") is not None
+    assert mapper.map_team("5911", "AC Monza") is not None
+    assert mapper.map_team("110", "SS Lazio") is not None
+    assert mapper.map_team("586", "Torino FC") is not None
+
+    # SP1: Betis, Sevilla, Sociedad, Bilbao, Osasuna, Alaves
+    assert mapper.map_team("90", "Real Betis Balompié") is not None
+    assert mapper.map_team("559", "Sevilla FC") is not None
+    assert mapper.map_team("92", "Real Sociedad de Fútbol") is not None
+    assert mapper.map_team("77", "Athletic Club") is not None
+    assert mapper.map_team("79", "CA Osasuna") is not None
+    assert mapper.map_team("263", "Deportivo Alavés") is not None
+
+
+# 38. Cold-start routing for newly registered clubs with zero historical matches
+def test_cold_start_routing_routes_to_m1_fallback(fake_clock: FakeClock):
+    from app.db.session import SessionLocal
+    from app.db.models.core import Team
+    from app.prediction.service import Phase5_2_PolicyEngine
+
+    session = SessionLocal()
+    # Como was newly inserted and has 0 historical matches
+    como = session.query(Team).filter_by(canonical_name="Como").first()
+    assert como is not None
+
+    adapter = LiveIngestionAdapter(clock=fake_clock, session_factory=SessionLocal)
+    dto = LiveFixtureDTO(
+        provider_fixture_id="999001",
+        provider_name="football_data_org",
+        provider_competition_id="2019",
+        competition_code="I1",
+        season_year="2026",
+        provider_home_team_id="7397",
+        provider_home_team_name="Como 1907",
+        provider_away_team_id="98",
+        provider_away_team_name="AC Milan",
+        canonical_home_team_id=como.id,
+        canonical_away_team_id=UUID("e3d92f3a-d75b-4e69-8960-a20f363cd5b6"),
+        kickoff_utc=fake_clock.now() + timedelta(days=2),
+        status=LiveFixtureStatus.SCHEDULED,
+        retrieved_at_utc=fake_clock.now(),
+        payload_fingerprint="fp_cold_como_test",
+        raw_payload={"id": 999001},
+    )
+    rec = adapter.adapt_live_fixture_to_orchestrator_record(dto)
+    assert rec["known_cold_start"] is True
+
+    # Policy evaluation routes directly to M1 fallback
+    policy_res = Phase5_2_PolicyEngine.evaluate(
+        is_eligible=True,
+        eligibility_reason=None,
+        critical_feature_absent=False,
+        known_cold_start=rec["known_cold_start"],
+        missingness_count=0,
+        drift_psi=0.01,
+        disagreement_value=0.02,
+        disagreement_band="LOW",
+    )
+    assert policy_res.fallback_applied is True
+    assert policy_res.fallback_model == "M1_Attack_Defense_Poisson"
+    assert policy_res.fallback_reason == "known_cold_start"
+    session.close()
+
+
+# 39. Prediction identity preserves Sprint 6.3 provenance and ensures zero duplicates
+def test_prediction_identity_preserves_sprint_6_3_provenance(fake_clock: FakeClock):
+    pred_service = ShadowPredictionService()
+    inp = ShadowPredictionInput(
+        fixture_id=UUID("55555555-5555-5555-5555-555555555555"),
+        competition_code="E0",
+        season_year="2026",
+        home_team_id=UUID("11111111-1111-1111-1111-111111111111"),
+        away_team_id=UUID("22222222-2222-2222-2222-222222222222"),
+        kickoff_utc=fake_clock.now() + timedelta(days=1),
+        feature_snapshot_id=UUID("33333333-3333-3333-3333-333333333333"),
+        feature_snapshot_fingerprint="feat_fp_cert_test_123",
+        history_fingerprint="hist_fp_cert_test_456",
+        feature_count=251,
+        feature_values=[0.45, -0.2] + [0.0] * 249,
+        feature_keys=[f"feat_{i}" for i in range(251)],
+        prediction_time=fake_clock.now(),
+        snapshot_quality_state="VALID",
+        critical_feature_absent=False,
+        known_cold_start=False,
+        missingness_count=0,
+        drift_psi=0.01,
+    )
+
+    p1 = pred_service.predict(inp)
+    assert isinstance(p1, ShadowPredictionResult)
+    assert p1.phase5_manifest_hash == "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524"
+    assert p1.phase5_2_policy_hash == "f974e06a3e2ad4730ed9e6d55ede58f10dd31f5400cd9e39c0c6b06df362887b"
+    assert p1.c1_model_key == "C1_Multinomial_Logistic_1X2"
+    assert p1.m1_model_key == "M1_Attack_Defense_Poisson"
+
+    # Repeated prediction for identical fixture, snapshot, and kickoff reuses p1 (zero duplicates)
+    p2 = pred_service.predict(inp)
+    assert p2 is p1
+    assert p2.prediction_id == p1.prediction_id
+

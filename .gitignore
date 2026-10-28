@@ -47,7 +47,11 @@ htmlcov/
 
 # Database & Storage
 *.sqlite
+*.sqlite-wal
+*.sqlite-shm
 *.db
+*.db-wal
+*.db-shm
 local_postgres_data/
 
 # Data Files (Keep structure, ignore raw bulk data)

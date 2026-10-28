@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from app.automation.domain import ExecutionMode, OperationalRunStatus
 from app.automation.health import HealthWatchdog
 from app.automation.orchestrator import OperationalOrchestrator
+from app.db.session import SessionLocal
 
 
 def ops_run_once(argv: Sequence[str] | None = None) -> int:
@@ -26,6 +27,7 @@ def ops_run_once(argv: Sequence[str] | None = None) -> int:
     orchestrator = OperationalOrchestrator(
         execution_mode=ExecutionMode(args.mode),
         scheduler_instance_id="cli-worker-run-once",
+        session_factory=SessionLocal,
     )
     summary = orchestrator.run_once(trigger_type=args.trigger, dry_run=False)
 

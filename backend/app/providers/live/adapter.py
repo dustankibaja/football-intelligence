@@ -19,8 +19,9 @@ class LiveIngestionAdapter:
     Phase 6.1/6.2/6.3 operational inputs while enforcing strict temporal safety.
     """
 
-    def __init__(self, clock: Clock | None = None) -> None:
+    def __init__(self, clock: Clock | None = None, session_factory: Any = None) -> None:
         self.clock = clock or SystemClock()
+        self.session_factory = session_factory
 
     def adapt_live_fixture_to_orchestrator_record(
         self,
@@ -69,6 +70,25 @@ class LiveIngestionAdapter:
                 "needs_snapshot": False,
             }
 
+        # Check if either team is a known cold start (zero historical matches)
+        is_cold_start = False
+        if self.session_factory is not None:
+            try:
+                with self.session_factory() as session:
+                    from app.db.models.core import Match
+                    h_has_matches = session.query(Match.id).filter(
+                        (Match.home_team_id == dto.canonical_home_team_id) |
+                        (Match.away_team_id == dto.canonical_home_team_id)
+                    ).first() is not None
+                    a_has_matches = session.query(Match.id).filter(
+                        (Match.home_team_id == dto.canonical_away_team_id) |
+                        (Match.away_team_id == dto.canonical_away_team_id)
+                    ).first() is not None
+                    if not h_has_matches or not a_has_matches:
+                        is_cold_start = True
+            except Exception:
+                pass
+
         return {
             "fixture_id": fix_id,
             "provider_fixture_id": dto.provider_fixture_id,
@@ -82,6 +102,7 @@ class LiveIngestionAdapter:
             "payload_fingerprint": dto.payload_fingerprint,
             "is_mapped": True,
             "needs_snapshot": True,
+            "known_cold_start": is_cold_start,
             # Phase 6.2 251-feature snapshot placeholders (mockable for unit tests or real point-in-time calculation)
             "feature_snapshot_id": snap_id,
             "feature_snapshot_fingerprint": f"feat_fp_live_{dto.provider_fixture_id}_{dto.payload_fingerprint[:8]}",
