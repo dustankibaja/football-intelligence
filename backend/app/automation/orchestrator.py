@@ -7,7 +7,10 @@ Guarantees monotonic fencing, split-brain protection, at-least-once safety, and 
 from __future__ import annotations
 
 from collections.abc import Callable
+import dataclasses
 from datetime import UTC, datetime
+import json
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -41,7 +44,7 @@ from app.prediction.service import (
     FROZEN_M1_KEY,
     ShadowPredictionService,
 )
-from app.providers.live.adapter import LiveIngestionAdapter
+from app.core.config import settings
 from app.providers.live.base import LiveFootballDataProvider
 
 FROZEN_PHASE5_MASTER_HASH = "68b151b2c9683d4a431605bfda45902d78a2335f533ab49256ef47713ce22524"
@@ -51,6 +54,7 @@ FROZEN_PHASE6_2_CANONICAL_HASH = "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc3
 FROZEN_SPRINT6_3_SHADOW_HASH = "e59dbe19c9a0568271e25fb9b1250a267a4a78c80ef202641c89bb6ce99b98ee"
 
 CANONICAL_TIMING_RULE = "LATEST_VALID_SHADOW_PREDICTION_BEFORE_KICKOFF"
+_DEFAULT_KEY = object()
 
 
 class OperationalOrchestrator:
@@ -72,7 +76,7 @@ class OperationalOrchestrator:
         scheduler_instance_id: str = "orchestrator-instance-1",
         git_commit: str = "HEAD",
         pipeline_version: str = "1.0.0",
-        live_api_key: str | None = None,
+        live_api_key: Any = _DEFAULT_KEY,
         live_api_base_url: str | None = None,
         live_provider: LiveFootballDataProvider | None = None,
         session_factory: Any = None,
@@ -88,10 +92,23 @@ class OperationalOrchestrator:
         self.scheduler_instance_id = scheduler_instance_id
         self.git_commit = git_commit
         self.pipeline_version = pipeline_version
-        self.live_provider = live_provider
-        self.live_api_key = live_api_key or (getattr(live_provider, "api_key", None))
+        if live_api_key is _DEFAULT_KEY:
+            self.live_api_key = getattr(live_provider, "api_key", None) or getattr(settings, "LIVE_DATA_API_KEY", None)
+        else:
+            self.live_api_key = live_api_key or (getattr(live_provider, "api_key", None))
         self.live_api_base_url = live_api_base_url
+        if live_provider is not None:
+            self.live_provider = live_provider
+        elif self.execution_mode == ExecutionMode.LIVE_SHADOW:
+            from app.providers.live.client import LiveFootballDataClient
+            self.live_provider = LiveFootballDataClient(api_key=self.live_api_key, clock=self.clock)
+        else:
+            self.live_provider = None
         self.session_factory = session_factory
+
+        # Restore previously persisted shadow predictions in LIVE_SHADOW mode
+        if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+            self._load_live_shadow_predictions()
 
         # Deduplicated alert history: set of (metric, severity, threshold, cohort, window)
         self._recorded_alert_signatures: set[tuple[str, str, float, str, int]] = set()
@@ -174,6 +191,7 @@ class OperationalOrchestrator:
             raw_fixtures = fixtures_due
             if raw_fixtures is None and self.execution_mode == ExecutionMode.LIVE_SHADOW and self.live_provider is not None:
                 summary.provider_status = "CONNECTED"
+                from app.providers.live.adapter import LiveIngestionAdapter
                 adapter = LiveIngestionAdapter(clock=self.clock)
                 live_dtos = self._handle_provider_call_with_retry(
                     lambda: self.live_provider.get_upcoming_fixtures(), summary
@@ -309,6 +327,9 @@ class OperationalOrchestrator:
                 else:
                     # Blocked by Phase 5.2 quality gate
                     summary.predictions_blocked += 1
+
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and not dry_run:
+                self._save_live_shadow_predictions()
 
             # Stage 10: Synchronize Result State (Phase 6.1)
             raw_results = results_due or []
@@ -521,3 +542,45 @@ class OperationalOrchestrator:
             "details": details or {},
             "occurred_at": self.clock.now(),
         })
+
+    def _get_live_store_path(self) -> Path:
+        return Path("data/processed/live_shadow_predictions.json")
+
+    def _load_live_shadow_predictions(self) -> None:
+        store_path = self._get_live_store_path()
+        if not store_path.exists():
+            return
+        try:
+            with open(store_path, "r", encoding="utf-8") as f:
+                records = json.load(f)
+            for d in records:
+                d_copy = dict(d)
+                d_copy["prediction_id"] = UUID(d_copy["prediction_id"])
+                d_copy["fixture_id"] = UUID(d_copy["fixture_id"])
+                d_copy["prediction_run_id"] = UUID(d_copy["prediction_run_id"]) if d_copy.get("prediction_run_id") else None
+                d_copy["feature_snapshot_id"] = UUID(d_copy["feature_snapshot_id"]) if d_copy.get("feature_snapshot_id") else None
+                d_copy["generated_at"] = datetime.fromisoformat(d_copy["generated_at"]).astimezone(UTC)
+                d_copy["kickoff_utc"] = datetime.fromisoformat(d_copy["kickoff_utc"]).astimezone(UTC)
+                pred = ShadowPredictionResult(**d_copy)
+                self.prediction_service._persisted_predictions[pred.prediction_id] = pred
+        except Exception:
+            pass
+
+    def _save_live_shadow_predictions(self) -> None:
+        store_path = self._get_live_store_path()
+        try:
+            store_path.parent.mkdir(parents=True, exist_ok=True)
+            serialized = []
+            for p in self.prediction_service._persisted_predictions.values():
+                d = dataclasses.asdict(p)
+                d["prediction_id"] = str(p.prediction_id)
+                d["fixture_id"] = str(p.fixture_id)
+                d["prediction_run_id"] = str(p.prediction_run_id) if p.prediction_run_id else None
+                d["feature_snapshot_id"] = str(p.feature_snapshot_id) if p.feature_snapshot_id else None
+                d["generated_at"] = p.generated_at.isoformat()
+                d["kickoff_utc"] = p.kickoff_utc.isoformat()
+                serialized.append(d)
+            with open(store_path, "w", encoding="utf-8") as f:
+                json.dump(serialized, f, indent=2)
+        except Exception:
+            pass

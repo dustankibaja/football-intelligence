@@ -6,7 +6,7 @@ Phase 5.2 Quality Policy, and Phase 6.3 Shadow Prediction Service.
 from __future__ import annotations
 
 from typing import Any
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from app.automation.clock import Clock, SystemClock
 from app.providers.live.base import LiveFixtureDTO, LiveFixtureStatus, LiveResultDTO
@@ -33,10 +33,14 @@ class LiveIngestionAdapter:
         # 1. Assert no odds contamination
         OddsExclusionPolicy.assert_no_odds(dto.raw_payload)
 
+        # Deterministic canonical fixture and snapshot identity
+        fix_id = uuid5(NAMESPACE_URL, f"{dto.provider_name}:{dto.provider_fixture_id}")
+        snap_id = uuid5(NAMESPACE_URL, f"{dto.provider_name}:{dto.provider_fixture_id}:snapshot:{dto.payload_fingerprint}")
+
         # 2. Check canonical team mapping
         if dto.canonical_home_team_id is None or dto.canonical_away_team_id is None:
             return {
-                "fixture_id": uuid4(),
+                "fixture_id": fix_id,
                 "provider_fixture_id": dto.provider_fixture_id,
                 "provider_name": dto.provider_name,
                 "competition_code": dto.competition_code,
@@ -52,7 +56,7 @@ class LiveIngestionAdapter:
         if now >= dto.kickoff_utc:
             # Kickoff has passed - record as MISSED_WINDOW
             return {
-                "fixture_id": uuid4(),
+                "fixture_id": fix_id,
                 "provider_fixture_id": dto.provider_fixture_id,
                 "provider_name": dto.provider_name,
                 "competition_code": dto.competition_code,
@@ -66,7 +70,7 @@ class LiveIngestionAdapter:
             }
 
         return {
-            "fixture_id": uuid4(),
+            "fixture_id": fix_id,
             "provider_fixture_id": dto.provider_fixture_id,
             "provider_name": dto.provider_name,
             "competition_code": dto.competition_code,
@@ -79,7 +83,7 @@ class LiveIngestionAdapter:
             "is_mapped": True,
             "needs_snapshot": True,
             # Phase 6.2 251-feature snapshot placeholders (mockable for unit tests or real point-in-time calculation)
-            "feature_snapshot_id": uuid4(),
+            "feature_snapshot_id": snap_id,
             "feature_snapshot_fingerprint": f"feat_fp_live_{dto.provider_fixture_id}_{dto.payload_fingerprint[:8]}",
             "history_fingerprint": f"hist_fp_{dto.provider_fixture_id}",
             "feature_values": [0.45, -0.2] + [0.0] * 249,

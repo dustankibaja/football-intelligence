@@ -564,3 +564,51 @@ def test_phase7_2_manifest_is_deterministic():
     canon = json.dumps(data, sort_keys=True).encode("utf-8")
     h = hashlib.sha256(canon).hexdigest()
     assert h == "45ccab6dd8b90e2d86470f237f921ed3c1a250cdbff0f3898679c1ee257d3261"
+
+
+# 31. Live shadow orchestrator default provider wiring
+def test_live_shadow_orchestrator_default_provider_wiring():
+    orch = OperationalOrchestrator(
+        execution_mode=ExecutionMode.LIVE_SHADOW,
+        live_api_key="explicit_test_key",
+    )
+    assert orch.live_provider is not None
+    assert orch.live_api_key == "explicit_test_key"
+
+
+# 32. Live ingestion adapter fixture ID is deterministic
+def test_live_ingestion_adapter_fixture_id_is_deterministic(fake_clock: FakeClock):
+    adapter = LiveIngestionAdapter(clock=fake_clock)
+    dto = LiveFixtureDTO(
+        provider_fixture_id="560626",
+        provider_name="football_data_org",
+        provider_competition_id="2021",
+        competition_code="E0",
+        season_year="2026",
+        provider_home_team_id="61",
+        provider_home_team_name="Chelsea FC",
+        provider_away_team_id="66",
+        provider_away_team_name="Manchester United FC",
+        canonical_home_team_id=uuid4(),
+        canonical_away_team_id=uuid4(),
+        kickoff_utc=fake_clock.now() + timedelta(days=2),
+        status=LiveFixtureStatus.SCHEDULED,
+        retrieved_at_utc=fake_clock.now(),
+        payload_fingerprint="test_fp_123",
+        raw_payload={"id": 560626},
+    )
+    r1 = adapter.adapt_live_fixture_to_orchestrator_record(dto)
+    r2 = adapter.adapt_live_fixture_to_orchestrator_record(dto)
+    assert r1["fixture_id"] == r2["fixture_id"]
+    assert r1["feature_snapshot_id"] == r2["feature_snapshot_id"]
+
+
+# 33. Pre-registered mappings resolve certified clubs deterministically
+def test_live_provider_pre_registered_mappings_resolve_certified_clubs():
+    mapper = ProviderTeamMapper()
+    chelsea_id = mapper.map_team("61", "Chelsea FC")
+    manutd_id = mapper.map_team("66", "Manchester United FC")
+    assert chelsea_id is not None
+    assert manutd_id is not None
+    assert chelsea_id != manutd_id
+
