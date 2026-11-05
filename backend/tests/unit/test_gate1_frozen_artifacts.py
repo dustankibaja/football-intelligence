@@ -9,6 +9,7 @@ from app.prediction.domain import ShadowPredictionInput
 from app.prediction.frozen_inference import (
     EXPECTED_C1_FINGERPRINT,
     EXPECTED_M1_FINGERPRINT,
+    FROZEN_COMPETITION_CODES,
     FrozenArtifactInference,
 )
 from app.prediction.service import ShadowPredictionService
@@ -23,7 +24,7 @@ def _sample_input(engine: FrozenArtifactInference):
     now = datetime(2026, 11, 5, 12, 0, tzinfo=UTC)
     return ShadowPredictionInput(
         fixture_id=uuid4(),
-        competition_code="E0",
+        competition_code=FROZEN_COMPETITION_CODES[comp_id_str],
         competition_id=UUID(comp_id_str),
         season_id=uuid4(),
         season_year="2026/27",
@@ -113,6 +114,7 @@ def test_frozen_model_forward_pass_covers_all_four_competitions():
     pairs = []
     for comp_id, comp in engine.m1.artifact.weights_payload["competitions"].items():
         inp.competition_id = UUID(comp_id)
+        inp.competition_code = FROZEN_COMPETITION_CODES[comp_id]
         inp.home_team_id = UUID(comp["team_list"][0])
         inp.away_team_id = UUID(comp["team_list"][1])
         out = engine.predict(inp, inp.competition_id, inp.season_id)
