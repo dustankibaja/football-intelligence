@@ -114,7 +114,7 @@ async function refresh(manual = false) {
   const button = $('refresh');
   button.disabled = true; button.textContent = '↻ Checking provider…';
   try {
-    const response = await fetch('/api/state', { cache: 'no-store' });
+    const response = await fetch(manual ? '/api/state?force=1' : '/api/state', { cache: 'no-store' });
     const json = await response.json();
     if (!response.ok && !json.lastRefreshAt) {
       throw new Error(json.refreshError || json.reason || json.error || 'Live data unavailable');
@@ -141,7 +141,7 @@ document.querySelectorAll('[data-league]').forEach(button => {
     renderFixtures();
   });
 });
-$('refresh').addEventListener('click', refresh);
+$('refresh').addEventListener('click', () => refresh(true));
 refresh();
 setInterval(() => {
   if (document.visibilityState === 'visible') refresh();
