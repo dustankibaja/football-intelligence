@@ -145,6 +145,19 @@ function renderResults() {
   }
 }
 
+function renderWorkerStatus(status) {
+  const stateLabel = {
+    RECENT: "Recent scheduler activity",
+    STALE: "Scheduler activity stale",
+    NO_RUNS: "No completed scheduler cycles"
+  };
+  $("worker-state").textContent = stateLabel[status.worker_activity] || "Worker status unavailable";
+  const detail = status.last_run_at ? `Last cycle: ${formatDate(status.last_run_at)} · ${status.last_run_status || "UNKNOWN"}`
+    : "No completed live cycle has been recorded.";
+  $("worker-last-run").textContent = status.last_failure_code
+    ? `${detail} · ${status.last_failure_code}` : detail;
+}
+
 function renderPerformance() {
   const grid = $("performance-grid");
   grid.replaceChildren();
@@ -187,10 +200,11 @@ async function refreshData() {
   $("refresh").disabled = true;
   $("connection-error").hidden = true;
   try {
-    const [predictions, evaluations, performance] = await Promise.all([
+    const [predictions, evaluations, performance, operations] = await Promise.all([
       request("predictions/?limit=100"),
       request("evaluations/?limit=100"),
-      request("evaluations/summary")
+      request("evaluations/summary"),
+      request("status")
     ]);
     if (!Array.isArray(predictions.items) || !Array.isArray(evaluations.items)) {
       throw new Error("The API returned an unexpected response.");
@@ -199,6 +213,7 @@ async function refreshData() {
     state.evaluations = evaluations.items;
     state.performance = performance;
     renderPerformance();
+    renderWorkerStatus(operations);
     renderLeagues();
     renderFixtures();
     renderResults();
