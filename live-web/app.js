@@ -1,5 +1,18 @@
 const $ = id => document.getElementById(id);
-let data = null, activeLeague = 'ALL';
+let data = null, activeLeague = 'ALL', activeWindow = 14;
+let historyDays = 7, historyVerdict = 'ALL', historyLeague = 'ALL';
+let historyVisible = 24;
+const DAY_MS = 24 * 60 * 60 * 1000;
+function withinWindow(iso, days, direction = 'future') {
+  const when = new Date(iso).getTime();
+  const now = Date.now();
+  if (!Number.isFinite(when)) return false;
+  if (days === 'ALL') return direction === 'past' ? when <= now : when > now;
+  const duration = Number(days) * DAY_MS;
+  return direction === 'past'
+    ? when <= now && when >= now - duration
+    : when > now && when <= now + duration;
+}
 const pct = p => Number.isFinite(Number(p)) ? `${(Number(p) * 100).toFixed(1)}%` : '—';
 const metric = x => x === null || x === undefined ? '—' : Number(x).toFixed(3);
 const time = iso => iso ? new Intl.DateTimeFormat(undefined, {
@@ -69,8 +82,9 @@ function fixtureCard(p) {
 }
 function renderFixtures() {
   if (!data) return;
-  const filtered = data.upcoming.filter(p =>
-    activeLeague === 'ALL' || p.competitionCode === activeLeague);
+  const filtered = (data.upcoming || []).filter(p =>
+    (activeLeague === 'ALL' || p.competitionCode === activeLeague) &&
+    withinWindow(p.kickoffUtc, activeWindow));
   $('fixture-count').textContent = `${filtered.length} verified-source forecasts`;
   $('fixtures').replaceChildren(...(filtered.length
     ? filtered.map(fixtureCard)
@@ -95,6 +109,93 @@ function renderResults() {
     ? data.results.map(resultCard)
     : [empty('No completed predicted fixtures have been verified yet. As real matches finish, final scores and scientific scoring will appear here automatically.')]));
 }
+const OUTCOME_NAMES = { H: 'Home win', D: 'Draw', A: 'Away win' };
+const VERDICTS = {
+  CORRECT: ['Correct pick', 'correct'],
+  INCORRECT: ['Incorrect pick', 'incorrect'],
+  NO_FORECAST: ['Not predicted', 'unpredicted'],
+  PENDING_EVALUATION: ['Awaiting evaluation', 'pending']
+};
+function historyCard(match) {
+  const card = node('article', 'history-card');
+  const top = node('div', 'history-card-top');
+  top.append(node('span', 'fixture-league', match.competition),
+    node('span', '', time(match.kickoffUtc)));
+  const main = node('div', 'history-card-main');
+  const teams = node('div', 'history-match');
+  teams.append(node('span', 'history-team', match.homeTeam),
+    node('strong', 'history-score', `${match.home} – ${match.away}`),
+    node('span', 'history-team', match.awayTeam));
+  const winner = node('div', 'history-winner',
+    match.outcome === 'D' ? 'Full time · Draw' : `Full time · ${match.winner} won`);
+  const verdictInfo = VERDICTS[match.forecastStatus] || VERDICTS.NO_FORECAST;
+  const verdict = node('span', `verdict ${verdictInfo[1]}`, verdictInfo[0]);
+  main.append(teams, winner, verdict);
+  const detail = node('div', 'history-detail');
+  if (match.forecastStatus === 'NO_FORECAST') {
+    detail.textContent = 'No pre-kickoff Footmo forecast exists for this match.';
+  } else {
+    const pick = match.predictedOutcome === 'D' ? 'Draw'
+      : match.predictedOutcome === 'H' ? match.homeTeam : match.awayTeam;
+    detail.textContent = `Footmo pick: ${pick} (${pct(match.predictedConfidence)}) · ` +
+      `Actual: ${match.outcome === 'D' ? 'Draw' : match.winner}` +
+      (match.logLoss1x2 == null ? '' : ` · 1X2 log loss: ${metric(match.logLoss1x2)}`);
+  }
+  if (match.resultVersion > 1) {
+    detail.append(node('span', 'history-correction',
+      ` · Provider score revision v${match.resultVersion}`));
+  }
+  card.append(top, main, detail);
+  return card;
+}
+function renderHistory() {
+  if (!data) return;
+  const period = (data.history || []).filter(m =>
+    withinWindow(m.kickoffUtc, historyDays, 'past') &&
+    (historyLeague === 'ALL' || m.competitionCode === historyLeague));
+  const correct = period.filter(m => m.forecastStatus === 'CORRECT').length;
+  const incorrect = period.filter(m => m.forecastStatus === 'INCORRECT').length;
+  const pending = period.filter(m => m.forecastStatus === 'PENDING_EVALUATION').length;
+  const notPredicted = period.filter(m => m.forecastStatus === 'NO_FORECAST').length;
+  const evaluated = correct + incorrect;
+  const accuracy = evaluated ? pct(correct / evaluated) : '—';
+  const stats = [
+    ['Finished matches', period.length],
+    ['Evaluated picks', evaluated],
+    ['Correct picks', correct],
+    ['Incorrect picks', incorrect],
+    ['Pick accuracy', accuracy],
+    ['Not predicted', notPredicted]
+  ];
+  $('history-stats').replaceChildren(...stats.map(([label, value]) => {
+    const box = node('div', 'history-stat');
+    box.append(node('span', '', label), node('strong', '', String(value)));
+    return box;
+  }));
+  const filtered = period.filter(m =>
+    historyVerdict === 'ALL' || m.forecastStatus === historyVerdict);
+  $('history-count').textContent = `${filtered.length} results` +
+    (pending ? ` · ${pending} pending evaluation` : '');
+  $('history-list').replaceChildren(...(filtered.length
+    ? filtered.slice(0, historyVisible).map(historyCard)
+    : [empty('No verified full-time matches match these filters. Try a longer period, another league, or All results.')]));
+  const more = $('history-more');
+  more.hidden = filtered.length <= historyVisible;
+  if (!more.hidden) more.textContent =
+    `Load more results (${filtered.length - historyVisible} remaining)`;
+}
+function bindFilter(groupId, attribute, onSelect) {
+  document.querySelectorAll(`#${groupId} [${attribute}]`).forEach(button => {
+    button.addEventListener('click', () => {
+      onSelect(button.getAttribute(attribute));
+      document.querySelectorAll(`#${groupId} [${attribute}]`).forEach(other => {
+        const selected = other === button;
+        other.classList.toggle('active', selected);
+        other.setAttribute('aria-pressed', String(selected));
+      });
+    });
+  });
+}
 function render() {
   $('last-update').textContent = data.lastRefreshAt
     ? `Provider last checked: ${time(data.lastRefreshAt)}`
@@ -105,6 +206,7 @@ function render() {
   renderMetrics(data.performance);
   renderFixtures();
   renderResults();
+  renderHistory();
   const errors = data.providerErrors || [];
   $('provider-errors').hidden = !errors.length && !data.refreshError;
   $('provider-errors').textContent = [data.refreshError,
@@ -140,6 +242,29 @@ document.querySelectorAll('[data-league]').forEach(button => {
       x.classList.toggle('active', x === button));
     renderFixtures();
   });
+});
+bindFilter('forecast-window', 'data-window', value => {
+  activeWindow = Number(value);
+  renderFixtures();
+});
+bindFilter('history-window', 'data-history-days', value => {
+  historyDays = value === 'ALL' ? 'ALL' : Number(value);
+  historyVisible = 24;
+  renderHistory();
+});
+bindFilter('history-verdict', 'data-verdict', value => {
+  historyVerdict = value;
+  historyVisible = 24;
+  renderHistory();
+});
+bindFilter('history-league', 'data-history-league', value => {
+  historyLeague = value;
+  historyVisible = 24;
+  renderHistory();
+});
+$('history-more').addEventListener('click', () => {
+  historyVisible += 24;
+  renderHistory();
 });
 $('refresh').addEventListener('click', () => refresh(true));
 refresh();
