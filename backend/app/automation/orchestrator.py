@@ -465,7 +465,7 @@ class OperationalOrchestrator:
             if results_due is not None:
                 raw_results = results_due
             elif self.execution_mode == ExecutionMode.LIVE_SHADOW:
-                raw_results = self._fetch_live_due_results(summary)
+                raw_results = self._fetch_live_due_results(summary, persist_poll_audit=not dry_run)
             else:
                 raw_results = []
             summary.results_processed = len(raw_results)
@@ -635,64 +635,123 @@ class OperationalOrchestrator:
 
         return summary
 
-    def _fetch_live_due_results(self, summary: OperationalRunSummary) -> list[dict[str, Any]]:
-        """Poll only genuine, persisted pre-match predictions awaiting finality."""
+    def _fetch_live_due_results(
+        self, summary: OperationalRunSummary, persist_poll_audit: bool = True
+    ) -> list[dict[str, Any]]:
+        """Poll pending results and rotate recent final-score correction checks.
+
+        Every poll is source-backed. Unchanged scores do not create a second
+        evaluation; changed scores get a new immutable result version. SQL
+        audit timestamps prevent the same recent fixture from monopolizing
+        the limited provider quota on every unattended run.
+        """
         if self.session_factory is None or self.live_provider is None:
-            raise ConfigurationError("LIVE_RESULTS_DEPENDENCY_MISSING", "Live result polling requires SQL and provider.")
+            raise ConfigurationError(
+                "LIVE_RESULTS_DEPENDENCY_MISSING",
+                "Live result polling requires SQL and provider.",
+            )
+        from datetime import timedelta
+        from app.db.models.core import SystemAuditLog
         from app.db.models.shadow import ShadowEvaluation, ShadowPrediction
         from app.providers.live.adapter import LiveIngestionAdapter
 
-        due: dict[str, UUID] = {}
+        now = self.clock.now()
         with self.session_factory() as session:
-            # Filter already evaluated rows in SQL BEFORE limiting. Otherwise
-            # after ~100 completed fixtures, the oldest evaluations starve
-            # every newer match and results silently stop arriving.
+            poll_rows = session.query(SystemAuditLog).filter_by(
+                event_type="LIVE_RESULT_POLL"
+            ).order_by(SystemAuditLog.created_at.desc()).limit(4000).all()
+            last_checked = {}
+            for audit in poll_rows:
+                if audit.description not in last_checked:
+                    checked = audit.created_at
+                    last_checked[audit.description] = (
+                        checked.replace(tzinfo=UTC)
+                        if checked.tzinfo is None else checked.astimezone(UTC)
+                    )
+
             candidates = session.query(ShadowPrediction).filter(
-                ShadowPrediction.kickoff_utc < self.clock.now(),
+                ShadowPrediction.kickoff_utc < now,
                 ShadowPrediction.score_matrix.isnot(None),
-                ~ShadowPrediction.evaluations.any(
-                    ShadowEvaluation.result_version == 1
-                ),
-            ).order_by(ShadowPrediction.kickoff_utc.asc()).limit(100).all()
+            ).order_by(ShadowPrediction.kickoff_utc.desc()).limit(5000).all()
+            pending, correction = [], []
+            seen = set()
             for row in candidates:
+                if row.fixture_id in seen:
+                    continue
                 pred = self.prediction_service._persisted_predictions.get(row.id)
                 if pred is None:
                     continue
                 try:
-                    ShadowPredictionRepository.verify_certified_live_prediction(session, pred)
+                    ShadowPredictionRepository.verify_certified_live_prediction(
+                        session, pred
+                    )
                 except ValueError:
                     continue
                 meta = row.feature_snapshot.data_quality_metadata or {}
                 provider_id = meta.get("source_fixture_id")
-                if provider_id and meta.get("source_provider") == self.live_provider.provider_name:
-                    due[str(provider_id)] = row.fixture_id
-                # One fixture request per ID; keep within the provider's
-                # small free-tier minute quota alongside history and schedule.
-                if len(due) >= 5:
-                    break
+                if not provider_id or meta.get("source_provider") != self.live_provider.provider_name:
+                    continue
+                seen.add(row.fixture_id)
+                latest = session.query(ShadowEvaluation).filter_by(
+                    prediction_id=row.id
+                ).order_by(ShadowEvaluation.result_version.desc()).first()
+                candidate = (
+                    str(provider_id), row.fixture_id,
+                    0 if latest is None else latest.result_version,
+                    None if latest is None else (
+                        latest.actual_home_goals, latest.actual_away_goals
+                    ),
+                )
+                if latest is None:
+                    pending.append((row.kickoff_utc, candidate))
+                elif row.kickoff_utc >= now - timedelta(days=14):
+                    correction.append((
+                        last_checked.get(str(row.fixture_id), datetime.min.replace(tzinfo=UTC)),
+                        candidate,
+                    ))
 
-        if not due:
+        # Pending results are the priority; recent corrections get two
+        # rotating checks per run. Keep total match-ID requests <= 6.
+        pending.sort(key=lambda item: item[0])
+        correction.sort(key=lambda item: item[0])
+        selected = [c for _, c in pending[:4]] + [c for _, c in correction[:2]]
+        if not selected:
             return []
+        due = {provider_id: (fixture_id, version, scores)
+               for provider_id, fixture_id, version, scores in selected}
         dtos = self._handle_provider_call_with_retry(
             lambda: self.live_provider.get_fixture_results(list(due)), summary
         )
         adapter = LiveIngestionAdapter(clock=self.clock)
         results = []
+        checked_fixture_ids = []
         for dto in dtos:
             provider_id = str(dto.provider_fixture_id)
             if provider_id not in due:
                 continue
+            fixture_id, previous_version, previous_scores = due[provider_id]
+            checked_fixture_ids.append(str(fixture_id))
             normalized = adapter.adapt_live_result_to_scoring_record(dto)
             if not normalized.get("score_match") or normalized.get("status") != "FINISHED":
                 continue
+            observed_scores = (normalized["home_score"], normalized["away_score"])
+            if previous_scores == observed_scores:
+                continue
             results.append({
-                "fixture_id": due[provider_id],
+                "fixture_id": fixture_id,
                 "match_status": "FINISHED",
-                "home_goals": normalized["home_score"],
-                "away_goals": normalized["away_score"],
-                "result_version": normalized["result_version"],
+                "home_goals": observed_scores[0],
+                "away_goals": observed_scores[1],
+                "result_version": previous_version + 1,
                 "source_payload_fingerprint": normalized["payload_fingerprint"],
             })
+        if persist_poll_audit and checked_fixture_ids:
+            with self.session_factory() as session:
+                for fixture_id in checked_fixture_ids:
+                    session.add(SystemAuditLog(
+                        event_type="LIVE_RESULT_POLL", description=fixture_id,
+                    ))
+                session.commit()
         return results
 
     def _persist_operational_run_summary(self, summary: OperationalRunSummary) -> None:
