@@ -19,13 +19,13 @@ This document is an execution plan, not a certification report. Never mark a gat
 
 **Exit evidence:** genuine real-provider pre-kickoff fixtures, canonical identity, 251 persisted features each, loaded model artifact SHA-256, independent prediction parity and reproducible test/CI reports. The temporary safety stop in PR #5 must only be replaced by a real verifier and frozen forward pass.
 
-## Gate 2 — Unattended operations (#2) — NOT STARTED
+## Gate 2 — Unattended operations (#2) — IN PROGRESS (code only; no host certification)
 
 Real provider result polling, finalized-score/versioned evaluations persisted to PostgreSQL, no swallowed DB errors, idempotency and fencing, actual persistent scheduler host, backup/restore and restart drills, multiple elapsed days of observed runs, alerting, provider outages and rate limits, and strict CI quality gates. Do not count a Docker/CI runner as an always-on production host.
 
 **Exit evidence:** independently observed real unattended runs, genuine result/evaluation records linked to unchanged pre-kickoff predictions, restart/restore logs and no duplicate writes.
 
-## Gate 3 — Customer application (#3) — NOT STARTED
+## Gate 3 — Customer application (#3) — IN PROGRESS (private preview; no paid accounts)
 
 Build a responsive web-first Footmo MVP with secure read-only predictions API, upcoming fixtures, 1X2, BTTS, O/U 2.5, scoreline probabilities, uncertainty/quality states, evaluation history, user accounts, accessible UI and admin operations. No fabricated fixture or probability demo presented as real.
 
@@ -46,3 +46,7 @@ Verify data provider commercial redistribution permissions and plan limits; reso
 - Do not commit secrets or copy provider API keys into issues, PRs or logs.
 - Never merge a failing or provisional gate as production-ready.
 - Require real evidence at each boundary, then proceed to the next gate.
+
+## Current implementation evidence
+
+See `docs/production/GATE1_PROGRESS_2026-11-05.md`. Do not infer launch readiness from new source code, test count or a green GitHub badge.
