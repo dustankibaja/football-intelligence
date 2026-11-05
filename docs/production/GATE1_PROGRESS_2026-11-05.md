@@ -22,7 +22,7 @@ This report distinguishes **implemented source code** from **observed test evide
 
 ## Verified automated evidence
 
-GitHub Actions at commit `82798de5d460acf0ce715084bb7d4b7d05e1cad1`: **540 passed, 11 skipped, 7 warnings**. Later CI at `96fb561227c31f431195d6213595ec7db189124d`: **542 passed, 11 skipped, 7 warnings**. These were real CI runs, but not evidence of a live production soak. Newer commits require their own CI verification before sign-off.
+GitHub Actions at commit `82798de5d460acf0ce715084bb7d4b7d05e1cad1`: **540 passed, 11 skipped, 7 warnings**. Later CI at `96fb561227c31f431195d6213595ec7db189124d`: **542 passed, 11 skipped, 7 warnings**. These were real CI runs, but not evidence of a live production soak. A later green run at commit `8a54a9b533d3a2fd2b04c42bb68452af463fc949` passed **545 tests, 11 skipped, 7 warnings**, including strict live SQL persistence and frontend checks. Newer commits require their own CI verification before sign-off.
 
 The existing broad Ruff lint report is advisory; fatal new-code checks and frontend syntax/Compose checks are enforced separately. Do not treat an advisory lint job's green badge as zero lint debt.
 
