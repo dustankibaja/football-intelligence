@@ -27,6 +27,9 @@ def _verified(p: ShadowPrediction) -> bool:
         or p.m1_artifact_fingerprint != EXPECTED_M1_FINGERPRINT
         or p.generated_at >= p.kickoff_utc
         or p.feature_snapshot is None
+        or p.prediction_run is None
+        or p.prediction_run.status not in ("SUCCESS", "PARTIAL_SUCCESS")
+        or p.prediction_run.completed_at is None
     ):
         return False
     metadata = p.feature_snapshot.data_quality_metadata or {}
