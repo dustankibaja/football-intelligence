@@ -88,7 +88,15 @@ class OperationalOrchestrator:
         self.execution_mode = execution_mode
         self.session_factory = session_factory or (SessionLocal if self.execution_mode == ExecutionMode.LIVE_SHADOW else None)
         self.lease_manager = lease_manager or LeaseManager(clock=self.clock, session_factory=self.session_factory)
-        self.prediction_service = prediction_service or ShadowPredictionService()
+        if prediction_service is not None:
+            self.prediction_service = prediction_service
+        elif self.execution_mode == ExecutionMode.LIVE_SHADOW:
+            from app.prediction.frozen_inference import FrozenArtifactInference
+            self.prediction_service = ShadowPredictionService(
+                frozen_inference=FrozenArtifactInference()
+            )
+        else:
+            self.prediction_service = ShadowPredictionService()
         self.scoring_service = scoring_service or PostMatchScoringService()
         self.monitoring_service = monitoring_service or ShadowMonitoringService()
         self.retry_policy = retry_policy or RetryPolicy(clock=self.clock)
@@ -224,8 +232,38 @@ class OperationalOrchestrator:
                         "LIVE_ARTIFACT_INFERENCE_NOT_CONNECTED", str(exc)
                     ) from exc
 
-            # Stage 8: Determine & Materialize Due Feature Snapshots (Phase 6.2)
-            # In Phase 6.2, valid snapshots have exact certified 251-feature width
+            # Stage 8: Genuine Phase 6.2 PIT materialization. A provider
+            # fixture DTO is never accepted as a feature snapshot.
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                from app.features.live import (
+                    LiveFeatureMaterializationError,
+                    LiveFeatureMaterializer,
+                )
+                materializer = LiveFeatureMaterializer(self.session_factory)
+                verified_fixtures = []
+                for fixture in raw_fixtures:
+                    if not fixture.get("is_mapped", True) or fixture.get("missed_window"):
+                        verified_fixtures.append(fixture)
+                        continue
+                    try:
+                        verified_fixtures.append(
+                            materializer.materialize(fixture, cutoff=current_time)
+                        )
+                    except LiveFeatureMaterializationError as exc:
+                        summary.snapshots_failed += 1
+                        summary.predictions_blocked += 1
+                        self._record_failure(
+                            summary.run_id, "FEATURES", "PIT_MATERIALIZATION",
+                            ErrorCategory.DATA, Retryability.PERMANENT,
+                            str(exc), "Live feature materialization blocked: " + str(exc),
+                        )
+                        verified_fixtures.append({
+                            **fixture, "is_mapped": False,
+                            "unresolved_reason": str(exc),
+                        })
+                raw_fixtures = verified_fixtures
+
+            # Count only verified, materialized snapshots.
             for f in raw_fixtures:
                 if not f.get("is_mapped", True):
                     summary.predictions_blocked += 1
@@ -280,6 +318,35 @@ class OperationalOrchestrator:
                     )
                     continue
 
+                # Live mode must never use the replay-only synthetic defaults.
+                if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                    if f.get("drift_psi") is None:
+                        summary.predictions_blocked += 1
+                        self._record_failure(
+                            summary.run_id, "PREDICTION", "QUALITY_DRIFT",
+                            ErrorCategory.SCIENTIFIC_INTEGRITY, Retryability.PERMANENT,
+                            "LIVE_DRIFT_REFERENCE_NOT_VERIFIED",
+                            "Frozen Phase 5.2 drift input has not been measured.",
+                        )
+                        continue
+                    if (
+                        not f.get("feature_snapshot_id")
+                        or not f.get("feature_snapshot_fingerprint")
+                        or not f.get("history_fingerprint")
+                        or len(f.get("feature_values", [])) != 251
+                        or len(f.get("feature_keys", [])) != 251
+                        or not f.get("competition_id")
+                        or not f.get("season_id")
+                    ):
+                        summary.predictions_blocked += 1
+                        self._record_failure(
+                            summary.run_id, "PREDICTION", "SNAPSHOT_VERIFICATION",
+                            ErrorCategory.SCIENTIFIC_INTEGRITY, Retryability.PERMANENT,
+                            "LIVE_SNAPSHOT_PROVENANCE_INCOMPLETE",
+                            "Live prediction rejected: verified 251-feature snapshot required.",
+                        )
+                        continue
+
                 # Prepare Phase 6.3 ShadowPredictionInput
                 feat_vals = f.get("feature_values", [0.5, -0.3] + [0.0] * 249)
                 if len(feat_vals) < 251:
@@ -311,6 +378,8 @@ class OperationalOrchestrator:
                     known_cold_start=f.get("known_cold_start", False),
                     missingness_count=f.get("missingness_count", 0),
                     drift_psi=f.get("drift_psi", 0.05),
+                    competition_id=f.get("competition_id"),
+                    season_id=f.get("season_id"),
                 )
 
                 if simulate_db_failure_at_stage == "PREDICTION_PERSISTENCE":
