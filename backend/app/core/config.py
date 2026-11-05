@@ -28,6 +28,7 @@ class Settings(BaseSettings):
 
     # Explicitly opt-in customer API; never expose unverified predictions.
     CUSTOMER_API_TOKEN: str | None = None
+    CUSTOMER_ALLOWED_ORIGINS: str = ""
 
     # Operational Watchdog Staleness Thresholds (Hours)
     OPS_RUN_STALE_AFTER_HOURS: float = 24.0
