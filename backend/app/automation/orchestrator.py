@@ -302,6 +302,9 @@ class OperationalOrchestrator:
                     continue
                 if f.get("missed_window"):
                     continue
+                if dry_run and self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                    # The work is due, but no snapshot was actually written.
+                    continue
                 if f.get("needs_snapshot", True):
                     summary.snapshots_created += 1
                 else:
