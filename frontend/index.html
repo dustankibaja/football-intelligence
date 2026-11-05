@@ -67,6 +67,11 @@
         <div class="connection-error" id="connection-error" role="alert" hidden></div>
       </div>
 
+      <div class="worker-status" aria-live="polite">
+        <span class="worker-status-label">UNATTENDED WORKER</span>
+        <strong id="worker-state">No verified activity yet</strong>
+        <span id="worker-last-run">Connect to inspect the latest recorded scheduler cycle.</span>
+      </div>
       <div class="workspace-toolbar"><div class="workspace-label"><span class="workspace-line"></span><span id="fixture-count">0 verified predictions</span></div><label class="filter-label">League<select id="league-filter" disabled><option value="ALL">All leagues</option></select></label></div>
       <div id="fixtures-list" class="fixture-grid" aria-live="polite"><div class="empty-state"><span class="empty-icon">◎</span><h3>Waiting for verified data</h3><p>Connect to the API to view real upcoming match probabilities. No sample predictions are shown.</p></div></div>
     </section>
