@@ -1,5 +1,7 @@
 import { readState, runRefresh, viewState } from '../lib/state.js';
 
+export const config = { maxDuration: 60 };
+
 export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'private, no-store');
   response.setHeader('X-Content-Type-Options', 'nosniff');
