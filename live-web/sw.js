@@ -12,7 +12,8 @@ self.addEventListener('install', event => {
     await Promise.allSettled(SHELL_ASSETS.map(async path => {
       const response = await fetch(path, { cache: 'no-store', credentials: 'same-origin' });
       if (response.ok && !response.redirected &&
-          new URL(response.url).origin === self.location.origin) {
+          new URL(response.url).origin === self.location.origin &&
+          new URL(response.url).pathname === path) {
         await cache.put(path, response);
       }
     }));
@@ -47,7 +48,8 @@ self.addEventListener('fetch', event => {
     try {
       const response = await fetch(request);
       if (response.ok && !response.redirected &&
-          new URL(response.url).origin === self.location.origin) {
+          new URL(response.url).origin === self.location.origin &&
+          new URL(response.url).pathname === url.pathname) {
         const cache = await caches.open(SHELL_CACHE);
         await cache.put(url.pathname, response.clone());
       }
