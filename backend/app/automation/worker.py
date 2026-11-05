@@ -22,6 +22,7 @@ def run_scheduler(
     stop_event: threading.Event,
     run_cycle: Callable[[], int] | None = None,
     max_cycles: int | None = None,
+    wait: Callable[[float], bool] | None = None,
 ) -> int:
     if not 300 <= interval_seconds <= 86400:
         raise ValueError("WORKER_INTERVAL_OUT_OF_RANGE")
@@ -29,6 +30,7 @@ def run_scheduler(
         raise ValueError("WORKER_MAX_CYCLES_INVALID")
 
     cycle = run_cycle or (lambda: ops_run_once(["--mode", "LIVE_SHADOW", "--trigger", "UNATTENDED_WORKER"]))
+    wait_fn = wait or stop_event.wait
     runs = 0
     while not stop_event.is_set():
         try:
@@ -44,7 +46,7 @@ def run_scheduler(
         runs += 1
         if max_cycles is not None and runs >= max_cycles:
             break
-        if stop_event.wait(interval_seconds):
+        if wait_fn(interval_seconds):
             break
     return runs
 
