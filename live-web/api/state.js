@@ -9,10 +9,13 @@ export default async function handler(request, response) {
   try {
     let { data } = await readState();
     let refreshError = null;
-    if (!data.lastRefreshAt ||
-        Date.now() - new Date(data.lastRefreshAt).getTime() > 22 * 3600000) {
+    const ageMs = data.lastRefreshAt
+      ? Date.now() - new Date(data.lastRefreshAt).getTime() : Infinity;
+    const manual = new URL(request.url, 'https://footmo.local')
+      .searchParams.get('force') === '1';
+    if (ageMs > 4 * 3600000 || (manual && ageMs > 30 * 60000)) {
       try {
-        const refreshed = await runRefresh();
+        const refreshed = await runRefresh({ force: manual && ageMs > 30 * 60000 });
         if (!refreshed.skipped) return response.status(200).json({
           ...refreshed.view, refresh: { created: refreshed.created,
             evaluated: refreshed.evaluated }
