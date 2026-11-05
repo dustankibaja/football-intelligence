@@ -41,17 +41,31 @@ function bestPick(probabilities) {
   return { code: ['H', 'D', 'A'][best], confidence: probabilities[best] };
 }
 
+function canonicalKey(id, kickoff) {
+  const date = new Date(kickoff || '');
+  return id == null || !Number.isFinite(date.getTime())
+    ? null : `${id}:${date.toISOString()}`;
+}
+
 export function buildHistory(finishedMatches = [], predictions = [], evaluations = []) {
-  const forecastByKey = new Map(predictions.filter(p =>
-    p && new Date(p.generatedAt).getTime() < new Date(p.kickoffUtc).getTime())
-    .map(p => [p.forecastKey, p]));
+  const eligible = predictions.filter(p => p &&
+    new Date(p.generatedAt).getTime() < new Date(p.kickoffUtc).getTime());
+  // Provider timestamps may use Z while stored ISO timestamps use .000Z.
+  // Compare canonical instants, not their original string formatting.
+  const forecastByKey = new Map(eligible.map(p =>
+    [canonicalKey(p.fixtureId, p.kickoffUtc), p]));
+  const originalForecastByKey = new Map(eligible.map(p => [p.forecastKey, p]));
   const evaluatedByKey = new Map();
   for (const ev of evaluations) {
-    const prev = evaluatedByKey.get(ev.forecastKey);
-    if (!prev || ev.version > prev.version) evaluatedByKey.set(ev.forecastKey, ev);
+    const linked = originalForecastByKey.get(ev.forecastKey);
+    const key = canonicalKey(ev.fixtureId ?? linked?.fixtureId,
+      ev.kickoffUtc ?? linked?.kickoffUtc);
+    if (!key) continue;
+    const prev = evaluatedByKey.get(key);
+    if (!prev || ev.version > prev.version) evaluatedByKey.set(key, ev);
   }
   return finishedMatches.map(match => {
-    const key = `${match.fixtureId}:${match.kickoffUtc}`;
+    const key = canonicalKey(match.fixtureId, match.kickoffUtc);
     const forecast = forecastByKey.get(key);
     const pick = forecast ? bestPick(forecast.p1x2) : null;
     const evaluation = evaluatedByKey.get(key);
