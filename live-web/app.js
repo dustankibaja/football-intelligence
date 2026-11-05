@@ -27,6 +27,10 @@ function renderMetrics(performance) {
     box.append(node('span', '', label), node('strong', '', value));
     return box;
   }));
+  const b = data?.backtest;
+  $('backtest-summary').textContent = b?.sampleSize
+    ? `RETROSPECTIVE WALK-FORWARD BENCHMARK (not live certification): ${b.sampleSize} earlier fixtures · 1X2 log loss ${metric(b.meanLogLoss1x2)} · Brier ${metric(b.meanBrier1x2)}. Each test match was predicted using only earlier results.`
+    : 'Historical walk-forward benchmark not yet available.';
   $('sample-label').textContent = performance.sampleSize === 0
     ? 'No observed evaluations yet'
     : performance.sampleSize < 50
