@@ -2,34 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#071321">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Footmo">
   <meta name="description" content="Footmo private football intelligence trial: source-backed pre-match probabilities and observed post-match performance.">
   <title>Footmo · Football Intelligence</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icons/footmo.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/footmo-180.png">
   <link rel="stylesheet" href="/styles.css">
   <script defer src="/app.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#predictions">Skip to predictions</a>
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="/" aria-label="Footmo home">
         <span class="brand-mark">F<span>•</span></span>
         <span>FOOTMO<small>FOOTBALL INTELLIGENCE</small></span>
       </a>
-      <nav class="top-nav" aria-label="Main sections"><a href="#fixtures-title">Predictions</a><a href="#history-title">Match history</a><a href="#metrics-title">Performance</a></nav>
+      <nav class="top-nav" aria-label="Main sections"><a href="#predictions">Predictions</a><a href="#history">Match history</a><a href="#performance">Performance</a></nav>
       <div class="top-right">
         <span class="pill"><span class="dot"></span> PRIVATE SCIENTIFIC TRIAL</span>
-        <button id="refresh" class="refresh" type="button">↻ Refresh data</button>
+        <button id="refresh" class="refresh" type="button" aria-label="Refresh match data"><span class="refresh-symbol" aria-hidden="true">↻</span><span class="refresh-label">Refresh data</span></button>
       </div>
     </div>
   </header>
-  <main>
+  <div id="connection-banner" class="connection-banner" role="status" hidden>Offline — connect to the internet for current predictions and results.</div>
+  <main id="main">
     <section class="hero">
       <div class="hero-copy">
         <div class="eyebrow">LIVE DATA. MEASURED UNCERTAINTY.</div>
         <h1>Football, <em>without the guesswork.</em></h1>
         <p>Upcoming fixtures, pre-kickoff probabilities, final results, and measurable forecasting performance. Every published probability comes from observed football data.</p>
-        <div class="hero-meta"><span id="last-update">Connecting to live provider…</span><span id="status" class="status">Loading</span></div>
+        <div class="hero-meta"><span id="last-update">Connecting to live provider…</span><span id="status" class="status" aria-live="polite">Loading</span></div>
+        <div class="app-install-row"><button id="install-app" class="install-app" type="button" hidden>Install Footmo on this device</button><p id="ios-install-tip" class="install-tip" hidden>On iPhone: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong> to use Footmo like an app.</p></div>
       </div>
       <div class="hero-graphic" aria-hidden="true">
         <div class="orb orb-one"></div><div class="orb orb-two"></div>
@@ -38,7 +47,7 @@
       </div>
     </section>
 
-    <section class="section metrics-section" aria-labelledby="metrics-title">
+    <section class="section metrics-section" id="performance" aria-labelledby="metrics-title">
       <div class="section-header"><div><div class="eyebrow">POST-MATCH VERIFICATION</div><h2 id="metrics-title">Scientific performance</h2></div><div id="sample-label" class="sample">Awaiting observed results</div></div>
       <div class="metrics" id="metrics">
         <div class="metric"><span>Evaluated fixtures</span><strong>—</strong></div>
@@ -52,7 +61,7 @@
       <p id="backtest-summary" class="backtest-note">Calculating the independent retrospective walk-forward benchmark from actual current-season scores…</p>
     </section>
 
-    <section class="section" aria-labelledby="fixtures-title">
+    <section class="section" id="predictions" aria-labelledby="fixtures-title">
       <div class="section-header"><div><div class="eyebrow">FIXTURE EXPLORER</div><h2 id="fixtures-title">Upcoming predictions</h2></div><span id="fixture-count" class="sample">— fixtures</span></div>
       <div class="filter-label">Show matches kicking off within</div>
       <div class="filters range-filters" id="forecast-window" aria-label="Upcoming match time range">
@@ -72,7 +81,7 @@
       <div class="fixtures" id="fixtures"><div class="empty">Loading real upcoming fixtures…</div></div>
     </section>
 
-    <section class="section" aria-labelledby="results-title">
+    <section class="section" id="results" aria-labelledby="results-title">
       <div class="section-header"><div><div class="eyebrow">OBSERVED AFTER FULL TIME</div><h2 id="results-title">Results &amp; evaluation</h2></div><span id="result-count" class="sample">— evaluated</span></div>
       <div class="results" id="results"><div class="empty">Waiting for verified final scores…</div></div>
     </section>
@@ -114,5 +123,10 @@
     </section>
   </main>
   <footer><span>FOOTMO / SCIENTIFIC PRIVATE TRIAL</span><span>Source-backed forecasts · Immutable result versions · No invented data</span></footer>
+  <nav class="mobile-nav" aria-label="Mobile app navigation">
+    <a href="#predictions" class="mobile-nav-link active" data-mobile-nav="predictions" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9h10M7 13h7M7 17h4"/></svg><span>Predictions</span></a>
+    <a href="#history" class="mobile-nav-link" data-mobile-nav="history"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5M12 7v5l3 2"/></svg><span>History</span></a>
+    <a href="#performance" class="mobile-nav-link" data-mobile-nav="performance"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M10 20V4M16 20v-8M22 20V7"/></svg><span>Performance</span></a>
+  </nav>
 </body>
 </html>
