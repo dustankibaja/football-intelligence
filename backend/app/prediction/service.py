@@ -290,6 +290,7 @@ class ShadowPredictionService:
             under_2_5=round(m1_markets["under_2_5"], 5),
             exact_score_matrix_fingerprint=m1_markets["matrix_fingerprint"],
             top_scorelines=m1_markets["top_scorelines"],
+            score_matrix=frozen.score_matrix if self.frozen_inference is not None else None,
             quality_state=quality_state,
             quality_reasons=quality_reasons,
             fallback_used=fallback_used,
