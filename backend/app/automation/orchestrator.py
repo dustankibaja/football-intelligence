@@ -679,7 +679,10 @@ class OperationalOrchestrator:
             candidates = session.query(ShadowPrediction).filter(
                 ShadowPrediction.kickoff_utc < now,
                 ShadowPrediction.score_matrix.isnot(None),
-            ).order_by(ShadowPrediction.kickoff_utc.desc()).limit(5000).all()
+            ).order_by(
+                ShadowPrediction.kickoff_utc.desc(),
+                ShadowPrediction.generated_at.desc(),
+            ).limit(5000).all()
             pending, correction = [], []
             seen = set()
             for row in candidates:
