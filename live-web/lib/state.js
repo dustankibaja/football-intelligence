@@ -1,9 +1,9 @@
-import { get, put, BlobPreconditionFailedError } from '@vercel/blob';
+import { get, put, list } from '@vercel/blob';
 import { predictFixture, evaluateForecast, summarizeEvaluations,
   MODEL_ID } from './model.js';
 import { fetchRealFixtures } from './provider.js';
 
-const PATH = 'footmo/private-trial/state-v1.json';
+const PREFIX = 'footmo/private-trial/snapshots/';
 const HOURS = 60 * 60 * 1000;
 const emptyState = () => ({
   schema: 1, source: 'football-data.org/v4', model: MODEL_ID,
@@ -12,15 +12,21 @@ const emptyState = () => ({
 });
 
 export async function readState() {
-  const result = await get(PATH, { access: 'private' });
+  // Immutable, timestamped private snapshots avoid Blob ETag/CDN races.
+  // At one scheduled refresh per day, 1000 snapshots covers years of trials.
+  const objects = await list({ prefix: PREFIX, limit: 1000 });
+  const latest = (objects.blobs || []).sort((a, b) =>
+    new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())[0];
+  if (!latest) return { data: emptyState() };
+  const result = await get(latest.pathname, { access: 'private' });
   if (!result || result.statusCode !== 200 || !result.stream) {
-    return { data: emptyState(), etag: null };
+    throw new Error('LATEST_PRIVATE_SNAPSHOT_UNAVAILABLE');
   }
   const text = await new Response(result.stream).text();
   const data = JSON.parse(text);
   if (data.schema !== 1 || !Array.isArray(data.predictions) ||
       !Array.isArray(data.evaluations)) throw new Error('STATE_SCHEMA_INVALID');
-  return { data, etag: result.blob.etag };
+  return { data };
 }
 
 function applyProviderData(previous, feed, now) {
@@ -115,24 +121,16 @@ export async function runRefresh({ force = false } = {}) {
     const codes = feed.errors.map(e => e.code).join(',');
     throw new Error('NO_VERIFIED_PROVIDER_DATA:' + codes);
   }
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const current = attempt ? await readState() : before;
-    const { data, created, evaluated } = applyProviderData(current.data, feed, now);
-    try {
-      await put(PATH, JSON.stringify(data), {
-        access: 'private', contentType: 'application/json',
-        addRandomSuffix: false, allowOverwrite: !!current.etag,
-        cacheControlMaxAge: 60,
-        ...(current.etag ? { ifMatch: current.etag } : {})
-      });
-      return {
-        skipped: false, created, evaluated,
-        verifiedLeagues: feed.leagues.length,
-        providerErrors: feed.errors, view: viewState(data)
-      };
-    } catch (err) {
-      if (!(err instanceof BlobPreconditionFailedError) || attempt === 2) throw err;
-    }
-  }
-  throw new Error('STATE_WRITE_CONFLICT');
+  const current = await readState();
+  const { data, created, evaluated } = applyProviderData(current.data, feed, now);
+  const unique = `${now.toISOString().replace(/[:.]/g, '-')}-${Math.random().toString(36).slice(2, 10)}`;
+  await put(`${PREFIX}${unique}.json`, JSON.stringify(data), {
+    access: 'private', contentType: 'application/json',
+    addRandomSuffix: true, cacheControlMaxAge: 60
+  });
+  return {
+    skipped: false, created, evaluated,
+    verifiedLeagues: feed.leagues.length,
+    providerErrors: feed.errors, view: viewState(data)
+  };
 }
