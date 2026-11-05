@@ -137,6 +137,13 @@ class ShadowPredictionRepository:
             raise ValueError("LIVE_KICKOFF_IDENTITY_MISMATCH")
         if pred.generated_at >= pred.kickoff_utc:
             raise ValueError("POST_KICKOFF_PREDICTION_PROHIBITED")
+        import hashlib
+        import json
+        matrix_hash = hashlib.sha256(
+            json.dumps(pred.score_matrix, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        if matrix_hash != pred.exact_score_matrix_fingerprint:
+            raise ValueError("LIVE_FULL_SCORE_MATRIX_TAMPERED")
 
     @classmethod
     def persist_prediction(
