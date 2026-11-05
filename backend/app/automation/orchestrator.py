@@ -702,9 +702,14 @@ class OperationalOrchestrator:
                         latest.actual_home_goals, latest.actual_away_goals
                     ),
                 )
+                kickoff_utc = (
+                    row.kickoff_utc.replace(tzinfo=UTC)
+                    if row.kickoff_utc.tzinfo is None
+                    else row.kickoff_utc.astimezone(UTC)
+                )
                 if latest is None:
-                    pending.append((row.kickoff_utc, candidate))
-                elif row.kickoff_utc >= now - timedelta(days=14):
+                    pending.append((kickoff_utc, candidate))
+                elif kickoff_utc >= now - timedelta(days=14):
                     correction.append((
                         last_checked.get(str(row.fixture_id), datetime.min.replace(tzinfo=UTC)),
                         candidate,
