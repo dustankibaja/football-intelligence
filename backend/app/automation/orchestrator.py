@@ -875,7 +875,9 @@ class OperationalOrchestrator:
             raise ConfigurationError("LIVE_DATABASE_REQUIRED", "Live mode requires SQL persistence.")
         with self.session_factory() as session:
             for pred in self.prediction_service._persisted_predictions.values():
-                ShadowPredictionRepository.verify_certified_live_prediction(session, pred)
+                ShadowPredictionRepository.verify_certified_live_prediction(
+                    session, pred, allow_running=True
+                )
                 meta = (fixture_meta_map or {}).get(pred.fixture_id)
                 ShadowPredictionRepository.persist_prediction(
                     session, pred, fixture_meta=meta, strict_live=True
