@@ -5,7 +5,7 @@
 ## Preconditions
 
 - A persistent Linux host with Docker Compose, firewall and SSH hardening.
-- Confirmed provider permissions for storing/using football data commercially.
+- Confirmed provider permissions for private research use and any storage/retention needed during the trial. Commercial redistribution rights are a later launch gate.
 - Real canonical teams, competitions, seasons and recent completed-match history in PostgreSQL.
 - Scientific Gate 1 sign-off including valid PIT snapshots, measured drift policy inputs, model artifact hashes, real provider fixtures and no synthetic evidence.
 - An off-host database backup destination and monitored restore drill.
