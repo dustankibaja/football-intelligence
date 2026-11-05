@@ -39,8 +39,11 @@ def ops_run_once(argv: Sequence[str] | None = None) -> int:
     print(f"Evaluations Created: {summary.evaluations_created}, Reused: {summary.evaluations_reused}")
     print(f"Alerts Created: {summary.alerts_created}")
 
-    if summary.run_status in (OperationalRunStatus.SUCCESS, OperationalRunStatus.PARTIAL_SUCCESS):
+    if summary.run_status == OperationalRunStatus.SUCCESS:
         return 0
+    elif summary.run_status == OperationalRunStatus.PARTIAL_SUCCESS:
+        print(f"Partial: {summary.failure_code} - {summary.failure_summary}")
+        return 3
     elif summary.run_status == OperationalRunStatus.ABORTED:
         print(f"Aborted: {summary.failure_code} - {summary.failure_summary}")
         return 2
