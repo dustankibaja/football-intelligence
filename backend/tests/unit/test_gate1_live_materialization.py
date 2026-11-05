@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db.models import Base
-from app.db.models.core import Competition, Season, Team
+from app.db.models.core import Competition, Match, Season, Team
 from app.db.models.features import FeatureSnapshot
 from app.features.live import (
     LiveFeatureMaterializationError,
@@ -86,3 +86,36 @@ def test_post_kickoff_materialization_is_rejected(isolated_sqlite_factory):
         LiveFeatureMaterializer(isolated_sqlite_factory).materialize(
             record, record["kickoff_utc"] + timedelta(seconds=1)
         )
+
+
+def test_real_recent_history_produces_persisted_251_feature_snapshot(isolated_sqlite_factory):
+    now, record = _record(isolated_sqlite_factory)
+    with isolated_sqlite_factory() as session:
+        season = session.query(Season).filter_by(season_year="2026/27").one()
+        past_kickoff = now - timedelta(days=10)
+        session.add(Match(
+            season_id=season.id,
+            home_team_id=record["home_team_id"],
+            away_team_id=record["away_team_id"],
+            kickoff_utc=past_kickoff,
+            completed_at=past_kickoff + timedelta(hours=2),
+            status="FINISHED",
+            home_score=2,
+            away_score=1,
+        ))
+        session.commit()
+
+    output = LiveFeatureMaterializer(isolated_sqlite_factory).materialize(
+        record, now
+    )
+    assert output["feature_snapshot_id"] is not None
+    assert len(output["feature_keys"]) == 251
+    assert len(output["feature_values"]) == 251
+    assert len(output["feature_snapshot_fingerprint"]) == 64 or len(output["feature_snapshot_fingerprint"]) == 16
+    assert len(output["history_fingerprint"]) == 64
+    assert output["snapshot_quality_state"] == "VALID"
+    assert output["drift_status"] == "NOT_MEASURED"
+    with isolated_sqlite_factory() as session:
+        snap = session.query(FeatureSnapshot).one()
+        assert snap.id == output["feature_snapshot_id"]
+        assert snap.data_quality_metadata["source_fixture_id"] == "12345"
