@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     LIVE_DATA_API_KEY: str | None = None
     LIVE_DATA_API_BASE_URL: str | None = None
 
+    # Explicitly opt-in customer API; never expose unverified predictions.
+    CUSTOMER_API_TOKEN: str | None = None
+
     # Operational Watchdog Staleness Thresholds (Hours)
     OPS_RUN_STALE_AFTER_HOURS: float = 24.0
     OPS_PREDICTION_STALE_AFTER_HOURS: float = 48.0
