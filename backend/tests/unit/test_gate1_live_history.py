@@ -85,5 +85,51 @@ def test_history_ingestion_is_idempotent_and_rejects_corrections():
     with factory() as db:
         match = db.query(Match).one()
         assert (match.home_score, match.away_score) == (2, 1)
-        assert match.completed_at is None
+        assert match.completed_at.replace(tzinfo=UTC) == now
+    engine.dispose()
+
+def test_provider_backfill_does_not_leak_final_score_into_earlier_cutoff():
+    from app.db.models.core import Season
+    from app.features.query import PointInTimeQueryService
+
+    engine = create_engine(
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+    )
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(bind=engine, expire_on_commit=False)
+    with factory() as db:
+        comp = Competition(code="E0", name="PIT Provider", country="England")
+        home = Team(canonical_name="PIT Provider Home")
+        away = Team(canonical_name="PIT Provider Away")
+        db.add_all([comp, home, away])
+        db.flush()
+        db.add(Season(competition_id=comp.id, season_year="2026/27", start_year=2026))
+        db.commit()
+        home_id, comp_id = home.id, comp.id
+        away_id = away.id
+    observed = datetime(2026, 11, 5, 12, tzinfo=UTC)
+    record = {
+        "provider_name": "football_data_org",
+        "provider_fixture_id": "pit-verified-01",
+        "fixture_id": uuid5(NAMESPACE_URL, "football_data_org:pit-verified-01"),
+        "competition_code": "E0",
+        "season_year": "2026",
+        "season_start_date": "2026-08-01",
+        "season_end_date": "2027-05-31",
+        "home_team_id": home_id,
+        "away_team_id": away_id,
+        "kickoff_utc": observed - timedelta(days=4),
+        "home_score": 1,
+        "away_score": 0,
+        "status": "FINISHED",
+        "payload_fingerprint": "a" * 64,
+        "retrieved_at_utc": observed,
+        "is_mapped": True,
+    }
+    assert LiveHistoryIngestor(factory).ingest([record])["created"] == 1
+    with factory() as db:
+        pit = PointInTimeQueryService(db, approved_only=False)
+        assert not pit.get_team_matches_before(home_id, observed - timedelta(hours=1))
+        assert not pit.get_league_matches_before(comp_id, observed - timedelta(hours=1))
+        assert len(pit.get_team_matches_before(home_id, observed + timedelta(days=1))) == 1
     engine.dispose()
