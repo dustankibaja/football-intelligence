@@ -210,6 +210,20 @@ class OperationalOrchestrator:
 
             summary.fixtures_refreshed = len(raw_fixtures)
 
+            # Gate 1 safety boundary: live fixtures may not reach heuristic
+            # inference while frozen C1/M1 artifact execution is disconnected.
+            # The prediction service must independently verify real loaded
+            # artifacts before this gate can pass.
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and any(
+                f.get("is_mapped", True) for f in raw_fixtures
+            ):
+                try:
+                    self.prediction_service.assert_live_inference_ready()
+                except RuntimeError as exc:
+                    raise ScientificIntegrityError(
+                        "LIVE_ARTIFACT_INFERENCE_NOT_CONNECTED", str(exc)
+                    ) from exc
+
             # Stage 8: Determine & Materialize Due Feature Snapshots (Phase 6.2)
             # In Phase 6.2, valid snapshots have exact certified 251-feature width
             for f in raw_fixtures:
