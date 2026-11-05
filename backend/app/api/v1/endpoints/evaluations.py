@@ -26,9 +26,11 @@ def _latest_verified_evaluations(db: Session) -> tuple[list[ShadowEvaluation], b
     truncated = len(rows) > MAX_EVALUATIONS_SCANNED
     seen, verified = set(), []
     for ev in rows[:MAX_EVALUATIONS_SCANNED]:
-        if ev.prediction_id in seen or not _verified(ev.prediction):
+        # Count each completed match once, even if multiple pre-match
+        # forecast snapshots were created during the same fixture window.
+        if ev.fixture_id in seen or not _verified(ev.prediction):
             continue
-        seen.add(ev.prediction_id)
+        seen.add(ev.fixture_id)
         verified.append(ev)
     return verified, truncated
 
