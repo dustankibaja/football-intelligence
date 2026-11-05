@@ -130,7 +130,7 @@ export async function runRefresh({ force = false } = {}) {
   }
   const before = await readState();
   if (!force && before.data.lastRefreshAt &&
-      Date.now() - new Date(before.data.lastRefreshAt).getTime() < 20 * HOURS) {
+      Date.now() - new Date(before.data.lastRefreshAt).getTime() < 4 * HOURS) {
     return { skipped: true, reason: 'RECENT_REFRESH', view: viewState(before.data) };
   }
   const now = new Date();
