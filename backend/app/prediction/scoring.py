@@ -82,19 +82,52 @@ class PostMatchScoringService:
         btts_ll, btts_brier = calculate_binary_metrics(prediction.btts_yes, actual_btts)
         ou_ll, ou_brier = calculate_binary_metrics(prediction.over_2_5, actual_ou25)
 
-        # Exact score evaluation
-        actual_score_prob = 0.0
-        top1_hit = False
-        top3_hit = False
+        # The top-five list is NOT the full exact-score distribution.
+        # New certified predictions persist the original full score matrix.
+        # Legacy replay predictions lack this field; reconstruct their
+        # independent-Poisson grid from stored lambdas without rewriting them.
+        if prediction.score_matrix is not None:
+            import hashlib
+            import json
 
-        for item in prediction.top_scorelines:
-            if item["home_goals"] == actual_home_goals and item["away_goals"] == actual_away_goals:
-                actual_score_prob = item["probability"]
-                if item["rank"] == 1:
-                    top1_hit = True
-                if item["rank"] <= 3:
-                    top3_hit = True
-                break
+            matrix = prediction.score_matrix
+            matrix_fp = hashlib.sha256(
+                json.dumps(matrix, sort_keys=True).encode("utf-8")
+            ).hexdigest()
+            if matrix_fp != prediction.exact_score_matrix_fingerprint:
+                raise ValueError("SCORE_MATRIX_FINGERPRINT_MISMATCH")
+            if (
+                not matrix or any(len(row) != len(matrix) for row in matrix)
+                or any(not math.isfinite(p) or p < 0 for row in matrix for p in row)
+                or abs(sum(sum(row) for row in matrix) - 1.0) > 1e-6
+            ):
+                raise ValueError("INVALID_FULL_SCORE_DISTRIBUTION")
+        else:
+            # Compatibility-only reconstruction for historical replay records.
+            # Such records must not be promoted to certified live evidence.
+            from app.prediction.service import compute_score_matrix
+            matrix = compute_score_matrix(
+                prediction.lambda_home, prediction.lambda_away, max_goals=10
+            )
+
+        actual_score_prob = (
+            matrix[actual_home_goals][actual_away_goals]
+            if 0 <= actual_home_goals < len(matrix)
+            and 0 <= actual_away_goals < len(matrix)
+            else 0.0
+        )
+        top1_hit = any(
+            item["home_goals"] == actual_home_goals
+            and item["away_goals"] == actual_away_goals
+            and item["rank"] == 1
+            for item in prediction.top_scorelines
+        )
+        top3_hit = any(
+            item["home_goals"] == actual_home_goals
+            and item["away_goals"] == actual_away_goals
+            and item["rank"] <= 3
+            for item in prediction.top_scorelines
+        )
 
         evaluation = ShadowEvaluationResult(
             evaluation_id=uuid4(),
