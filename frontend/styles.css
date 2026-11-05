@@ -12,3 +12,13 @@
 footer{padding:38px clamp(24px,5vw,88px);border-top:1px solid #27404e;display:flex;justify-content:space-between;gap:20px;align-items:center;color:#8ea7b2;font-size:12px}.footer-brand{font:800 22px Manrope;color:var(--white);letter-spacing:-.05em}
 @media(max-width:1050px){.hero{grid-template-columns:1fr;gap:35px;padding-top:70px}.hero-visual{max-width:750px}.connection-panel{grid-template-columns:1fr}.connection-form{grid-template-columns:1fr 1fr auto}.trust-strip>div{gap:10px}.strip-number{font-size:25px}.strip-caption{font-size:9px}}@media(max-width:700px){.site-header{min-height:70px;padding:0 20px}.site-header nav{display:none}.brand{font-size:18px}.header-right{font-size:10px}.hero{padding:70px 22px 60px}.hero-visual{min-height:320px}.pitch{height:170px}.visual-top,.visual-bottom{padding:18px}.visual-bottom strong{font-size:13px}.visual-bottom span{font-size:8px}.trust-strip{grid-template-columns:repeat(2,1fr);padding:24px;gap:20px}.trust-strip>div{justify-content:flex-start}.trust-strip>div:nth-child(2){border:0}.section-shell{padding:70px 22px}.section-header{align-items:start;flex-direction:column}.connection-panel{padding:20px}.connection-form{grid-template-columns:1fr}.fixture-grid,.method-grid{grid-template-columns:1fr}.fixture-card{padding:20px}.fixture-teams strong{font-size:16px}.prob-labels strong{font-size:20px}footer{flex-direction:column;align-items:flex-start;padding:35px 22px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+
+/* Private scientific trial: real outcome metrics, no invented accuracy badges. */
+.performance-heading{max-width:1375px;margin:0 auto 16px}
+.performance-heading h3{font-size:20px;margin-bottom:5px}
+.performance-heading p{font-size:12px;color:var(--muted)}
+.performance-grid{max-width:1375px;margin:0 auto 30px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.performance-card{border:1px solid #2c4754;background:#102735;border-radius:12px;padding:18px}
+.performance-card span{display:block;color:#9cb1bc;font-size:11px;margin-bottom:9px}
+.performance-card strong{font:800 25px Manrope;color:var(--lime)}
+@media(max-width:700px){.performance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.performance-card strong{font-size:20px}}
