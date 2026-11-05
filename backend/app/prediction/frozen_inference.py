@@ -88,6 +88,8 @@ class FrozenArtifactInference:
                 or artifact.training_window.modeling_dataset_fingerprint != EXPECTED_DATASET_FINGERPRINT
             ):
                 raise ValueError(f"{name}_FROZEN_ARTIFACT_INVALID")
+        if set(self.m1.artifact.weights_payload.get("competitions", {})) != set(FROZEN_COMPETITION_CODES):
+            raise ValueError("M1_TRAINED_COMPETITION_REGISTRY_MISMATCH")
         if (
             self._file_sha256(self.c1_path) != self.c1_file_sha256
             or self._file_sha256(self.m1_path) != self.m1_file_sha256
