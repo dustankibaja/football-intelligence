@@ -473,10 +473,39 @@ class OperationalOrchestrator:
                                     observed_at=self.clock.now(),
                                 )
                                 if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                                    if not res.get("source_payload_fingerprint"):
+                                        raise ScientificIntegrityError(
+                                            "LIVE_RESULT_PROVENANCE_MISSING",
+                                            "Cannot persist a live evaluation without provider result provenance.",
+                                        )
+                                    from app.db.models.core import Match, SystemAuditLog
                                     with self.session_factory() as session:
                                         _, created = ShadowPredictionRepository.persist_evaluation(
                                             session, evaluation
                                         )
+                                        if created:
+                                            match = session.query(Match).filter_by(id=fixture_id).one()
+                                            if (
+                                                match.status == "FINISHED"
+                                                and (match.home_score, match.away_score) != (home_goals, away_goals)
+                                                and res_version <= 1
+                                            ):
+                                                raise ScientificIntegrityError(
+                                                    "RESULT_CORRECTION_REQUIRES_NEW_VERSION",
+                                                    "A changed final result requires a new version.",
+                                                )
+                                            match.status = "FINISHED"
+                                            match.home_score = home_goals
+                                            match.away_score = away_goals
+                                            match.completed_at = self.clock.now()
+                                            session.add(SystemAuditLog(
+                                                event_type="LIVE_RESULT_FINALIZED",
+                                                description=(
+                                                    f"{fixture_id}:v{res_version}:"
+                                                    f"{res['source_payload_fingerprint']}"
+                                                )[:255],
+                                            ))
+                                            session.commit()
                                     if created:
                                         summary.evaluations_created += 1
                                     else:
