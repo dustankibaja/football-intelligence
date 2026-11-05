@@ -232,7 +232,7 @@ def test_live_provider_ingestion_delegates_to_phase6_1(fake_clock: FakeClock, sa
 
 
 # 14. Live provider features delegate to Phase 6.2 251-feature specification
-def test_live_provider_features_delegate_to_phase6_2(fake_clock: FakeClock):
+def test_live_provider_does_not_fabricate_phase6_2_snapshot(fake_clock: FakeClock):
     adapter = LiveIngestionAdapter(clock=fake_clock)
     dto = LiveFixtureDTO(
         provider_fixture_id="live_fix_2",
@@ -252,8 +252,9 @@ def test_live_provider_features_delegate_to_phase6_2(fake_clock: FakeClock):
         payload_fingerprint="fp5678",
     )
     record = adapter.adapt_live_fixture_to_orchestrator_record(dto)
-    assert len(record["feature_values"]) == 251
-    assert "feat_fp_live_" in record["feature_snapshot_fingerprint"]
+    assert record["feature_values"] == []
+    assert record["feature_snapshot_fingerprint"] == ""
+    assert record["snapshot_quality_state"] == "NOT_MATERIALIZED"
 
 
 # 15. Live provider prediction delegates to Phase 6.3 ShadowPredictionService
