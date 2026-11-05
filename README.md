@@ -1,120 +1,64 @@
-# Football Intelligence & Probability Analysis System
+# Footmo — Football Intelligence & Probability Analysis
 
-A scientific data-analysis and probability-estimation platform for European football matches.
+Footmo is a scientific football probability platform covering the Premier League, La Liga, Serie A and Bundesliga. It estimates 1X2 outcomes, expected goals, BTTS, Over/Under 2.5 and exact scorelines using pre-match evidence.
 
-> **Disclaimer:** This platform is designed strictly for scientific evaluation, statistical research, and probabilistic modeling. It does **not** guarantee match outcomes or provide financial/betting advice.
+**Status (2026-11-05): ACTIVE DEVELOPMENT — NOT COMMERCIALLY LIVE.** The historical scientific program and model artifacts exist, but the newly integrated live pipeline has not passed independent 2026 provider-data parity, multi-day host soak or commercial launch checks.
 
----
+> **Probability, not certainty.** Footmo does not guarantee match outcomes, financial returns or betting results. It does not use bookmaker odds as predictive inputs or execute bets.
 
-## Current Status: Phase 1 — Development Foundation (Sprint 1.1 Complete)
+## Current implementation
 
-- **Sprint 0.1:** Product Requirements Document (PRD v0.1.2) Signed Off.
-- **Sprint 0.2:** Technical Architecture Specification (v0.2.0) Signed Off.
-- **Sprint 1.1:** Monorepo & Backend Foundational Bootstrap Complete.
+- **Historical science:** 4,338 historical fixtures and 251 point-in-time features in the approved MVP-A research program. C1 trained multinomial logistic regression owns primary 1X2 probabilities. M1 attack–defence Poisson owns goals, exact scores and structural fallback.
+- **Frozen inference:** Real committed C1/M1 artifact loading, fingerprint checks, competition registry validation and model-class forward inference.
+- **Live pipeline:** Provider-backed canonical fixture and final-result ingestion, recent-history reconciliation, PIT snapshot materialization, pre-kickoff enforcement, immutable prediction and evaluation persistence.
+- **Customer preview:** Responsive web UI in `frontend/`; authenticated read-only API for verified predictions, matches, evaluations and model metadata. The API is disabled by default.
+- **Staging infrastructure:** Private Docker Compose topology, non-root API image and Linux scheduler configuration. No persistent host deployment has been certified.
+- **Testing:** PostgreSQL migrations, integration and unit tests, fatal Python checks and frontend syntax checks in GitHub Actions.
 
----
+See [the production release gates](docs/production/FOOTMO_RELEASE_PLAN.md) and [the Gate 1 implementation evidence](docs/production/GATE1_PROGRESS_2026-11-05.md). The current development work is tracked in [PR #5](https://github.com/dustankibaja/football-intelligence/pull/5).
 
-## Architectural Principles
-
-1. **Probability, Not Certainty:** Every match outcome is expressed as a calibrated probability distribution ($P_{\text{Home}}, P_{\text{Draw}}, P_{\text{Away}}$).
-2. **Zero Dependency on Bookmaker Odds:** Core prediction engine operates strictly independently from commercial betting markets.
-3. **Data Leakage Prevention:** Temporal isolation rules (DL-01 to DL-07) prevent post-kickoff information from entering pre-match features.
-4. **Distinct Data Quality & Prediction Uncertainty:** Input data completeness is measured separately from outcome distribution spread.
-5. **Immutable Snapshot Ledger:** Pre-match prediction snapshots ($T-24\text{h}, T-6\text{h}, T-90\text{min}$) are append-only.
-6. **Comparative Model Evaluation:** Models are evaluated comparatively against Baseline A (Historical Base Rates), Baseline B (Elo-Only), and Baseline C (Basic Poisson).
-
----
-
-## Monorepo Layout
+## Repository
 
 ```text
-football-intelligence-system/
-├── backend/            # FastAPI, SQLAlchemy 2.0, Alembic, Pytest backend core
-├── frontend/           # Next.js 14+ TypeScript dashboard placeholder (MVP-C)
-├── data/               # Raw, interim, and processed data directories
-├── docs/               # System architecture specs, PRDs, and ADRs
-├── infrastructure/     # Docker Compose PostgreSQL local setup
-├── scripts/            # Cross-platform development helper scripts
-└── .github/            # GitHub Actions CI workflow
+backend/          FastAPI, trained artifact inference, SQLAlchemy, Alembic, Pytest
+frontend/         Responsive customer web preview (HTML/CSS/JavaScript)
+data/             Research data directories (not bundled with the production image)
+docs/             Scientific specifications and production release evidence
+infrastructure/   PostgreSQL, private staging Compose and runbook
+scripts/          Operational scheduler configurations
+.github/          CI regression and frontend checks
 ```
 
----
+## Local backend development
 
-## Quick Start (Local Setup)
-
-### Prerequisites
-
-- Python 3.11+
-- PostgreSQL 16 (Native or Docker)
-- Git
-
-### 1. Clone & Set Up Virtual Environment
+Requires Python 3.11+, PostgreSQL 16 and Git.
 
 ```bash
-git clone https://github.com/your-org/football-intelligence-system.git
-cd football-intelligence-system
-
+git clone https://github.com/dustankibaja/football-intelligence.git
+cd football-intelligence
 python -m venv .venv
-# Activate virtual environment:
-# Windows (PowerShell): .venv\Scripts\Activate.ps1
-# Linux/macOS: source .venv/bin/activate
-```
-
-### 2. Install Dependencies
-
-```bash
-pip install -e "./backend[dev]"
-```
-
-### 3. Environment Configuration
-
-```bash
-copy .env.example .env
-```
-
-### 4. Start Local PostgreSQL Database
-
-Using Docker Compose:
-```bash
-docker-compose -f infrastructure/docker-compose.yml up -d
-```
-
-### 5. Run Database Schema Migrations
-
-```bash
+# Activate .venv using your shell's instructions.
+python -m pip install -e "./backend[dev]"
+# Configure your untracked .env from .env.example; never commit secrets.
+docker compose -f infrastructure/docker-compose.yml up -d
 cd backend
 alembic upgrade head
-```
-
-### 6. Run System Health Endpoint & Tests
-
-```bash
-# Start local API server
-uvicorn app.main:app --reload --port 8000
-
-# Execute Pytest test suite (in another terminal window)
-cd backend
 pytest
-
-# Execute Linter
-ruff check app tests
+uvicorn app.main:app --reload --port 8000
 ```
 
-Access health check: `http://localhost:8000/api/v1/health`
+For a private frontend preview, see [frontend/README.md](frontend/README.md). For a host-based staging deployment, see [infrastructure/STAGING_RUNBOOK.md](infrastructure/STAGING_RUNBOOK.md).
 
----
+## Scientific and operational safeguards
 
-## Technology Stack
+1. No post-kickoff prediction backfill; observations must precede the feature cutoff.
+2. Real provider IDs, canonical team/competition/season mappings and source fingerprints are required for live data.
+3. Frozen trained model artifacts are verified; no automatic training or recalibration during live operation.
+4. Predictions and versioned evaluations are separate, append-only evidence.
+5. Invalid legacy shadow records are excluded from verified customer endpoints.
+6. Missing drift-reference evidence currently blocks live predictions rather than producing an invented PSI value.
+7. No commercial claims are permitted until provider licensing, customer entitlements, security, persistent hosting and a real unattended soak are verified.
 
-- **Backend:** Python 3.11+, FastAPI 0.110+
-- **Database:** PostgreSQL 16
-- **ORM & Migrations:** SQLAlchemy 2.0+, Alembic 1.13+
-- **Schemas & Parsing:** Pydantic v2
-- **Testing & Quality:** Pytest 8.0+, Ruff
-- **Frontend (MVP-C):** Next.js 14+, TypeScript, Tailwind CSS
+## Licensing
 
----
-
-## License
-
-Internal Working Repository — All Rights Reserved.
+The repository currently contains an **MIT LICENSE file**. That license governs the repository code as published. Football data and other third-party content have separate licensing requirements. Any decision to change the software license for future commercial distribution requires an explicit rights review; do not assume the current MIT license makes third-party football data commercially redistributable.
