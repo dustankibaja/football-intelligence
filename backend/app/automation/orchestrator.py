@@ -488,8 +488,22 @@ class OperationalOrchestrator:
                         self._recorded_alert_signatures.add(sig)
                         summary.alerts_created += 1
 
-            # Stage 13: Persist Run Summary
-            summary.run_status = OperationalRunStatus.SUCCESS
+            # Stage 13: Persist Run Summary. A run that blocked live fixtures
+            # must never report a clean SUCCESS or imply science certification.
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and (
+                summary.snapshots_failed
+                or summary.predictions_blocked
+                or summary.predictions_failed
+                or summary.evaluations_failed
+            ):
+                summary.run_status = OperationalRunStatus.PARTIAL_SUCCESS
+                summary.failure_code = "LIVE_SCIENTIFIC_GATES_BLOCKED"
+                summary.failure_summary = (
+                    "One or more live fixtures were blocked by scientific integrity "
+                    "or operational quality checks; no synthetic fallback permitted."
+                )
+            else:
+                summary.run_status = OperationalRunStatus.SUCCESS
             summary.completed_at = self.clock.now()
 
         except OperationalException as op_exc:
@@ -574,8 +588,10 @@ class OperationalOrchestrator:
                 )
                 session.add(op_run)
                 session.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            summary.run_status = OperationalRunStatus.FAILED
+            summary.failure_code = "OPERATIONAL_RUN_PERSISTENCE_FAILED"
+            summary.failure_summary = str(exc)
 
     def _verify_scientific_manifests(self, manifest_override: dict[str, str] | None = None) -> None:
         """Verify five frozen parent manifest hashes. Aborts on any discrepancy."""
