@@ -94,3 +94,14 @@ def test_frozen_forward_pass_rejects_unseen_competition():
     inp, _ = _sample_input(engine)
     with pytest.raises(ValueError, match="M1_COMPETITION_NOT_IN_FROZEN_ARTIFACT"):
         engine.predict(inp, uuid4(), inp.season_id)
+
+
+def test_unseen_team_triggers_certified_m1_fallback():
+    engine = FrozenArtifactInference()
+    inp, _ = _sample_input(engine)
+    inp.away_team_id = uuid4()
+    pred = ShadowPredictionService(frozen_inference=engine).predict(inp)
+    assert pred.fallback_used is True
+    assert pred.fallback_model == "M1_Attack_Defense_Poisson"
+    assert pred.quality_state == "FALLBACK_MODEL_USED"
+    assert pred.prob_home == pred.structural_prob_home
