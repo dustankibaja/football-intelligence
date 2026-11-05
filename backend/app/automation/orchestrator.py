@@ -320,6 +320,18 @@ class OperationalOrchestrator:
                     f"Worker {self.scheduler_instance_id} holds obsolete fencing token {current_lease.fencing_token}. Protected commit rejected.",
                 )
 
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and not dry_run:
+                from app.db.models.shadow import ShadowPredictionRun
+                with self.session_factory() as session:
+                    if session.query(ShadowPredictionRun).filter_by(id=summary.run_id).first() is None:
+                        session.add(ShadowPredictionRun(
+                            id=summary.run_id,
+                            started_at=summary.started_at,
+                            status="RUNNING",
+                            candidate_count=len(raw_fixtures),
+                        ))
+                        session.commit()
+
             current_time = self.clock.now()
             for f in raw_fixtures:
                 if not f.get("is_mapped", True):
@@ -716,6 +728,16 @@ class OperationalOrchestrator:
                     failure_summary=summary.failure_summary,
                 )
                 session.add(op_run)
+                if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                    from app.db.models.shadow import ShadowPredictionRun
+                    prediction_run = session.query(ShadowPredictionRun).filter_by(
+                        id=summary.run_id
+                    ).first()
+                    if prediction_run is not None:
+                        prediction_run.status = summary.run_status.value
+                        prediction_run.completed_at = summary.completed_at
+                        prediction_run.predicted_count = summary.predictions_created
+                        prediction_run.blocked_count = summary.predictions_blocked
                 session.commit()
         except Exception as exc:
             summary.run_status = OperationalRunStatus.FAILED
@@ -856,5 +878,5 @@ class OperationalOrchestrator:
                 ShadowPredictionRepository.verify_certified_live_prediction(session, pred)
                 meta = (fixture_meta_map or {}).get(pred.fixture_id)
                 ShadowPredictionRepository.persist_prediction(
-                    session, pred, fixture_meta=meta
+                    session, pred, fixture_meta=meta, strict_live=True
                 )
