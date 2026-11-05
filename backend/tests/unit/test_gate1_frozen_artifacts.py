@@ -124,3 +124,11 @@ def test_frozen_model_forward_pass_covers_all_four_competitions():
         pairs.append((out.lambda_home, out.lambda_away))
     assert len(pairs) == 4
     assert len(set(pairs)) >= 2
+
+
+def test_frozen_model_rejects_swapped_league_identity():
+    engine = FrozenArtifactInference()
+    inp, _ = _sample_input(engine)
+    inp.competition_code = "E0" if inp.competition_code != "E0" else "D1"
+    with pytest.raises(ValueError, match="CANONICAL_COMPETITION_CODE_ID_MISMATCH"):
+        engine.predict(inp, inp.competition_id, inp.season_id)
