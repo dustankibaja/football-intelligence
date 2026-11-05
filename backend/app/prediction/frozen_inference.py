@@ -25,6 +25,13 @@ EXPECTED_M1_FINGERPRINT = "e116413051f52d5f"
 EXPECTED_DATASET_FINGERPRINT = (
     "9b9ceb90da803eaa498c26a070d4ac69483fa4d06c391444b2c326f3fa03021c"
 )
+# Pinned canonical IDs from the frozen 2021–2024 training artifact.
+FROZEN_COMPETITION_CODES = {
+    "ac2186e7-8b5e-4cf0-b033-62c5a82c7c95": "D1",
+    "719f2542-48c8-4352-af57-9f0b81a5562b": "E0",
+    "2a1a49d9-9682-40ba-889c-366a0608dd02": "SP1",
+    "cec92346-8c38-424e-93ea-78340321570e": "I1",
+}
 
 
 @dataclass(frozen=True)
@@ -104,6 +111,8 @@ class FrozenArtifactInference:
             raise ValueError("CANONICAL_COMPETITION_OR_SEASON_MISSING")
         if str(competition_id) not in self.m1.artifact.weights_payload["competitions"]:
             raise ValueError("M1_COMPETITION_NOT_IN_FROZEN_ARTIFACT")
+        if FROZEN_COMPETITION_CODES.get(str(competition_id)) != inp.competition_code:
+            raise ValueError("CANONICAL_COMPETITION_CODE_ID_MISMATCH")
         if any(v is not None and (not isinstance(v, (float, int)) or not math.isfinite(v)) for v in inp.feature_values):
             raise ValueError("NONFINITE_OR_INVALID_LIVE_FEATURE")
 
