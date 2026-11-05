@@ -163,7 +163,7 @@ class HealthWatchdog:
         # Check manifest file if available on disk
         manifest_path = Path(__file__).resolve().parents[3] / "phase6_3_shadow_prediction_manifest.json"
         if not manifest_path.exists():
-            return True  # Fallback to in-memory check
+            return False  # Missing scientific evidence is never a healthy state.
 
         try:
             with open(manifest_path, encoding="utf-8") as f:
