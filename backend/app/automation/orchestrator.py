@@ -202,6 +202,25 @@ class OperationalOrchestrator:
             raw_fixtures = fixtures_due
             if raw_fixtures is None and self.execution_mode == ExecutionMode.LIVE_SHADOW and self.live_provider is not None:
                 summary.provider_status = "CONNECTED"
+                # Incremental recent-result history ingestion is real-provider
+                # sourced and precedes PIT feature materialization.
+                if hasattr(self.live_provider, "get_recent_finished_matches"):
+                    from app.providers.live.history import LiveHistoryIngestor
+                    finished_history = self._handle_provider_call_with_retry(
+                        lambda: self.live_provider.get_recent_finished_matches(
+                            days_back=2, window_days=2
+                        ), summary
+                    )
+                    history_stats = LiveHistoryIngestor(self.session_factory).ingest(
+                        finished_history
+                    )
+                    if history_stats["rejected"]:
+                        self._record_failure(
+                            summary.run_id, "INGESTION", "HISTORY_RECONCILIATION",
+                            ErrorCategory.DATA, Retryability.PERMANENT,
+                            "UNRESOLVED_LIVE_HISTORY",
+                            f"{history_stats['rejected']} recent completed fixtures were rejected.",
+                        )
                 from app.providers.live.adapter import LiveIngestionAdapter
                 adapter = LiveIngestionAdapter(clock=self.clock, session_factory=self.session_factory)
                 live_dtos = self._handle_provider_call_with_retry(
