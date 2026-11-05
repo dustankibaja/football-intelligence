@@ -105,3 +105,20 @@ def test_unseen_team_triggers_certified_m1_fallback():
     assert pred.fallback_model == "M1_Attack_Defense_Poisson"
     assert pred.quality_state == "FALLBACK_MODEL_USED"
     assert pred.prob_home == pred.structural_prob_home
+
+
+def test_frozen_model_forward_pass_covers_all_four_competitions():
+    engine = FrozenArtifactInference()
+    inp, _ = _sample_input(engine)
+    pairs = []
+    for comp_id, comp in engine.m1.artifact.weights_payload["competitions"].items():
+        inp.competition_id = UUID(comp_id)
+        inp.home_team_id = UUID(comp["team_list"][0])
+        inp.away_team_id = UUID(comp["team_list"][1])
+        out = engine.predict(inp, inp.competition_id, inp.season_id)
+        assert out.lambda_home > 0 and out.lambda_away > 0
+        assert abs(sum(out.c1_probabilities) - 1.0) < 1e-5
+        assert abs(sum(out.m1_probabilities) - 1.0) < 1e-5
+        pairs.append((out.lambda_home, out.lambda_away))
+    assert len(pairs) == 4
+    assert len(set(pairs)) >= 2
