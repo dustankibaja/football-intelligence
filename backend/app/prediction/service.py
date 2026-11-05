@@ -122,6 +122,20 @@ class ShadowPredictionService:
         self._persisted_predictions: dict[UUID, ShadowPredictionResult] = {}
         self._canonical_timing_rule = "LATEST_VALID_PREDICTION_BEFORE_KICKOFF"
 
+    def assert_live_inference_ready(self) -> None:
+        """Prevent commercial/live inference until frozen artifacts are genuinely loaded.
+
+        A model name or hard-coded fingerprint is not proof that the certified
+        C1/M1 parameters were used. The existing predict() implementation
+        still contains heuristic coefficients and MUST NOT serve live fixtures.
+        Replace this guard only with a verified frozen-artifact forward pass
+        and independent parity tests (Gate 1).
+        """
+        raise RuntimeError(
+            "LIVE_ARTIFACT_INFERENCE_NOT_CONNECTED: certified C1/M1 forward "
+            "inference has not been wired into the live prediction service."
+        )
+
     def predict(
         self,
         inp: ShadowPredictionInput,
