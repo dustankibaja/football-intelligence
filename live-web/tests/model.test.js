@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { predictFixture, evaluateForecast, summarizeEvaluations, MODEL_ID } from '../lib/model.js';
+import { predictFixture, evaluateForecast, summarizeEvaluations, walkForwardBacktest, MODEL_ID } from '../lib/model.js';
 
 const now = new Date('2026-11-05T12:00:00Z');
 const makeFixture = (id, date, status = 'SCHEDULED', h = null, a = null) => ({
@@ -56,4 +56,13 @@ test('future scores never enter a pre-match forecast history', () => {
   const p = predictFixture(makeFixture(300, '2026-11-08T14:00:00Z'),
     [...history, future], now);
   assert.equal(p.trainingMatches, 20);
+});
+
+test('walk-forward benchmark never uses the target score in training', () => {
+  const summary = walkForwardBacktest(history);
+  assert.ok(summary.sampleSize > 0);
+  assert.ok(summary.sampleSize <= history.length - 15);
+  assert.equal(summary.status, 'SMALL_SAMPLE');
+  assert.ok(Number.isFinite(summary.meanLogLoss1x2));
+  assert.ok(Number.isFinite(summary.meanBrier1x2));
 });
