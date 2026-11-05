@@ -16,6 +16,12 @@ on:
 permissions:
   contents: read
 
+# Keep only the newest PR revision under test; older commits cannot certify
+# the current branch and would waste CI minutes during rapid development.
+concurrency:
+  group: footmo-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend-smoke:
     name: Footmo Frontend Syntax and Asset Integrity
