@@ -85,10 +85,13 @@ export function predictFixture(fixture, finished, now = new Date()) {
   const topScores = matrix.slice(0, 3).map(x => ({
     score: `${x.h}-${x.a}`, probability: rounded(x.p)
   }));
-  const historyIds = previous.map(x => String(x.id)).sort();
+  const observedHistory = previous.map(x => ({
+    id: String(x.id), utcDate: x.utcDate,
+    home: x.score.fullTime.home, away: x.score.fullTime.away
+  })).sort((a, b) => a.id.localeCompare(b.id));
   const fingerprint = createHash('sha256')
     .update(JSON.stringify({ model: MODEL_ID, fixture: fixture.id,
-      cutoff: now.toISOString(), historyIds })).digest('hex');
+      cutoff: now.toISOString(), observedHistory })).digest('hex');
   return {
     fixtureId: String(fixture.id),
     competition: fixture.competition?.name || '',
