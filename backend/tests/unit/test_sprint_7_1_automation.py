@@ -511,7 +511,7 @@ def test_ops_minimum_sample_monitoring_policy_is_preserved(fake_clock: FakeClock
 def test_ops_operational_health_is_separate_from_scientific_quality(fake_clock: FakeClock):
     watchdog = HealthWatchdog(clock=fake_clock)
     # Operational health status
-    h_healthy = watchdog.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True)
+    h_healthy = watchdog.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True)
     assert h_healthy.health_state == OperationalHealthState.HEALTHY
 
     # Scientific model quality state via Phase 5.2 engine
@@ -657,7 +657,7 @@ def test_ops_watchdog_custom_thresholds_override_defaults(fake_clock: FakeClock)
     # Set run threshold to 6.0 hours
     wd = HealthWatchdog(clock=fake_clock, max_run_staleness_hours=6.0)
     last_run = fake_clock.now() - timedelta(hours=7.0)
-    health = wd.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True, last_successful_run=last_run)
+    health = wd.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True, last_successful_run=last_run)
     assert health.health_state == OperationalHealthState.STALE
     assert "OPERATIONAL_STALENESS" in health.diagnostics[0]
 
@@ -690,17 +690,17 @@ def test_ops_watchdog_run_staleness_boundary_behavior(fake_clock: FakeClock):
 
     # 1. 23h 59m 59s -> NOT STALE
     t_23h59 = now - timedelta(hours=23, minutes=59, seconds=59)
-    h1 = wd.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True, last_successful_run=t_23h59)
+    h1 = wd.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True, last_successful_run=t_23h59)
     assert h1.health_state == OperationalHealthState.HEALTHY
 
     # 2. 24h exactly -> NOT STALE (comparison operator contract is strictly '>')
     t_24h = now - timedelta(hours=24)
-    h2 = wd.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True, last_successful_run=t_24h)
+    h2 = wd.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True, last_successful_run=t_24h)
     assert h2.health_state == OperationalHealthState.HEALTHY
 
     # 3. 24h + 1s -> STALE
     t_24h_1s = now - timedelta(hours=24, seconds=1)
-    h3 = wd.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True, last_successful_run=t_24h_1s)
+    h3 = wd.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True, last_successful_run=t_24h_1s)
     assert h3.health_state == OperationalHealthState.STALE
 
 
@@ -710,16 +710,16 @@ def test_ops_watchdog_prediction_staleness_boundary_behavior(fake_clock: FakeClo
 
     # 1. 47h 59m 59s -> NOT STALE
     t_47h59 = now - timedelta(hours=47, minutes=59, seconds=59)
-    h1 = wd.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True, last_prediction_activity=t_47h59)
+    h1 = wd.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True, last_prediction_activity=t_47h59)
     assert h1.health_state == OperationalHealthState.HEALTHY
 
     # 2. 48h exactly -> NOT STALE (comparison operator contract is strictly '>')
     t_48h = now - timedelta(hours=48)
-    h2 = wd.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True, last_prediction_activity=t_48h)
+    h2 = wd.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True, last_prediction_activity=t_48h)
     assert h2.health_state == OperationalHealthState.HEALTHY
 
     # 3. 48h + 1s -> STALE
     t_48h_1s = now - timedelta(hours=48, seconds=1)
-    h3 = wd.check_health(database_reachable=True, current_alembic_head="20261023_0006", provider_configured=True, last_prediction_activity=t_48h_1s)
+    h3 = wd.check_health(database_reachable=True, current_alembic_head="20261105_0007", provider_configured=True, last_prediction_activity=t_48h_1s)
     assert h3.health_state == OperationalHealthState.STALE
 
