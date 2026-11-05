@@ -73,7 +73,16 @@
 
     <section class="results-section section-shell" id="results">
       <div class="section-header"><div><div class="eyebrow">ACCOUNTABILITY</div><h2>Results & evaluation<span class="heading-dot">.</span></h2><p>Predictions are recorded before kickoff. Final results are evaluated separately without rewriting the original forecast.</p></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Fixture ID</th><th>Final score</th><th>Outcome</th><th>1X2 log loss</th><th>Observed</th></tr></thead><tbody id="results-body"><tr><td colspan="5" class="table-empty">Connect to see verified post-match evaluations.</td></tr></tbody></table></div>
+      <div class="performance-heading"><h3>Observed scientific performance</h3><p id="performance-caption" aria-live="polite">Connect to see performance calculated from real completed fixtures. Small samples are labelled.</p></div>
+      <div class="performance-grid" id="performance-grid" aria-live="polite">
+        <div class="performance-card"><span>Evaluated matches</span><strong>—</strong></div>
+        <div class="performance-card"><span>1X2 log loss</span><strong>—</strong></div>
+        <div class="performance-card"><span>1X2 Brier</span><strong>—</strong></div>
+        <div class="performance-card"><span>BTTS log loss</span><strong>—</strong></div>
+        <div class="performance-card"><span>O/U 2.5 log loss</span><strong>—</strong></div>
+        <div class="performance-card"><span>Top exact score hit</span><strong>—</strong></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Fixture</th><th>Final score</th><th>Outcome</th><th>1X2 log loss</th><th>Observed</th></tr></thead><tbody id="results-body"><tr><td colspan="5" class="table-empty">Connect to see verified post-match evaluations.</td></tr></tbody></table></div>
     </section>
 
     <section class="method-section section-shell" id="methodology">
