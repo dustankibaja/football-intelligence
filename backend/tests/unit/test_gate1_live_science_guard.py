@@ -29,7 +29,10 @@ def test_live_scheduler_does_not_publish_heuristic_predictions():
     }
     summary = orchestrator.run_once(fixtures_due=[fixture])
 
-    assert summary.run_status == OperationalRunStatus.FAILED
-    assert summary.failure_code == "LIVE_ARTIFACT_INFERENCE_NOT_CONNECTED"
     assert summary.predictions_created == 0
+    assert summary.snapshots_failed == 1
+    assert any(
+        x["failure_code"] == "LIVE_PROVIDER_PROVENANCE_MISSING"
+        for x in orchestrator._failure_log
+    )
     assert not orchestrator.prediction_service._persisted_predictions
