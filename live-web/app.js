@@ -303,7 +303,7 @@ window.addEventListener('scroll', () => {
   requestAnimationFrame(() => {
     scrollPending = false;
     let current = 'predictions';
-    for (const id of ['performance', 'predictions', 'history']) {
+    for (const id of ['predictions', 'history', 'performance']) {
       if ($(id).getBoundingClientRect().top < window.innerHeight * .32) current = id;
     }
     selectMobileNav(current);
