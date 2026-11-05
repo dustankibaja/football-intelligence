@@ -34,12 +34,13 @@ jobs:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci-test-only
           CUSTOMER_API_TOKEN: ci-test-only
+          LIVE_DATA_API_KEY: ci-placeholder-not-a-live-provider-key
         run: docker compose -f infrastructure/compose.staging.yml config -q
       - name: Check Python compilation and new-code fatal errors
         run: |
           python -m compileall -q backend/app
           python -m pip install ruff
-          ruff check backend/app/prediction/frozen_inference.py backend/app/features/live.py backend/app/api/v1/security.py backend/app/api/v1/endpoints --select E9,F63,F7,F82
+          ruff check backend/app/prediction/frozen_inference.py backend/app/features/live.py backend/app/api/v1/security.py backend/app/api/v1/endpoints backend/app/automation/worker.py backend/app/evaluation/summary.py --select E9,F63,F7,F82
 
   lint-policy:
     name: Codebase Lint Policy (Ruff)
