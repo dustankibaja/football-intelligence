@@ -224,6 +224,11 @@ $("connect-form").addEventListener("submit", (event) => {
     $("connection-error").hidden = false;
     return;
   }
+  if (url.protocol === "http:" && !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
+    $("connection-error").textContent = "Use HTTPS for remote APIs to protect the private access key.";
+    $("connection-error").hidden = false;
+    return;
+  }
   state.apiBase = url.origin + url.pathname.replace(/\/+$/, "");
   state.apiToken = $("api-token").value;
   $("api-token").value = "";
