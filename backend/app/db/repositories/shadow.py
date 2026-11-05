@@ -184,7 +184,19 @@ class ShadowPredictionRepository:
             kickoff_utc=_ensure_utc(pred.kickoff_utc),
         ).first()
         if existing_dup is not None:
-            return existing_dup, False
+            if strict_live:
+                previous_run = existing_dup.prediction_run
+                # A crashed worker may have persisted a forecast but never
+                # finalized its run. That orphan must not permanently prevent
+                # a new, verified pre-kickoff prediction on the same snapshot.
+                if (
+                    previous_run is not None
+                    and previous_run.status in ("SUCCESS", "PARTIAL_SUCCESS")
+                    and previous_run.completed_at is not None
+                ):
+                    return existing_dup, False
+            else:
+                return existing_dup, False
 
         # Only replay/test persistence may create fixture stubs. Real live
         # predictions must already have a verified canonical match + snapshot.
