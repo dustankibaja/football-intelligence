@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "postinstall": "node scripts/bootstrap.js"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.0"
