@@ -110,7 +110,7 @@ function render() {
   $('provider-errors').textContent = [data.refreshError,
     ...errors.map(x => `${x.competition}: ${x.code}`)].filter(Boolean).join(' · ');
 }
-async function refresh() {
+async function refresh(manual = false) {
   const button = $('refresh');
   button.disabled = true; button.textContent = '↻ Checking provider…';
   try {
