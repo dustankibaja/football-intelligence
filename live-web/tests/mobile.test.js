@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 
-const root = resolve(import.meta.dirname, '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = path => readFileSync(resolve(root, path), 'utf8');
 
 test('PWA manifest has a stable scope and real install icons', () => {
@@ -37,6 +38,9 @@ test('mobile layout provides viewport-safe touch navigation and install hints', 
   assert.match(html, /id="predictions"/);
   assert.match(html, /id="history"/);
   assert.match(html, /id="performance"/);
+  assert.ok(html.indexOf('id="predictions"') < html.indexOf('id="history"'));
+  assert.ok(html.indexOf('id="history"') < html.indexOf('id="performance"'));
+  assert.ok(html.indexOf('id="performance"') < html.indexOf('id="results"'));
   assert.match(html, /aria-label="Mobile app navigation"/);
   assert.match(html, /id="install-app"/);
   assert.match(html, /id="connection-banner"/);
