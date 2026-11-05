@@ -326,6 +326,11 @@ class LiveFootballDataClient(LiveFootballDataProvider):
         """Internal dispatch with error classification, headers, and rate limiting."""
         url = f"{self._base_url}{endpoint}"
 
+        # The provider publishes remaining minute quota. Never knowingly
+        # exceed it during multi-window backfill or final-score polling.
+        if self._rate_limit_state.remaining is not None and self._rate_limit_state.remaining <= 0:
+            self.clock.sleep(max(60, self._rate_limit_state.reset_seconds or 60))
+
         if self.transport is not None:
             # Test double transport execution
             status_code, headers, body_str = self.transport(endpoint)
