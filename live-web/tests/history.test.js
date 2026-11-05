@@ -44,7 +44,7 @@ test('history marks correct, incorrect, pending and pre-trial games separately',
     normalizeFinished(match(4, 0, 0), league, now)
   ];
   const predictions = [1, 2, 3].map(id => ({
-    forecastKey: `${id}:2026-11-04T18:00:00.000Z`,
+    forecastKey: `${id}:2026-11-04T18:00:00Z`,
     fixtureId: String(id), kickoffUtc: '2026-11-04T18:00:00.000Z',
     generatedAt: '2026-11-03T12:00:00Z',
     p1x2: id === 1 ? [0.6, 0.2, 0.2]
