@@ -495,7 +495,7 @@ def test_live_watchdog_uses_real_run_freshness(fake_clock: FakeClock):
     # Recent run -> HEALTHY
     h1 = wd.check_health(
         database_reachable=True,
-        current_alembic_head="20261023_0006",
+        current_alembic_head="20261105_0007",
         provider_configured=True,
         last_successful_run=fake_clock.now() - timedelta(hours=2),
     )
@@ -504,7 +504,7 @@ def test_live_watchdog_uses_real_run_freshness(fake_clock: FakeClock):
     # Stale run -> STALE
     h2 = wd.check_health(
         database_reachable=True,
-        current_alembic_head="20261023_0006",
+        current_alembic_head="20261105_0007",
         provider_configured=True,
         last_successful_run=fake_clock.now() - timedelta(hours=25),
     )
