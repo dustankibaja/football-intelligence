@@ -81,6 +81,11 @@ class PointInTimeQueryService:
 
         query = self.db.query(Match).filter(
             Match.status == "FINISHED",
+            Match.home_score.isnot(None),
+            Match.away_score.isnot(None),
+            # A finished result observed after the prediction cutoff is
+            # forbidden even when the match kicked off earlier.
+            (Match.completed_at.is_(None)) | (Match.completed_at < cutoff_timestamp),
         )
 
         if self.enforce_date_only_precision:
@@ -132,6 +137,9 @@ class PointInTimeQueryService:
 
         query = self.db.query(Match).join(Match.season).filter(
             Match.status == "FINISHED",
+            Match.home_score.isnot(None),
+            Match.away_score.isnot(None),
+            (Match.completed_at.is_(None)) | (Match.completed_at < cutoff_timestamp),
         )
 
         if self.enforce_date_only_precision:
