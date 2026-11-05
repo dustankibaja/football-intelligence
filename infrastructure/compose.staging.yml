@@ -42,6 +42,29 @@ services:
     tmpfs: [/tmp]
     networks: [internal]
 
+  worker:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python", "-m", "app.automation.worker", "--interval-seconds", "21600"]
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      POSTGRES_SERVER: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-football_intelligence}
+      LIVE_DATA_API_KEY: ${LIVE_DATA_API_KEY:?Set the authorized live provider key}
+    read_only: true
+    tmpfs: [/tmp]
+    stop_grace_period: 30s
+    networks: [internal]
+
   web:
     image: nginx:1.27-alpine
     restart: unless-stopped
