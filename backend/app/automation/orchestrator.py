@@ -153,6 +153,10 @@ class OperationalOrchestrator:
             run_status=OperationalRunStatus.STARTED,
         )
 
+        # Dry-run lease is process-local: no scheduler-lease SQL writes.
+        active_lease_manager = (
+            LeaseManager(clock=self.clock) if dry_run else self.lease_manager
+        )
         lease_acquired = False
         current_lease: LeaseRecord | None = None
 
@@ -161,7 +165,7 @@ class OperationalOrchestrator:
             summary.run_status = OperationalRunStatus.RUNNING
 
             # Stage 2: Acquire Distributed Scheduler Lease + Monotonic Fencing Token
-            acquired, lease = self.lease_manager.acquire(
+            acquired, lease = active_lease_manager.acquire(
                 lease_name="operational_scheduler_lease",
                 lease_owner=self.scheduler_instance_id,
                 ttl_seconds=60.0,
@@ -204,7 +208,7 @@ class OperationalOrchestrator:
                 summary.provider_status = "CONNECTED"
                 # Incremental recent-result history ingestion is real-provider
                 # sourced and precedes PIT feature materialization.
-                if hasattr(self.live_provider, "get_recent_finished_matches"):
+                if not dry_run and hasattr(self.live_provider, "get_recent_finished_matches"):
                     from app.providers.live.history import LiveHistoryIngestor
                     finished_history = self._handle_provider_call_with_retry(
                         lambda: self.live_provider.get_recent_finished_matches(
@@ -254,7 +258,7 @@ class OperationalOrchestrator:
             current_time = self.clock.now()
             # Stage 8: Genuine Phase 6.2 PIT materialization. A provider
             # fixture DTO is never accepted as a feature snapshot.
-            if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and not dry_run:
                 from app.features.live import (
                     LiveFeatureMaterializationError,
                     LiveFeatureMaterializer,
@@ -305,7 +309,7 @@ class OperationalOrchestrator:
 
             # Stage 9: Generate Due Shadow Predictions (Phase 6.3)
             # Stale worker protection check before making protected prediction commit
-            if not self.lease_manager.validate_token("operational_scheduler_lease", self.scheduler_instance_id, current_lease.fencing_token):
+            if not active_lease_manager.validate_token("operational_scheduler_lease", self.scheduler_instance_id, current_lease.fencing_token):
                 raise OperationalException(
                     ErrorCategory.INTERNAL,
                     Retryability.PERMANENT,
@@ -604,14 +608,14 @@ class OperationalOrchestrator:
         finally:
             # Stage 13: Release Lease if held
             if lease_acquired and current_lease is not None:
-                self.lease_manager.release(
+                active_lease_manager.release(
                     lease_name="operational_scheduler_lease",
                     lease_owner=self.scheduler_instance_id,
                     fencing_token=current_lease.fencing_token,
                 )
 
             # Persist OperationalRun record if session_factory is active
-            if self.session_factory is not None:
+            if self.session_factory is not None and not dry_run:
                 self._persist_operational_run_summary(summary)
 
         return summary
