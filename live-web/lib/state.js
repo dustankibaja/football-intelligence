@@ -1,6 +1,6 @@
 import { get, put, list } from '@vercel/blob';
 import { predictFixture, evaluateForecast, summarizeEvaluations,
-  MODEL_ID } from './model.js';
+  MODEL_ID, walkForwardBacktest } from './model.js';
 import { fetchRealFixtures } from './provider.js';
 
 const PREFIX = 'footmo/private-trial/snapshots/';
@@ -8,7 +8,7 @@ const HOURS = 60 * 60 * 1000;
 const emptyState = () => ({
   schema: 1, source: 'football-data.org/v4', model: MODEL_ID,
   lastRefreshAt: null, predictions: [], evaluations: [],
-  providerErrors: [], leagueCounts: []
+  providerErrors: [], leagueCounts: [], backtest: null
 });
 
 export async function readState() {
@@ -76,6 +76,23 @@ function applyProviderData(previous, feed, now) {
     competition: x.name, finished: x.finished.length,
     scheduled: x.upcoming.length
   }));
+  const byLeague = feed.leagues.map(x => ({
+    competition: x.name, ...walkForwardBacktest(x.finished)
+  }));
+  const total = byLeague.reduce((sum, x) => sum + x.sampleSize, 0);
+  const weighted = key => total ? Math.round(
+    byLeague.reduce((sum, x) => sum + x.sampleSize * (x[key] || 0), 0) /
+    total * 1000000) / 1000000 : null;
+  data.backtest = {
+    sampleSize: total,
+    status: total < 50 ? 'SMALL_SAMPLE' : 'RETROSPECTIVE_ONLY',
+    meanLogLoss1x2: weighted('meanLogLoss1x2'),
+    meanBrier1x2: weighted('meanBrier1x2'),
+    meanBttsLogLoss: weighted('meanBttsLogLoss'),
+    meanOu25LogLoss: weighted('meanOu25LogLoss'),
+    top1ScoreHitRate: weighted('top1ScoreHitRate'),
+    perLeague: byLeague
+  };
   return { data, created, evaluated };
 }
 
@@ -102,7 +119,8 @@ export function viewState(data, now = new Date()) {
     leagueCounts: data.leagueCounts,
     upcoming: upcoming.slice(0, 100),
     results: evaluations.slice(0, 100),
-    performance: summarizeEvaluations(evaluations)
+    performance: summarizeEvaluations(evaluations),
+    backtest: data.backtest || null
   };
 }
 
