@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_v1_router
 from app.core.config import settings
@@ -34,6 +35,17 @@ def create_application() -> FastAPI:
         debug=settings.DEBUG,
         lifespan=lifespan,
     )
+
+    # No wildcard CORS: explicit browser origins only.
+    origins = [o.strip() for o in settings.CUSTOMER_ALLOWED_ORIGINS.split(",") if o.strip()]
+    if origins and "*" not in origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=False,
+            allow_methods=["GET"],
+            allow_headers=["X-Footmo-API-Key", "Accept"],
+        )
 
     # Register API v1 Router
     app.include_router(api_v1_router, prefix="/api/v1")

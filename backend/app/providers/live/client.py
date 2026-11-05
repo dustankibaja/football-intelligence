@@ -193,6 +193,90 @@ class LiveFootballDataClient(LiveFootballDataProvider):
 
         return fixtures
 
+    def get_recent_finished_matches(
+        self, days_back: int = 7, window_days: int = 7,
+    ) -> list[dict[str, Any]]:
+        """Read actual recent final scores in bounded date windows.
+
+        Intended for explicitly scheduled history synchronization, not a
+        synthetic historical backfill. The provider's quota still applies.
+        """
+        from uuid import NAMESPACE_URL, uuid5
+
+        if not self._api_key and not self.transport:
+            raise PermanentProviderError(
+                "PROVIDER_AUTHENTICATION_MISSING", "LIVE_DATA_API_KEY is not configured."
+            )
+        if not (1 <= days_back <= 365 and 1 <= window_days <= 7):
+            raise ValueError("HISTORY_WINDOW_OUT_OF_BOUNDS")
+        now = self.clock.now()
+        start = now - timedelta(days=days_back)
+        output: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        while start < now:
+            end = min(start + timedelta(days=window_days), now)
+            endpoint = (
+                f"/matches?dateFrom={start:%Y-%m-%d}"
+                f"&dateTo={end:%Y-%m-%d}&status=FINISHED"
+            )
+            data = self._make_request(endpoint)
+            for raw in data.get("matches", []):
+                clean = OddsExclusionPolicy.sanitize_payload(raw)
+                if clean.get("status") != "FINISHED":
+                    continue
+                comp_info = clean.get("competition") or {}
+                comp_id = comp_info.get("id") or comp_info.get("code")
+                if not ProviderCompetitionMapper.is_supported(comp_id):
+                    continue
+                home = clean.get("homeTeam") or {}
+                away = clean.get("awayTeam") or {}
+                home_id = self.team_mapper.map_team(
+                    str(home.get("id", "")), home.get("name", ""), allow_unresolved=True
+                )
+                away_id = self.team_mapper.map_team(
+                    str(away.get("id", "")), away.get("name", ""), allow_unresolved=True
+                )
+                season = clean.get("season") or {}
+                start_date = season.get("startDate")
+                end_date = season.get("endDate")
+                kickoff_str = clean.get("utcDate")
+                scores = (clean.get("score") or {}).get("fullTime") or {}
+                h_score, a_score = scores.get("home"), scores.get("away")
+                provider_id = str(clean.get("id", ""))
+                if (
+                    not provider_id or provider_id in seen or not kickoff_str
+                    or not start_date or not end_date
+                    or not isinstance(h_score, int) or not isinstance(a_score, int)
+                    or h_score < 0 or a_score < 0
+                ):
+                    continue
+                kickoff = datetime.fromisoformat(
+                    kickoff_str.replace("Z", "+00:00")
+                ).astimezone(UTC)
+                if kickoff >= now:
+                    continue
+                seen.add(provider_id)
+                output.append({
+                    "provider_name": self.provider_name,
+                    "provider_fixture_id": provider_id,
+                    "fixture_id": uuid5(NAMESPACE_URL, f"{self.provider_name}:{provider_id}"),
+                    "competition_code": ProviderCompetitionMapper.map_competition(comp_id),
+                    "season_year": start_date[:4],
+                    "season_start_date": start_date,
+                    "season_end_date": end_date,
+                    "home_team_id": home_id,
+                    "away_team_id": away_id,
+                    "kickoff_utc": kickoff,
+                    "home_score": h_score,
+                    "away_score": a_score,
+                    "status": "FINISHED",
+                    "payload_fingerprint": compute_payload_fingerprint(clean),
+                    "retrieved_at_utc": now,
+                    "is_mapped": home_id is not None and away_id is not None,
+                })
+            start = end
+        return output
+
     def get_fixture_results(
         self,
         provider_fixture_ids: list[str],
@@ -241,6 +325,11 @@ class LiveFootballDataClient(LiveFootballDataProvider):
     def _make_request(self, endpoint: str) -> dict[str, Any]:
         """Internal dispatch with error classification, headers, and rate limiting."""
         url = f"{self._base_url}{endpoint}"
+
+        # The provider publishes remaining minute quota. Never knowingly
+        # exceed it during multi-window backfill or final-score polling.
+        if self._rate_limit_state.remaining is not None and self._rate_limit_state.remaining <= 0:
+            self.clock.sleep(max(60, self._rate_limit_state.reset_seconds or 60))
 
         if self.transport is not None:
             # Test double transport execution

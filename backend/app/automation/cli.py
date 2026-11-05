@@ -39,8 +39,11 @@ def ops_run_once(argv: Sequence[str] | None = None) -> int:
     print(f"Evaluations Created: {summary.evaluations_created}, Reused: {summary.evaluations_reused}")
     print(f"Alerts Created: {summary.alerts_created}")
 
-    if summary.run_status in (OperationalRunStatus.SUCCESS, OperationalRunStatus.PARTIAL_SUCCESS):
+    if summary.run_status == OperationalRunStatus.SUCCESS:
         return 0
+    elif summary.run_status == OperationalRunStatus.PARTIAL_SUCCESS:
+        print(f"Partial: {summary.failure_code} - {summary.failure_summary}")
+        return 3
     elif summary.run_status == OperationalRunStatus.ABORTED:
         print(f"Aborted: {summary.failure_code} - {summary.failure_summary}")
         return 2
@@ -68,8 +71,55 @@ def ops_dry_run(argv: Sequence[str] | None = None) -> int:
 
 
 def ops_health(argv: Sequence[str] | None = None) -> int:
+    from datetime import UTC
+    from sqlalchemy import text
+    from app.core.config import settings
+    from app.db.models.automation import OperationalRun
+    from app.db.models.shadow import ShadowPrediction
+    from app.prediction.frozen_inference import FrozenArtifactInference
+
+    database_reachable = False
+    db_head = "UNREACHABLE"
+    last_successful_run = None
+    last_prediction_activity = None
+    try:
+        with SessionLocal() as session:
+            session.execute(text("SELECT 1"))
+            db_head = session.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+            last_run = session.query(OperationalRun).filter_by(
+                run_status="SUCCESS"
+            ).order_by(OperationalRun.completed_at.desc()).first()
+            if last_run:
+                last_successful_run = last_run.completed_at
+                if last_successful_run is not None and last_successful_run.tzinfo is None:
+                    last_successful_run = last_successful_run.replace(tzinfo=UTC)
+            last_prediction = session.query(ShadowPrediction).filter(
+                ShadowPrediction.score_matrix.isnot(None)
+            ).order_by(ShadowPrediction.generated_at.desc()).first()
+            if last_prediction:
+                last_prediction_activity = last_prediction.generated_at
+                if last_prediction_activity.tzinfo is None:
+                    last_prediction_activity = last_prediction_activity.replace(tzinfo=UTC)
+            database_reachable = True
+    except Exception:
+        pass
+
+    try:
+        FrozenArtifactInference().verify()
+        models_valid = True
+    except Exception:
+        models_valid = False
+
     watchdog = HealthWatchdog()
-    health = watchdog.check_health()
+    health = watchdog.check_health(
+        database_reachable=database_reachable,
+        current_alembic_head=db_head,
+        c1_available=models_valid,
+        m1_available=models_valid,
+        last_successful_run=last_successful_run,
+        last_prediction_activity=last_prediction_activity,
+        provider_configured=bool(settings.LIVE_DATA_API_KEY),
+    )
 
     print(f"Operational Health: {health.health_state.value}")
     print(f"Database Reachable: {health.database_reachable}")
@@ -86,9 +136,20 @@ def ops_health(argv: Sequence[str] | None = None) -> int:
 
 
 def ops_status(argv: Sequence[str] | None = None) -> int:
-    print("Operational Status: Attended / Unattended orchestration ready.")
-    print("Execution Modes: REPLAY_CERTIFICATION (active), LIVE_SHADOW (pending credentials)")
-    return 0
+    from app.db.models.automation import OperationalRun
+    try:
+        with SessionLocal() as session:
+            runs = session.query(OperationalRun).order_by(
+                OperationalRun.started_at.desc()
+            ).limit(5).all()
+            if not runs:
+                print("No persisted operational runs found.")
+            for run in runs:
+                print(f"{run.started_at} {run.execution_mode} {run.run_status} {run.failure_code or ''}")
+        return 0
+    except Exception as exc:
+        print(f"Operational status unavailable: {type(exc).__name__}")
+        return 1
 
 
 if __name__ == "__main__":

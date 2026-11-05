@@ -101,12 +101,69 @@ class ShadowPredictionRepository:
         session.flush()
         return match_row
 
+    @staticmethod
+    def verify_certified_live_prediction(
+        session: Session, pred: ShadowPredictionResult, allow_running: bool = False
+    ) -> None:
+        """Strict live-only validation. Legacy replay rows remain quarantined."""
+        from app.prediction.frozen_inference import (
+            EXPECTED_C1_FINGERPRINT, EXPECTED_M1_FINGERPRINT,
+        )
+
+        if (
+            pred.feature_snapshot_id is None
+            or pred.prediction_run_id is None
+            or pred.score_matrix is None
+            or pred.c1_artifact_fingerprint != EXPECTED_C1_FINGERPRINT
+            or pred.m1_artifact_fingerprint != EXPECTED_M1_FINGERPRINT
+            or len(pred.feature_snapshot_fingerprint) != 64
+            or len(pred.history_fingerprint) != 64
+        ):
+            raise ValueError("UNCERTIFIED_LIVE_PREDICTION_PROVENANCE")
+
+        run = session.query(ShadowPredictionRun).filter_by(
+            id=pred.prediction_run_id
+        ).first()
+        if run is None or run.status not in ("RUNNING", "SUCCESS", "PARTIAL_SUCCESS"):
+            raise ValueError("LIVE_PREDICTION_RUN_INVALID")
+        if not allow_running and (
+            run.status not in ("SUCCESS", "PARTIAL_SUCCESS")
+            or run.completed_at is None
+        ):
+            raise ValueError("LIVE_PREDICTION_RUN_NOT_FINALIZED")
+        match = session.query(Match).filter_by(id=pred.fixture_id).first()
+        snapshot = session.query(FeatureSnapshot).filter_by(
+            id=pred.feature_snapshot_id, match_id=pred.fixture_id
+        ).first()
+        if match is None or snapshot is None:
+            raise ValueError("LIVE_MATCH_OR_FEATURE_SNAPSHOT_NOT_PERSISTED")
+        meta = snapshot.data_quality_metadata or {}
+        if (
+            meta.get("fingerprint_sha256") != pred.feature_snapshot_fingerprint
+            or meta.get("history_fingerprint") != pred.history_fingerprint
+            or not meta.get("source_provider")
+            or not meta.get("source_fixture_id")
+        ):
+            raise ValueError("LIVE_SNAPSHOT_LINEAGE_MISMATCH")
+        if _ensure_utc(match.kickoff_utc) != _ensure_utc(pred.kickoff_utc):
+            raise ValueError("LIVE_KICKOFF_IDENTITY_MISMATCH")
+        if pred.generated_at >= pred.kickoff_utc:
+            raise ValueError("POST_KICKOFF_PREDICTION_PROHIBITED")
+        import hashlib
+        import json
+        matrix_hash = hashlib.sha256(
+            json.dumps(pred.score_matrix, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        if matrix_hash != pred.exact_score_matrix_fingerprint:
+            raise ValueError("LIVE_FULL_SCORE_MATRIX_TAMPERED")
+
     @classmethod
     def persist_prediction(
         cls,
         session: Session,
         pred: ShadowPredictionResult,
         fixture_meta: dict[str, Any] | None = None,
+        strict_live: bool = False,
     ) -> tuple[ShadowPrediction, bool]:
         """
         Persists a single ShadowPredictionResult into the shadow_predictions table.
@@ -127,10 +184,26 @@ class ShadowPredictionRepository:
             kickoff_utc=_ensure_utc(pred.kickoff_utc),
         ).first()
         if existing_dup is not None:
-            return existing_dup, False
+            if strict_live:
+                previous_run = existing_dup.prediction_run
+                # A crashed worker may have persisted a forecast but never
+                # finalized its run. That orphan must not permanently prevent
+                # a new, verified pre-kickoff prediction on the same snapshot.
+                if (
+                    previous_run is not None
+                    and previous_run.status in ("SUCCESS", "PARTIAL_SUCCESS")
+                    and previous_run.completed_at is not None
+                ):
+                    return existing_dup, False
+            else:
+                return existing_dup, False
 
-        # Ensure foreign key on matches table
-        cls._ensure_match_exists(session, pred.fixture_id, pred.kickoff_utc, fixture_meta)
+        # Only replay/test persistence may create fixture stubs. Real live
+        # predictions must already have a verified canonical match + snapshot.
+        if strict_live:
+            cls.verify_certified_live_prediction(session, pred, allow_running=True)
+        else:
+            cls._ensure_match_exists(session, pred.fixture_id, pred.kickoff_utc, fixture_meta)
 
         # Check optional FKs
         run_fk = None
@@ -138,8 +211,10 @@ class ShadowPredictionRepository:
             run_row = session.query(ShadowPredictionRun).filter_by(id=pred.prediction_run_id).first()
             if run_row is not None:
                 run_fk = run_row.id
+            elif strict_live:
+                raise ValueError("LIVE_PREDICTION_RUN_NOT_PERSISTED")
             else:
-                # Create stub run row to satisfy foreign key
+                # Legacy replay-only stub, forbidden in live persistence.
                 stub_run = ShadowPredictionRun(
                     id=pred.prediction_run_id,
                     started_at=_ensure_utc(pred.generated_at),
@@ -154,6 +229,8 @@ class ShadowPredictionRepository:
             snap_row = session.query(FeatureSnapshot).filter_by(id=pred.feature_snapshot_id).first()
             if snap_row is not None:
                 snap_fk = snap_row.id
+        if strict_live and snap_fk is None:
+            raise ValueError("LIVE_FEATURE_SNAPSHOT_NOT_PERSISTED")
 
         db_pred = ShadowPrediction(
             id=pred.prediction_id,
@@ -190,6 +267,7 @@ class ShadowPredictionRepository:
             under_2_5=pred.under_2_5,
             exact_score_matrix_fingerprint=pred.exact_score_matrix_fingerprint,
             top_scorelines=pred.top_scorelines,
+            score_matrix=pred.score_matrix,
             quality_state=pred.quality_state,
             quality_reasons=pred.quality_reasons,
             fallback_used=pred.fallback_used,
@@ -288,6 +366,7 @@ class ShadowPredictionRepository:
                 under_2_5=float(p.under_2_5),
                 exact_score_matrix_fingerprint=p.exact_score_matrix_fingerprint,
                 top_scorelines=p.top_scorelines,
+                score_matrix=p.score_matrix,
                 quality_state=p.quality_state,
                 quality_reasons=p.quality_reasons,
                 fallback_used=p.fallback_used,

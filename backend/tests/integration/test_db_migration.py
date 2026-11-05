@@ -22,7 +22,7 @@ def test_alembic_migration_head_revision_resolves():
     script_dir = ScriptDirectory.from_config(alembic_cfg)
     head_revision = script_dir.get_current_head()
 
-    assert head_revision == "20261023_0006"
+    assert head_revision == "20261105_0007"
 
 
 @pytest.mark.integration

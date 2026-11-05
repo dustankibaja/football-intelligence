@@ -16,7 +16,46 @@ on:
 permissions:
   contents: read
 
+# Keep only the newest PR revision under test; older commits cannot certify
+# the current branch and would waste CI minutes during rapid development.
+concurrency:
+  group: footmo-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  frontend-smoke:
+    name: Footmo Frontend Syntax and Asset Integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax and required files
+        run: |
+          node --check frontend/app.js
+          node --check live-web/app.js
+          node --check live-web/sw.js
+          test -s live-web/manifest.webmanifest
+          test -s live-web/offline.html
+          for file in live-web/api/*.js live-web/lib/*.js; do node --check "$file"; done
+          node --test live-web/tests/*.test.js
+          test -s live-web/index.html
+          test -s live-web/styles.css
+          test -s frontend/index.html
+          test -s frontend/styles.css
+          test -s frontend/README.md
+      - name: Validate private staging Compose topology
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-test-only
+          CUSTOMER_API_TOKEN: ci-test-only
+          LIVE_DATA_API_KEY: ci-placeholder-not-a-live-provider-key
+        run: docker compose -f infrastructure/compose.staging.yml config -q
+      - name: Check Python compilation and new-code fatal errors
+        run: |
+          python -m compileall -q backend/app
+          python -m pip install ruff
+          ruff check backend/app/prediction/frozen_inference.py backend/app/features/live.py backend/app/api/v1/security.py backend/app/api/v1/endpoints backend/app/automation/worker.py backend/app/evaluation/summary.py --select E9,F63,F7,F82
+
   lint-policy:
     name: Codebase Lint Policy (Ruff)
     runs-on: ubuntu-latest
@@ -120,7 +159,7 @@ jobs:
         run: |
           DB_HEAD=$(psql -h localhost -p 5432 -U postgres -d football_intelligence_test -t -A -c "SELECT version_num FROM alembic_version;")
           echo "Database Alembic revision: $DB_HEAD"
-          if [ "$DB_HEAD" != "20261023_0006" ]; then
+          if [ "$DB_HEAD" != "20261105_0007" ]; then
             echo "ERROR: Database revision ($DB_HEAD) does not match expected repository head (20261023_0006)"
             exit 1
           fi
