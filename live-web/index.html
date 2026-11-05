@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071321">
+  <meta name="description" content="Footmo private football intelligence trial: source-backed pre-match probabilities and observed post-match performance.">
+  <title>Footmo · Football Intelligence</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Footmo home">
+        <span class="brand-mark">F<span>•</span></span>
+        <span>FOOTMO<small>FOOTBALL INTELLIGENCE</small></span>
+      </a>
+      <div class="top-right">
+        <span class="pill"><span class="dot"></span> PRIVATE SCIENTIFIC TRIAL</span>
+        <button id="refresh" class="refresh" type="button">↻ Refresh data</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">LIVE DATA. MEASURED UNCERTAINTY.</div>
+        <h1>Football, <em>without the guesswork.</em></h1>
+        <p>Upcoming fixtures, pre-kickoff probabilities, final results, and measurable forecasting performance. Every published probability comes from observed football data.</p>
+        <div class="hero-meta"><span id="last-update">Connecting to live provider…</span><span id="status" class="status">Loading</span></div>
+      </div>
+      <div class="hero-graphic" aria-hidden="true">
+        <div class="orb orb-one"></div><div class="orb orb-two"></div>
+        <div class="chartline"><span>1</span><span>X</span><span>2</span></div>
+        <div class="graphbars"><i style="height:70%"></i><i style="height:48%"></i><i style="height:36%"></i><i style="height:86%"></i><i style="height:62%"></i><i style="height:100%"></i><i style="height:52%"></i></div>
+      </div>
+    </section>
+
+    <section class="section metrics-section" aria-labelledby="metrics-title">
+      <div class="section-header"><div><div class="eyebrow">POST-MATCH VERIFICATION</div><h2 id="metrics-title">Scientific performance</h2></div><div id="sample-label" class="sample">Awaiting observed results</div></div>
+      <div class="metrics" id="metrics">
+        <div class="metric"><span>Evaluated fixtures</span><strong>—</strong></div>
+        <div class="metric"><span>1X2 log loss ↓</span><strong>—</strong></div>
+        <div class="metric"><span>1X2 Brier ↓</span><strong>—</strong></div>
+        <div class="metric"><span>BTTS log loss ↓</span><strong>—</strong></div>
+        <div class="metric"><span>Over/Under log loss ↓</span><strong>—</strong></div>
+        <div class="metric"><span>Exact-score hit rate</span><strong>—</strong></div>
+      </div>
+      <p class="fineprint">Lower log loss and Brier scores are better. Results are calculated only after actual full-time scores are observed. No guaranteed outcomes or fabricated accuracy.</p>
+    </section>
+
+    <section class="section" aria-labelledby="fixtures-title">
+      <div class="section-header"><div><div class="eyebrow">NEXT 14 DAYS</div><h2 id="fixtures-title">Upcoming predictions</h2></div><span id="fixture-count" class="sample">— fixtures</span></div>
+      <div class="filters" id="filters" aria-label="Competition filter">
+        <button class="active" type="button" data-league="ALL">All leagues</button>
+        <button type="button" data-league="PL">Premier League</button>
+        <button type="button" data-league="PD">La Liga</button>
+        <button type="button" data-league="SA">Serie A</button>
+        <button type="button" data-league="BL1">Bundesliga</button>
+      </div>
+      <div class="fixtures" id="fixtures"><div class="empty">Loading real upcoming fixtures…</div></div>
+    </section>
+
+    <section class="section" aria-labelledby="results-title">
+      <div class="section-header"><div><div class="eyebrow">OBSERVED AFTER FULL TIME</div><h2 id="results-title">Results &amp; evaluation</h2></div><span id="result-count" class="sample">— evaluated</span></div>
+      <div class="results" id="results"><div class="empty">Waiting for verified final scores…</div></div>
+    </section>
+    <section class="science-note">
+      <strong>Model transparency</strong>
+      <p id="science-copy">Footmo is operating a private, provisional empirical Poisson trial. This deployment does not claim certification of the frozen C1/M1 scientific champion. All probabilities are estimates, not betting guarantees. Data: football-data.org.</p>
+      <p id="provider-errors" class="provider-errors" hidden></p>
+    </section>
+  </main>
+  <footer><span>FOOTMO / SCIENTIFIC PRIVATE TRIAL</span><span>Source-backed forecasts · Immutable result versions · No invented data</span></footer>
+</body>
+</html>
