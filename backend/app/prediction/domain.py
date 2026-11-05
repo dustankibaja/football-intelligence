@@ -30,13 +30,15 @@ class ShadowPredictionInput:
     feature_snapshot_fingerprint: str
     history_fingerprint: str
     feature_count: int
-    feature_values: list[float]
+    feature_values: list[float | None]
     feature_keys: list[str]
     snapshot_quality_state: str = "VALID"
     missingness_count: int = 0
     drift_psi: float = 0.0
     known_cold_start: bool = False
     critical_feature_absent: bool = False
+    competition_id: UUID | None = None
+    season_id: UUID | None = None
 
 
 @dataclass
