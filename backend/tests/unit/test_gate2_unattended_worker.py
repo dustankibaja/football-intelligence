@@ -12,7 +12,7 @@ def test_worker_retries_failed_cycle_then_succeeds():
     runs = run_scheduler(
         interval_seconds=300, stop_event=threading.Event(),
         run_cycle=lambda: seen.append(next(results)) or seen[-1],
-        max_cycles=3,
+        max_cycles=3, wait=lambda _: False,
     )
     assert runs == 3
     assert seen == [3, 1, 0]
