@@ -47,20 +47,6 @@
       </div>
     </section>
 
-    <section class="section metrics-section" id="performance" aria-labelledby="metrics-title">
-      <div class="section-header"><div><div class="eyebrow">POST-MATCH VERIFICATION</div><h2 id="metrics-title">Scientific performance</h2></div><div id="sample-label" class="sample">Awaiting observed results</div></div>
-      <div class="metrics" id="metrics">
-        <div class="metric"><span>Evaluated fixtures</span><strong>—</strong></div>
-        <div class="metric"><span>1X2 log loss ↓</span><strong>—</strong></div>
-        <div class="metric"><span>1X2 Brier ↓</span><strong>—</strong></div>
-        <div class="metric"><span>BTTS log loss ↓</span><strong>—</strong></div>
-        <div class="metric"><span>Over/Under log loss ↓</span><strong>—</strong></div>
-        <div class="metric"><span>Exact-score hit rate</span><strong>—</strong></div>
-      </div>
-      <p class="fineprint">Lower log loss and Brier scores are better. Results are calculated only after actual full-time scores are observed. No guaranteed outcomes or fabricated accuracy.</p>
-      <p id="backtest-summary" class="backtest-note">Calculating the independent retrospective walk-forward benchmark from actual current-season scores…</p>
-    </section>
-
     <section class="section" id="predictions" aria-labelledby="fixtures-title">
       <div class="section-header"><div><div class="eyebrow">FIXTURE EXPLORER</div><h2 id="fixtures-title">Upcoming predictions</h2></div><span id="fixture-count" class="sample">— fixtures</span></div>
       <div class="filter-label">Show matches kicking off within</div>
@@ -81,10 +67,6 @@
       <div class="fixtures" id="fixtures"><div class="empty">Loading real upcoming fixtures…</div></div>
     </section>
 
-    <section class="section" id="results" aria-labelledby="results-title">
-      <div class="section-header"><div><div class="eyebrow">OBSERVED AFTER FULL TIME</div><h2 id="results-title">Results &amp; evaluation</h2></div><span id="result-count" class="sample">— evaluated</span></div>
-      <div class="results" id="results"><div class="empty">Waiting for verified final scores…</div></div>
-    </section>
     <section class="section history-section" id="history" aria-labelledby="history-title">
       <div class="section-header"><div><div class="eyebrow">FULL-TIME RESULTS &amp; FORECAST AUDIT</div><h2 id="history-title">Match history</h2></div><span id="history-count" class="sample">— matches</span></div>
       <p class="history-intro">See who actually won, the final score, and whether Footmo’s pre-match 1X2 pick was correct. Matches played before Footmo started are labelled <strong>Not predicted</strong> — they never count as wins or losses for the model.</p>
@@ -115,6 +97,24 @@
       <div class="history-list" id="history-list"><div class="empty">Loading verified football results…</div></div>
       <button id="history-more" class="load-more" type="button" hidden>Load more results</button>
       <p class="fineprint">Correct/incorrect means the most likely 1X2 outcome matched or did not match the final result; it is not a betting profit/loss calculation. History comes from football-data.org. Results can be revised by the provider.</p>
+    </section>
+    <section class="section metrics-section" id="performance" aria-labelledby="metrics-title">
+      <div class="section-header"><div><div class="eyebrow">POST-MATCH VERIFICATION</div><h2 id="metrics-title">Scientific performance</h2></div><div id="sample-label" class="sample">Awaiting observed results</div></div>
+      <div class="metrics" id="metrics">
+        <div class="metric"><span>Evaluated fixtures</span><strong>—</strong></div>
+        <div class="metric"><span>1X2 log loss ↓</span><strong>—</strong></div>
+        <div class="metric"><span>1X2 Brier ↓</span><strong>—</strong></div>
+        <div class="metric"><span>BTTS log loss ↓</span><strong>—</strong></div>
+        <div class="metric"><span>Over/Under log loss ↓</span><strong>—</strong></div>
+        <div class="metric"><span>Exact-score hit rate</span><strong>—</strong></div>
+      </div>
+      <p class="fineprint">Lower log loss and Brier scores are better. Results are calculated only after actual full-time scores are observed. No guaranteed outcomes or fabricated accuracy.</p>
+      <p id="backtest-summary" class="backtest-note">Calculating the independent retrospective walk-forward benchmark from actual current-season scores…</p>
+    </section>
+
+    <section class="section" id="results" aria-labelledby="results-title">
+      <div class="section-header"><div><div class="eyebrow">OBSERVED AFTER FULL TIME</div><h2 id="results-title">Results &amp; evaluation</h2></div><span id="result-count" class="sample">— evaluated</span></div>
+      <div class="results" id="results"><div class="empty">Waiting for verified final scores…</div></div>
     </section>
     <section class="science-note">
       <strong>Model transparency</strong>
