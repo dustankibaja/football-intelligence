@@ -99,7 +99,10 @@ def list_predictions(
         ShadowPrediction.m1_artifact_fingerprint == EXPECTED_M1_FINGERPRINT,
         ShadowPrediction.generated_at < ShadowPrediction.kickoff_utc,
         ShadowPrediction.kickoff_utc > datetime.now(UTC),
-    ).order_by(ShadowPrediction.kickoff_utc.asc()).limit(1000).all()
+    ).order_by(
+        ShadowPrediction.kickoff_utc.asc(),
+        ShadowPrediction.generated_at.desc(),
+    ).limit(1000).all()
     # A single earliest verified forecast per upcoming fixture.
     # Historical forecasts belong in evaluations, not upcoming matches.
     verified, seen = [], set()
