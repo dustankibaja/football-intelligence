@@ -232,6 +232,7 @@ class OperationalOrchestrator:
                         "LIVE_ARTIFACT_INFERENCE_NOT_CONNECTED", str(exc)
                     ) from exc
 
+            current_time = self.clock.now()
             # Stage 8: Genuine Phase 6.2 PIT materialization. A provider
             # fixture DTO is never accepted as a feature snapshot.
             if self.execution_mode == ExecutionMode.LIVE_SHADOW:
@@ -251,7 +252,6 @@ class OperationalOrchestrator:
                         )
                     except LiveFeatureMaterializationError as exc:
                         summary.snapshots_failed += 1
-                        summary.predictions_blocked += 1
                         self._record_failure(
                             summary.run_id, "FEATURES", "PIT_MATERIALIZATION",
                             ErrorCategory.DATA, Retryability.PERMANENT,
@@ -276,6 +276,8 @@ class OperationalOrchestrator:
                         f.get("unresolved_reason", "UNRESOLVED_MAPPING"),
                         f"Fixture {f.get('provider_fixture_id', 'unknown')} blocked due to unresolved mapping.",
                     )
+                    continue
+                if f.get("missed_window"):
                     continue
                 if f.get("needs_snapshot", True):
                     summary.snapshots_created += 1
