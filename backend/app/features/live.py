@@ -146,7 +146,7 @@ class LiveFeatureMaterializer:
                 if (
                     meta.get("source_provider") != provider
                     or meta.get("source_fixture_id") != provider_id
-                    or meta.get("source_payload_fingerprint") != source_fp
+                    or not meta.get("source_payload_fingerprint")
                     or not meta.get("history_fingerprint")
                     or not meta.get("fingerprint_sha256")
                     or meta.get("feature_keys") != manifest.included_feature_keys
