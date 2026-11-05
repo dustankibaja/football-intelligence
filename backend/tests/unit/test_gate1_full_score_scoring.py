@@ -6,7 +6,7 @@ import pytest
 
 from app.features.manifest import get_mvp_a_feature_set_v1_manifest
 from app.prediction.domain import ShadowPredictionInput
-from app.prediction.frozen_inference import FrozenArtifactInference
+from app.prediction.frozen_inference import FrozenArtifactInference, FROZEN_COMPETITION_CODES
 from app.prediction.scoring import PostMatchScoringService
 from app.prediction.service import ShadowPredictionService
 
@@ -17,7 +17,7 @@ def _prediction():
     now = datetime(2026, 11, 5, 12, tzinfo=UTC)
     inp = ShadowPredictionInput(
         fixture_id=uuid4(),
-        competition_code="E0",
+        competition_code=FROZEN_COMPETITION_CODES[competition_id],
         competition_id=UUID(competition_id),
         season_id=uuid4(),
         season_year="2026/27",
