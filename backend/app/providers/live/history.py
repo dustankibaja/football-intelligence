@@ -122,17 +122,21 @@ class LiveHistoryIngestor:
             existing.status = "FINISHED"
             existing.home_score = hg
             existing.away_score = ag
+            # No final-whistle timestamp was supplied. The first verified
+            # observation is a conservative availability bound for PIT queries.
+            existing.completed_at = retrieved.astimezone(UTC)
         else:
             db.add(Match(
                 id=expected_id, season_id=season.id,
                 home_team_id=home_id, away_team_id=away_id,
                 kickoff_utc=kickoff, status="FINISHED",
                 home_score=hg, away_score=ag,
-                # The provider supplied no completion timestamp. Do not invent one.
-                completed_at=None,
+                # First observed final result, not an invented final whistle.
+                # Never expose a score to a feature snapshot before observation.
+                completed_at=retrieved.astimezone(UTC),
             ))
         db.add(SystemAuditLog(
             event_type="LIVE_HISTORY_INGESTED",
-            description=f"{provider}:{provider_id}:{source_fp}"[:255],
+            description=f"{provider}:{provider_id}:{source_fp}:observed={retrieved.isoformat()}"[:255],
         ))
         return True
