@@ -187,6 +187,7 @@ class ShadowPredictionService:
             }
             c1_artifact_fp = frozen.c1_artifact_fingerprint
             m1_artifact_fp = frozen.m1_artifact_fingerprint
+            model_cold_start = frozen.home_cold_start or frozen.away_cold_start
         else:
             # Re-derive lambdas from relative attack/defense features deterministically
             # Feature vector has 251 values; indices correspond to certified feature set
@@ -218,6 +219,7 @@ class ShadowPredictionService:
 
             c1_artifact_fp = FROZEN_C1_FINGERPRINT
             m1_artifact_fp = FROZEN_M1_FINGERPRINT
+            model_cold_start = inp.known_cold_start
 
         # 5. Model Disagreement Calculation via Frozen Phase 5.2 Policy
         disagreement_val, disagreement_band = Phase5_2_PolicyEngine.compute_model_disagreement(
@@ -234,7 +236,7 @@ class ShadowPredictionService:
             is_eligible=True,
             eligibility_reason=None,
             critical_feature_absent=inp.critical_feature_absent,
-            known_cold_start=inp.known_cold_start,
+            known_cold_start=model_cold_start,
             missingness_count=inp.missingness_count,
             drift_psi=inp.drift_psi,
             disagreement_value=disagreement_val,
