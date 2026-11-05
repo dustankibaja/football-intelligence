@@ -683,75 +683,33 @@ class OperationalOrchestrator:
         return Path("data/processed/live_shadow_predictions.json")
 
     def _load_live_shadow_predictions(self) -> None:
-        """
-        Loads live shadow predictions.
-        Primary authoritative store: Relational database (shadow_predictions table).
-        Secondary cache/export store: JSON file (data/processed/live_shadow_predictions.json).
-        """
-        # 1. Primary: Load from relational database if session factory is available
-        if self.session_factory is not None:
-            try:
-                with self.session_factory() as session:
-                    db_preds = ShadowPredictionRepository.load_all_predictions(session)
-                    if db_preds:
-                        self.prediction_service._persisted_predictions.update(db_preds)
-                        return
-            except Exception:
-                pass
+        """Load only verified scientific predictions from authoritative SQL.
 
-        # 2. Secondary: Load from JSON cache/export artifact (offline/dry-run replay fallback)
-        store_path = self._get_live_store_path()
-        if not store_path.exists():
-            return
-        try:
-            with open(store_path, "r", encoding="utf-8") as f:
-                records = json.load(f)
-            for d in records:
-                d_copy = dict(d)
-                d_copy["prediction_id"] = UUID(d_copy["prediction_id"])
-                d_copy["fixture_id"] = UUID(d_copy["fixture_id"])
-                d_copy["prediction_run_id"] = UUID(d_copy["prediction_run_id"]) if d_copy.get("prediction_run_id") else None
-                d_copy["feature_snapshot_id"] = UUID(d_copy["feature_snapshot_id"]) if d_copy.get("feature_snapshot_id") else None
-                d_copy["generated_at"] = datetime.fromisoformat(d_copy["generated_at"]).astimezone(UTC)
-                d_copy["kickoff_utc"] = datetime.fromisoformat(d_copy["kickoff_utc"]).astimezone(UTC)
-                pred = ShadowPredictionResult(**d_copy)
+        Historical synthetic rows are preserved in the database but excluded
+        from the active live cache; JSON exports are never trusted as source.
+        """
+        if self.session_factory is None:
+            raise ConfigurationError("LIVE_DATABASE_REQUIRED", "Live mode requires SQL persistence.")
+        with self.session_factory() as session:
+            db_preds = ShadowPredictionRepository.load_all_predictions(session)
+            for pred in db_preds.values():
+                try:
+                    ShadowPredictionRepository.verify_certified_live_prediction(session, pred)
+                except ValueError:
+                    # Append-only quarantine: do not modify or delete old rows.
+                    continue
                 self.prediction_service._persisted_predictions[pred.prediction_id] = pred
-        except Exception:
-            pass
 
     def _save_live_shadow_predictions(
         self, fixture_meta_map: dict[UUID, dict[str, Any]] | None = None
     ) -> None:
-        """
-        Saves live shadow predictions.
-        Primary authoritative write: Relational database (shadow_predictions table).
-        Secondary cache/export write: JSON file (data/processed/live_shadow_predictions.json).
-        """
-        # 1. Primary: Persist to relational database
-        if self.session_factory is not None:
-            try:
-                with self.session_factory() as session:
-                    for p in self.prediction_service._persisted_predictions.values():
-                        meta = (fixture_meta_map or {}).get(p.fixture_id)
-                        ShadowPredictionRepository.persist_prediction(session, p, fixture_meta=meta)
-            except Exception:
-                pass
-
-        # 2. Secondary: Export to JSON cache artifact
-        store_path = self._get_live_store_path()
-        try:
-            store_path.parent.mkdir(parents=True, exist_ok=True)
-            serialized = []
-            for p in self.prediction_service._persisted_predictions.values():
-                d = dataclasses.asdict(p)
-                d["prediction_id"] = str(p.prediction_id)
-                d["fixture_id"] = str(p.fixture_id)
-                d["prediction_run_id"] = str(p.prediction_run_id) if p.prediction_run_id else None
-                d["feature_snapshot_id"] = str(p.feature_snapshot_id) if p.feature_snapshot_id else None
-                d["generated_at"] = p.generated_at.isoformat()
-                d["kickoff_utc"] = p.kickoff_utc.isoformat()
-                serialized.append(d)
-            with open(store_path, "w", encoding="utf-8") as f:
-                json.dump(serialized, f, indent=2)
-        except Exception:
-            pass
+        """Persist only verified live predictions to SQL, never silently fall back."""
+        if self.session_factory is None:
+            raise ConfigurationError("LIVE_DATABASE_REQUIRED", "Live mode requires SQL persistence.")
+        with self.session_factory() as session:
+            for pred in self.prediction_service._persisted_predictions.values():
+                ShadowPredictionRepository.verify_certified_live_prediction(session, pred)
+                meta = (fixture_meta_map or {}).get(pred.fixture_id)
+                ShadowPredictionRepository.persist_prediction(
+                    session, pred, fixture_meta=meta
+                )
