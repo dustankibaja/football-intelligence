@@ -156,3 +156,29 @@ export function summarizeEvaluations(evaluations) {
     top3ScoreHitRate: rounded(mean(evaluations.map(x => Number(x.top3ScoreHit))))
   };
 }
+
+/**
+ * Retrospective walk-forward benchmark, kept STRICTLY separate from forecasts
+ * genuinely published before kickoff. Uses only earlier matches whose
+ * scheduled kickoffs were at least four hours before the simulated cutoff.
+ * This is not a substitute for independent live calibration certification.
+ */
+export function walkForwardBacktest(finished) {
+  const ordered = finished.filter(validFinished)
+    .sort((a, b) => a.utcDate.localeCompare(b.utcDate));
+  const evaluations = [];
+  for (let i = 15; i < ordered.length; i++) {
+    const match = ordered[i];
+    const kickoff = new Date(match.utcDate);
+    const asOf = new Date(kickoff.getTime() - 60000);
+    const eligibleHistory = ordered.slice(0, i).filter(m =>
+      new Date(m.utcDate).getTime() + 4 * 3600000 < asOf.getTime());
+    const scheduled = { ...match, status: 'SCHEDULED' };
+    const forecast = predictFixture(scheduled, eligibleHistory, asOf);
+    if (!forecast) continue;
+    const ev = evaluateForecast(forecast, match,
+      new Date(kickoff.getTime() + 4 * 3600000));
+    if (ev) evaluations.push(ev);
+  }
+  return summarizeEvaluations(evaluations);
+}
