@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -97,9 +98,19 @@ def list_predictions(
         ShadowPrediction.c1_artifact_fingerprint == EXPECTED_C1_FINGERPRINT,
         ShadowPrediction.m1_artifact_fingerprint == EXPECTED_M1_FINGERPRINT,
         ShadowPrediction.generated_at < ShadowPrediction.kickoff_utc,
-    ).order_by(ShadowPrediction.kickoff_utc.asc()).limit(500).all()
-    verified = [_serialize(p) for p in rows if _verified(p)]
-    return {"items": verified[:limit], "count": min(len(verified), limit)}
+        ShadowPrediction.kickoff_utc > datetime.now(UTC),
+    ).order_by(ShadowPrediction.kickoff_utc.asc()).limit(1000).all()
+    # A single earliest verified forecast per upcoming fixture.
+    # Historical forecasts belong in evaluations, not upcoming matches.
+    verified, seen = [], set()
+    for p in rows:
+        if p.fixture_id in seen or not _verified(p):
+            continue
+        seen.add(p.fixture_id)
+        verified.append(_serialize(p))
+        if len(verified) >= limit:
+            break
+    return {"items": verified, "count": len(verified)}
 
 
 @router.get("/{fixture_id}")
