@@ -71,6 +71,7 @@ def ops_dry_run(argv: Sequence[str] | None = None) -> int:
 
 
 def ops_health(argv: Sequence[str] | None = None) -> int:
+    from datetime import UTC
     from sqlalchemy import text
     from app.core.config import settings
     from app.db.models.automation import OperationalRun
@@ -90,11 +91,15 @@ def ops_health(argv: Sequence[str] | None = None) -> int:
             ).order_by(OperationalRun.completed_at.desc()).first()
             if last_run:
                 last_successful_run = last_run.completed_at
+                if last_successful_run is not None and last_successful_run.tzinfo is None:
+                    last_successful_run = last_successful_run.replace(tzinfo=UTC)
             last_prediction = session.query(ShadowPrediction).filter(
                 ShadowPrediction.score_matrix.isnot(None)
             ).order_by(ShadowPrediction.generated_at.desc()).first()
             if last_prediction:
                 last_prediction_activity = last_prediction.generated_at
+                if last_prediction_activity.tzinfo is None:
+                    last_prediction_activity = last_prediction_activity.replace(tzinfo=UTC)
             database_reachable = True
     except Exception:
         pass
