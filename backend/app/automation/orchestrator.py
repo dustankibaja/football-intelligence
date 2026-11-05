@@ -644,15 +644,17 @@ class OperationalOrchestrator:
 
         due: dict[str, UUID] = {}
         with self.session_factory() as session:
+            # Filter already evaluated rows in SQL BEFORE limiting. Otherwise
+            # after ~100 completed fixtures, the oldest evaluations starve
+            # every newer match and results silently stop arriving.
             candidates = session.query(ShadowPrediction).filter(
                 ShadowPrediction.kickoff_utc < self.clock.now(),
                 ShadowPrediction.score_matrix.isnot(None),
+                ~ShadowPrediction.evaluations.any(
+                    ShadowEvaluation.result_version == 1
+                ),
             ).order_by(ShadowPrediction.kickoff_utc.asc()).limit(100).all()
             for row in candidates:
-                if session.query(ShadowEvaluation).filter_by(
-                    prediction_id=row.id, result_version=1
-                ).first() is not None:
-                    continue
                 pred = self.prediction_service._persisted_predictions.get(row.id)
                 if pred is None:
                     continue
@@ -664,7 +666,9 @@ class OperationalOrchestrator:
                 provider_id = meta.get("source_fixture_id")
                 if provider_id and meta.get("source_provider") == self.live_provider.provider_name:
                     due[str(provider_id)] = row.fixture_id
-                if len(due) >= 30:
+                # One fixture request per ID; keep within the provider's
+                # small free-tier minute quota alongside history and schedule.
+                if len(due) >= 5:
                     break
 
         if not due:
