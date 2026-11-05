@@ -33,6 +33,9 @@ jobs:
         run: |
           node --check frontend/app.js
           node --check live-web/app.js
+          node --check live-web/sw.js
+          test -s live-web/manifest.webmanifest
+          test -s live-web/offline.html
           for file in live-web/api/*.js live-web/lib/*.js; do node --check "$file"; done
           node --test live-web/tests/*.test.js
           test -s live-web/index.html
