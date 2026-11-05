@@ -200,9 +200,12 @@ function render() {
   $('last-update').textContent = data.lastRefreshAt
     ? `Provider last checked: ${time(data.lastRefreshAt)}`
     : 'Waiting for the first verified provider update';
-  $('status').className = 'status' + (data.refreshError ? ' error' : '');
-  $('status').textContent = data.refreshError ? 'Provider update delayed'
-    : data.automated ? 'Automatic daily updates enabled' : 'Automation paused';
+  const offline = !navigator.onLine;
+  $('connection-banner').hidden = !offline;
+  $('status').className = 'status' + (data.refreshError || offline ? ' error' : '');
+  $('status').textContent = offline ? 'Offline · reconnect to update'
+    : data.refreshError ? 'Provider update delayed'
+      : data.automated ? 'Automatic daily updates enabled' : 'Automation paused';
   renderMetrics(data.performance);
   renderFixtures();
   renderResults();
@@ -214,8 +217,12 @@ function render() {
 }
 async function refresh(manual = false) {
   const button = $('refresh');
-  button.disabled = true; button.textContent = '↻ Checking provider…';
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  button.setAttribute('aria-label', 'Checking football data');
+  button.querySelector('.refresh-label').textContent = 'Checking provider…';
   try {
+    if (!navigator.onLine) throw new Error('Offline — reconnect to update match data');
     const response = await fetch(manual ? '/api/state?force=1' : '/api/state', { cache: 'no-store' });
     const json = await response.json();
     if (!response.ok && !json.lastRefreshAt) {
@@ -230,9 +237,14 @@ async function refresh(manual = false) {
     if (!data) {
       $('fixtures').replaceChildren(empty('Real fixture data is temporarily unavailable. No synthetic predictions will be shown.'));
       $('results').replaceChildren(empty('Awaiting the verified data service.'));
+      $('history-list').replaceChildren(empty('Match history requires a connection to verified football data.'));
     }
+    $('connection-banner').hidden = navigator.onLine;
   } finally {
-    button.disabled = false; button.textContent = '↻ Refresh data';
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+    button.setAttribute('aria-label', 'Refresh match data');
+    button.querySelector('.refresh-label').textContent = 'Refresh data';
   }
 }
 document.querySelectorAll('[data-league]').forEach(button => {
@@ -271,3 +283,79 @@ refresh();
 setInterval(() => {
   if (document.visibilityState === 'visible') refresh();
 }, 5 * 60 * 1000);
+
+/* Mobile app lifecycle: navigation, install prompts and honest offline status. */
+function selectMobileNav(id) {
+  document.querySelectorAll('[data-mobile-nav]').forEach(link => {
+    const selected = link.dataset.mobileNav === id;
+    link.classList.toggle('active', selected);
+    if (selected) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+document.querySelectorAll('[data-mobile-nav]').forEach(link => {
+  link.addEventListener('click', () => selectMobileNav(link.dataset.mobileNav));
+});
+let scrollPending = false;
+window.addEventListener('scroll', () => {
+  if (scrollPending) return;
+  scrollPending = true;
+  requestAnimationFrame(() => {
+    scrollPending = false;
+    let current = 'predictions';
+    for (const id of ['performance', 'predictions', 'history']) {
+      if ($(id).getBoundingClientRect().top < window.innerHeight * .32) current = id;
+    }
+    selectMobileNav(current);
+  });
+}, { passive: true });
+
+window.addEventListener('offline', () => {
+  $('connection-banner').hidden = false;
+  $('status').className = 'status error';
+  $('status').textContent = 'Offline · reconnect to update';
+});
+window.addEventListener('online', () => {
+  $('connection-banner').hidden = true;
+  refresh();
+});
+$('connection-banner').hidden = navigator.onLine;
+
+let installPrompt = null;
+const installButton = $('install-app');
+const iosTip = $('ios-install-tip');
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (isIOS && !standalone()) iosTip.hidden = false;
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  if (standalone()) return;
+  installPrompt = event;
+  installButton.hidden = false;
+});
+installButton.addEventListener('click', async () => {
+  if (!installPrompt) return;
+  const event = installPrompt;
+  installPrompt = null;
+  installButton.hidden = true;
+  try {
+    await event.prompt();
+    await event.userChoice;
+  } catch {
+    // Browser may decline or no longer support the installation prompt.
+  }
+});
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  installButton.hidden = true;
+  iosTip.hidden = true;
+});
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
+      // Normal online website still works without offline shell support.
+    });
+  });
+}
