@@ -23,14 +23,15 @@ async function providerGet(path, attempt = 0) {
     error.status = response.status;
     throw error;
   }
-  const available = Number(response.headers.get('x-requests-available-minute'));
+  const remaining = response.headers.get('x-requests-available-minute');
+  const available = remaining === null ? null : Number(remaining);
   const data = await response.json();
   if (!Array.isArray(data.matches)) throw new Error('PROVIDER_MATCH_SCHEMA_INVALID');
   return { matches: data.matches, available: Number.isFinite(available) ? available : null };
 }
 
 export async function fetchRealFixtures(now = new Date()) {
-  const end = new Date(now.getTime() + 14 * 86400000);
+  const end = new Date(now.getTime() + 30 * 86400000);
   const leagues = [], errors = [];
   for (const competition of COMPETITIONS) {
     try {
