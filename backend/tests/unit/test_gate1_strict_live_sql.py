@@ -106,10 +106,32 @@ def test_genuine_frozen_prediction_persists_without_any_stub_entities():
         assert saved.prediction_run_id == run_id
         assert db.query(ShadowPrediction).count() == 1
         assert not _verified(saved), "In-flight run must never reach customer API"
+
+        # Simulate a crash: an orphan RUNNING forecast is retained for audit,
+        # but it must not prevent a fresh run from generating a valid forecast.
         run = db.query(ShadowPredictionRun).filter_by(id=run_id).one()
-        run.status = "SUCCESS"
-        run.completed_at = now + timedelta(seconds=10)
+        run.status = "FAILED"
+        db.add(ShadowPredictionRun(
+            id=uuid4(), started_at=now, status="RUNNING",
+        ))
+        db.commit()
+        new_run = db.query(ShadowPredictionRun).filter(
+            ShadowPredictionRun.id != run_id
+        ).one()
+        recovered = ShadowPredictionService(frozen_inference=frozen).predict(
+            inp, run_id=new_run.id
+        )
+        replacement, recovered_created = ShadowPredictionRepository.persist_prediction(
+            db, recovered, strict_live=True
+        )
+        assert recovered_created is True
+        assert replacement.id != saved.id
+        assert db.query(ShadowPrediction).count() == 2
+        new_run.status = "SUCCESS"
+        new_run.completed_at = now + timedelta(seconds=10)
         db.commit()
         db.refresh(saved)
-        assert _verified(saved), "Only completed, provenanced predictions are exposed"
+        db.refresh(replacement)
+        assert not _verified(saved), "Orphaned run must stay quarantined"
+        assert _verified(replacement), "Recovered prediction must become visible"
     engine.dispose()
