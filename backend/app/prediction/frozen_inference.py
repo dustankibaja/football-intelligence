@@ -42,6 +42,8 @@ class FrozenInferenceOutput:
     m1_artifact_fingerprint: str
     c1_file_sha256: str
     m1_file_sha256: str
+    home_cold_start: bool
+    away_cold_start: bool
 
 
 class FrozenArtifactInference:
@@ -122,6 +124,9 @@ class FrozenArtifactInference:
         )
         c1 = self.c1.predict_raw(row)
         m1 = self.m1.predict_raw(row)
+        evidence = m1.raw_outputs.get("evidence_quality", {})
+        if "home_cold_start" not in evidence or "away_cold_start" not in evidence:
+            raise ValueError("M1_TRAINING_HISTORY_EVIDENCE_MISSING")
         if m1.predicted_home_goals is None or m1.predicted_away_goals is None:
             raise ValueError("M1_LAMBDAS_MISSING")
         lh, la = float(m1.predicted_home_goals), float(m1.predicted_away_goals)
@@ -146,4 +151,6 @@ class FrozenArtifactInference:
             m1_artifact_fingerprint=self.m1.artifact.artifact_fingerprint,
             c1_file_sha256=self.c1_file_sha256,
             m1_file_sha256=self.m1_file_sha256,
+            home_cold_start=bool(evidence["home_cold_start"]),
+            away_cold_start=bool(evidence["away_cold_start"]),
         )
