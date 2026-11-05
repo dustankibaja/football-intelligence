@@ -2,13 +2,15 @@ import { get, put, list } from '@vercel/blob';
 import { predictFixture, evaluateForecast, summarizeEvaluations,
   MODEL_ID, walkForwardBacktest } from './model.js';
 import { fetchRealFixtures } from './provider.js';
+import { normalizeFinished, buildHistory, auditSummary } from './history.js';
 
 const PREFIX = 'footmo/private-trial/snapshots/';
 const HOURS = 60 * 60 * 1000;
 const emptyState = () => ({
   schema: 1, source: 'football-data.org/v4', model: MODEL_ID,
   lastRefreshAt: null, predictions: [], evaluations: [],
-  providerErrors: [], leagueCounts: [], backtest: null
+  providerErrors: [], leagueCounts: [], backtest: null,
+  finishedMatches: [], resultCorrections: []
 });
 
 export async function readState() {
@@ -32,8 +34,25 @@ export async function readState() {
 function applyProviderData(previous, feed, now) {
   const data = structuredClone(previous);
   const forecastKeys = new Set(data.predictions.map(p => p.forecastKey));
+  const completed = new Map((data.finishedMatches || []).map(m => [m.fixtureId, m]));
+  const corrections = data.resultCorrections || [];
   let created = 0, evaluated = 0;
   for (const league of feed.leagues) {
+    // Source match history includes games played before this trial began.
+    // Those matches must never be presented as successful/failed forecasts.
+    for (const finished of league.finished) {
+      const id = String(finished.id);
+      const prior = completed.get(id);
+      const record = normalizeFinished(finished, league, now, prior);
+      if (!record) continue;
+      if (prior && record.resultVersion > prior.resultVersion) {
+        corrections.push({ fixtureId: id, competitionCode: league.code,
+          from: `${prior.home}-${prior.away}`,
+          to: `${record.home}-${record.away}`,
+          observedAt: now.toISOString(), version: record.resultVersion });
+      }
+      completed.set(id, record);
+    }
     for (const fixture of league.upcoming) {
       const forecastKey = `${fixture.id}:${fixture.utcDate}`;
       if (forecastKeys.has(forecastKey)) continue;
@@ -70,6 +89,8 @@ function applyProviderData(previous, feed, now) {
       evaluated++;
     }
   }
+  data.finishedMatches = [...completed.values()];
+  data.resultCorrections = corrections;
   data.lastRefreshAt = now.toISOString();
   data.providerErrors = feed.errors;
   data.leagueCounts = feed.leagues.map(x => ({
@@ -106,6 +127,7 @@ export function viewState(data, now = new Date()) {
   }
   const evaluations = [...latest.values()].sort((a, b) =>
     b.observedAt.localeCompare(a.observedAt));
+  const history = buildHistory(data.finishedMatches || [], data.predictions, evaluations);
   const upcoming = data.predictions.filter(p =>
     new Date(p.kickoffUtc) > now &&
     new Date(p.generatedAt) < new Date(p.kickoffUtc))
@@ -117,8 +139,11 @@ export function viewState(data, now = new Date()) {
     automated: process.env.AUTOMATION_ENABLED !== 'false',
     providerErrors: data.providerErrors,
     leagueCounts: data.leagueCounts,
-    upcoming: upcoming.slice(0, 100),
+    upcoming: upcoming.slice(0, 500),
     results: evaluations.slice(0, 100),
+    history: history.slice(0, 2000),
+    historyAudit: auditSummary(history),
+    resultCorrections: (data.resultCorrections || []).length,
     performance: summarizeEvaluations(evaluations),
     backtest: data.backtest || null
   };
