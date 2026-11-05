@@ -29,6 +29,12 @@ jobs:
           test -s frontend/index.html
           test -s frontend/styles.css
           test -s frontend/README.md
+      - name: Validate private staging Compose topology
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-test-only
+          CUSTOMER_API_TOKEN: ci-test-only
+        run: docker compose -f infrastructure/compose.staging.yml config -q
       - name: Check Python compilation and new-code fatal errors
         run: |
           python -m compileall -q backend/app
