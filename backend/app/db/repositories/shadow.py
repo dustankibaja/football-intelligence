@@ -101,6 +101,43 @@ class ShadowPredictionRepository:
         session.flush()
         return match_row
 
+    @staticmethod
+    def verify_certified_live_prediction(session: Session, pred: ShadowPredictionResult) -> None:
+        """Strict live-only validation. Legacy replay rows remain quarantined."""
+        from app.prediction.frozen_inference import (
+            EXPECTED_C1_FINGERPRINT, EXPECTED_M1_FINGERPRINT,
+        )
+
+        if (
+            pred.feature_snapshot_id is None
+            or pred.prediction_run_id is None
+            or pred.score_matrix is None
+            or pred.c1_artifact_fingerprint != EXPECTED_C1_FINGERPRINT
+            or pred.m1_artifact_fingerprint != EXPECTED_M1_FINGERPRINT
+            or len(pred.feature_snapshot_fingerprint) != 64
+            or len(pred.history_fingerprint) != 64
+        ):
+            raise ValueError("UNCERTIFIED_LIVE_PREDICTION_PROVENANCE")
+
+        match = session.query(Match).filter_by(id=pred.fixture_id).first()
+        snapshot = session.query(FeatureSnapshot).filter_by(
+            id=pred.feature_snapshot_id, match_id=pred.fixture_id
+        ).first()
+        if match is None or snapshot is None:
+            raise ValueError("LIVE_MATCH_OR_FEATURE_SNAPSHOT_NOT_PERSISTED")
+        meta = snapshot.data_quality_metadata or {}
+        if (
+            meta.get("fingerprint_sha256") != pred.feature_snapshot_fingerprint
+            or meta.get("history_fingerprint") != pred.history_fingerprint
+            or not meta.get("source_provider")
+            or not meta.get("source_fixture_id")
+        ):
+            raise ValueError("LIVE_SNAPSHOT_LINEAGE_MISMATCH")
+        if _ensure_utc(match.kickoff_utc) != _ensure_utc(pred.kickoff_utc):
+            raise ValueError("LIVE_KICKOFF_IDENTITY_MISMATCH")
+        if pred.generated_at >= pred.kickoff_utc:
+            raise ValueError("POST_KICKOFF_PREDICTION_PROHIBITED")
+
     @classmethod
     def persist_prediction(
         cls,
