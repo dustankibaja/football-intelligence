@@ -102,7 +102,9 @@ class ShadowPredictionRepository:
         return match_row
 
     @staticmethod
-    def verify_certified_live_prediction(session: Session, pred: ShadowPredictionResult) -> None:
+    def verify_certified_live_prediction(
+        session: Session, pred: ShadowPredictionResult, allow_running: bool = False
+    ) -> None:
         """Strict live-only validation. Legacy replay rows remain quarantined."""
         from app.prediction.frozen_inference import (
             EXPECTED_C1_FINGERPRINT, EXPECTED_M1_FINGERPRINT,
@@ -119,6 +121,16 @@ class ShadowPredictionRepository:
         ):
             raise ValueError("UNCERTIFIED_LIVE_PREDICTION_PROVENANCE")
 
+        run = session.query(ShadowPredictionRun).filter_by(
+            id=pred.prediction_run_id
+        ).first()
+        if run is None or run.status not in ("RUNNING", "SUCCESS", "PARTIAL_SUCCESS"):
+            raise ValueError("LIVE_PREDICTION_RUN_INVALID")
+        if not allow_running and (
+            run.status not in ("SUCCESS", "PARTIAL_SUCCESS")
+            or run.completed_at is None
+        ):
+            raise ValueError("LIVE_PREDICTION_RUN_NOT_FINALIZED")
         match = session.query(Match).filter_by(id=pred.fixture_id).first()
         snapshot = session.query(FeatureSnapshot).filter_by(
             id=pred.feature_snapshot_id, match_id=pred.fixture_id
@@ -177,7 +189,7 @@ class ShadowPredictionRepository:
         # Only replay/test persistence may create fixture stubs. Real live
         # predictions must already have a verified canonical match + snapshot.
         if strict_live:
-            cls.verify_certified_live_prediction(session, pred)
+            cls.verify_certified_live_prediction(session, pred, allow_running=True)
         else:
             cls._ensure_match_exists(session, pred.fixture_id, pred.kickoff_utc, fixture_meta)
 
