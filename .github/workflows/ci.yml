@@ -120,7 +120,7 @@ jobs:
         run: |
           DB_HEAD=$(psql -h localhost -p 5432 -U postgres -d football_intelligence_test -t -A -c "SELECT version_num FROM alembic_version;")
           echo "Database Alembic revision: $DB_HEAD"
-          if [ "$DB_HEAD" != "20261023_0006" ]; then
+          if [ "$DB_HEAD" != "20261105_0007" ]; then
             echo "ERROR: Database revision ($DB_HEAD) does not match expected repository head (20261023_0006)"
             exit 1
           fi
