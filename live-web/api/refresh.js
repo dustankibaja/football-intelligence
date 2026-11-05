@@ -1,5 +1,7 @@
 import { runRefresh } from '../lib/state.js';
 
+export const config = { maxDuration: 60 };
+
 export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'no-store');
   if (request.method !== 'GET') return response.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
