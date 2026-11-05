@@ -1,5 +1,6 @@
 const $ = id => document.getElementById(id);
 let data = null, activeLeague = 'ALL', activeWindow = 14;
+let fixtureVisible = 20;
 let historyDays = 7, historyVerdict = 'ALL', historyLeague = 'ALL';
 let historyVisible = 24;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -87,8 +88,12 @@ function renderFixtures() {
     withinWindow(p.kickoffUtc, activeWindow));
   $('fixture-count').textContent = `${filtered.length} verified-source forecasts`;
   $('fixtures').replaceChildren(...(filtered.length
-    ? filtered.map(fixtureCard)
+    ? filtered.slice(0, fixtureVisible).map(fixtureCard)
     : [empty('No eligible pre-match forecasts for this filter yet. The system never invents upcoming fixtures or probabilities. Check back after the next provider update.')]));
+  const more = $('fixtures-more');
+  more.hidden = filtered.length <= fixtureVisible;
+  if (!more.hidden) more.textContent =
+    `Load more predictions (${filtered.length - fixtureVisible} remaining)`;
 }
 function resultCard(ev) {
   const row = node('article', 'result');
@@ -250,6 +255,7 @@ async function refresh(manual = false) {
 document.querySelectorAll('[data-league]').forEach(button => {
   button.addEventListener('click', () => {
     activeLeague = button.dataset.league;
+    fixtureVisible = 20;
     document.querySelectorAll('[data-league]').forEach(x =>
       x.classList.toggle('active', x === button));
     renderFixtures();
@@ -257,6 +263,7 @@ document.querySelectorAll('[data-league]').forEach(button => {
 });
 bindFilter('forecast-window', 'data-window', value => {
   activeWindow = Number(value);
+  fixtureVisible = 20;
   renderFixtures();
 });
 bindFilter('history-window', 'data-history-days', value => {
@@ -273,6 +280,10 @@ bindFilter('history-league', 'data-history-league', value => {
   historyLeague = value;
   historyVisible = 24;
   renderHistory();
+});
+$('fixtures-more').addEventListener('click', () => {
+  fixtureVisible += 20;
+  renderFixtures();
 });
 $('history-more').addEventListener('click', () => {
   historyVisible += 24;
