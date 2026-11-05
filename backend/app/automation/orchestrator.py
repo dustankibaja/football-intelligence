@@ -219,6 +219,11 @@ class OperationalOrchestrator:
                         finished_history
                     )
                     if history_stats["rejected"]:
+                        summary.failure_code = "UNRESOLVED_LIVE_HISTORY"
+                        summary.failure_summary = (
+                            f"{history_stats['rejected']} provider history records "
+                            "failed canonical reconciliation."
+                        )
                         self._record_failure(
                             summary.run_id, "INGESTION", "HISTORY_RECONCILIATION",
                             ErrorCategory.DATA, Retryability.PERMANENT,
@@ -580,13 +585,15 @@ class OperationalOrchestrator:
                 or summary.predictions_blocked
                 or summary.predictions_failed
                 or summary.evaluations_failed
+                or summary.failure_code
             ):
                 summary.run_status = OperationalRunStatus.PARTIAL_SUCCESS
-                summary.failure_code = "LIVE_SCIENTIFIC_GATES_BLOCKED"
-                summary.failure_summary = (
-                    "One or more live fixtures were blocked by scientific integrity "
-                    "or operational quality checks; no synthetic fallback permitted."
-                )
+                if not summary.failure_code:
+                    summary.failure_code = "LIVE_SCIENTIFIC_GATES_BLOCKED"
+                    summary.failure_summary = (
+                        "One or more live fixtures were blocked by scientific integrity "
+                        "or operational quality checks; no synthetic fallback permitted."
+                    )
             else:
                 summary.run_status = OperationalRunStatus.SUCCESS
             summary.completed_at = self.clock.now()
