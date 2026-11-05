@@ -1,7 +1,7 @@
 /* Footmo staging client: no fabricated data, no hard-coded secrets. */
 "use strict";
 
-const state = { apiBase: "", apiToken: "", predictions: [], evaluations: [], league: "ALL" };
+const state = { apiBase: "", apiToken: "", predictions: [], evaluations: [], performance: null, league: "ALL" };
 const $ = (id) => document.getElementById(id);
 
 function element(tag, className = "", text = "") {
@@ -135,7 +135,7 @@ function renderResults() {
     const tr = element("tr");
     const score = ev.actual_score ? `${ev.actual_score.home} – ${ev.actual_score.away}` : "—";
     const cols = [
-      String(ev.fixture_id || "").slice(0, 8) + "…",
+      ev.home_team && ev.away_team ? `${ev.home_team} vs ${ev.away_team}` : "Fixture unavailable",
       score, ev.actual_1x2 || "—",
       Number.isFinite(Number(ev.log_loss_1x2)) ? Number(ev.log_loss_1x2).toFixed(3) : "—",
       formatDate(ev.result_observed_at)
@@ -143,6 +143,31 @@ function renderResults() {
     for (const value of cols) tr.append(element("td", "", value));
     body.append(tr);
   }
+}
+
+function renderPerformance() {
+  const grid = $("performance-grid");
+  grid.replaceChildren();
+  const summary = state.performance || {};
+  const metric = (value) => value === null || value === undefined ||
+    !Number.isFinite(Number(value)) ? "—" : Number(value).toFixed(3);
+  const rows = [
+    ["Evaluated matches", summary.sample_size ?? 0],
+    ["1X2 log loss ↓", metric(summary.mean_log_loss_1x2)],
+    ["1X2 Brier ↓", metric(summary.mean_brier_1x2)],
+    ["BTTS log loss ↓", metric(summary.mean_btts_log_loss)],
+    ["O/U 2.5 log loss ↓", metric(summary.mean_over_under_2_5_log_loss)],
+    ["Top exact score hit", summary.top1_score_hit_rate == null ? "—" : percent(summary.top1_score_hit_rate)]
+  ];
+  for (const [label, value] of rows) {
+    const card = element("div", "performance-card");
+    card.append(element("span", "", label), element("strong", "", value));
+    grid.append(card);
+  }
+  const n = Number(summary.sample_size || 0);
+  $("performance-caption").textContent = n === 0
+    ? "No verified completed-match evaluations yet. No accuracy claims can be made."
+    : `Observed from ${n} verified completed matches. ${n < 50 ? "Small sample: treat results as preliminary." : "Monitor calibration and league-level performance."}${summary.truncated ? " The evaluation history is truncated." : ""}`;
 }
 
 async function request(path) {
@@ -162,15 +187,18 @@ async function refreshData() {
   $("refresh").disabled = true;
   $("connection-error").hidden = true;
   try {
-    const [predictions, evaluations] = await Promise.all([
+    const [predictions, evaluations, performance] = await Promise.all([
       request("predictions/?limit=100"),
-      request("evaluations/?limit=100")
+      request("evaluations/?limit=100"),
+      request("evaluations/summary")
     ]);
     if (!Array.isArray(predictions.items) || !Array.isArray(evaluations.items)) {
       throw new Error("The API returned an unexpected response.");
     }
     state.predictions = predictions.items;
     state.evaluations = evaluations.items;
+    state.performance = performance;
+    renderPerformance();
     renderLeagues();
     renderFixtures();
     renderResults();
@@ -207,3 +235,10 @@ $("league-filter").addEventListener("change", (event) => {
   renderFixtures();
 });
 $("year").textContent = String(new Date().getFullYear());
+
+// Browser auto-refresh while open; unattended backend scheduling is separate.
+setInterval(() => {
+  if (state.apiBase && state.apiToken && document.visibilityState === "visible") {
+    refreshData();
+  }
+}, 5 * 60 * 1000);
