@@ -20,6 +20,18 @@ This report distinguishes **implemented source code** from **observed test evide
 9. A private staging Docker Compose topology, non-root API Dockerfile, environment controls, and runbook are committed. These files do not constitute a deployed or observed persistent host.
 10. Live dry-run avoids writing history, snapshots, leases and operational summaries. Scheduler reports partial scientific blocks with a nonzero exit code.
 
+## Private trial engineering follow-up (same date)
+
+The development branch now also contains:
+- A dedicated restartable `app.automation.worker` loop and Compose `worker` service, with an explicit stop command. This is **source configuration**, not evidence of a running host.
+- A private evaluation summary endpoint and responsive dashboard cards for empirical 1X2 log loss/Brier, BTTS and O/U log loss, exact-score hit rate and sample size; results include real fixture identities and latest-version evaluation records.
+- An upcoming-only, deduplicated prediction list (past forecasts no longer appear as upcoming matches).
+- A conservative first-observed final-score availability bound on provider history to prevent retrospective feature leakage.
+- SQL recovery from an orphaned unfinalized prediction run, bounded provider result polling, rotated correction checks and versioned correction records.
+- A regression test for provider result polling after restart and score correction. These tests use explicit synthetic test fixtures; they do **not** establish real-provider operational certification.
+
+No deployment, real-provider credential verification, approved PSI reference, or independent current-season end-to-end run has been completed in this follow-up. The 60-day private trial has **not** started.
+
 ## Verified automated evidence
 
 GitHub Actions at commit `82798de5d460acf0ce715084bb7d4b7d05e1cad1`: **540 passed, 11 skipped, 7 warnings**. Later CI at `96fb561227c31f431195d6213595ec7db189124d`: **542 passed, 11 skipped, 7 warnings**. These were real CI runs, but not evidence of a live production soak. A later green run at commit `8a54a9b533d3a2fd2b04c42bb68452af463fc949` passed **545 tests, 11 skipped, 7 warnings**, including strict live SQL persistence and frontend checks. Newer commits require their own CI verification before sign-off.
