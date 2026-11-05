@@ -151,6 +151,7 @@ class ShadowPredictionRepository:
         session: Session,
         pred: ShadowPredictionResult,
         fixture_meta: dict[str, Any] | None = None,
+        strict_live: bool = False,
     ) -> tuple[ShadowPrediction, bool]:
         """
         Persists a single ShadowPredictionResult into the shadow_predictions table.
@@ -173,8 +174,12 @@ class ShadowPredictionRepository:
         if existing_dup is not None:
             return existing_dup, False
 
-        # Ensure foreign key on matches table
-        cls._ensure_match_exists(session, pred.fixture_id, pred.kickoff_utc, fixture_meta)
+        # Only replay/test persistence may create fixture stubs. Real live
+        # predictions must already have a verified canonical match + snapshot.
+        if strict_live:
+            cls.verify_certified_live_prediction(session, pred)
+        else:
+            cls._ensure_match_exists(session, pred.fixture_id, pred.kickoff_utc, fixture_meta)
 
         # Check optional FKs
         run_fk = None
@@ -182,8 +187,10 @@ class ShadowPredictionRepository:
             run_row = session.query(ShadowPredictionRun).filter_by(id=pred.prediction_run_id).first()
             if run_row is not None:
                 run_fk = run_row.id
+            elif strict_live:
+                raise ValueError("LIVE_PREDICTION_RUN_NOT_PERSISTED")
             else:
-                # Create stub run row to satisfy foreign key
+                # Legacy replay-only stub, forbidden in live persistence.
                 stub_run = ShadowPredictionRun(
                     id=pred.prediction_run_id,
                     started_at=_ensure_utc(pred.generated_at),
@@ -198,6 +205,8 @@ class ShadowPredictionRepository:
             snap_row = session.query(FeatureSnapshot).filter_by(id=pred.feature_snapshot_id).first()
             if snap_row is not None:
                 snap_fk = snap_row.id
+        if strict_live and snap_fk is None:
+            raise ValueError("LIVE_FEATURE_SNAPSHOT_NOT_PERSISTED")
 
         db_pred = ShadowPrediction(
             id=pred.prediction_id,
