@@ -43,11 +43,13 @@ test('mobile layout provides viewport-safe touch navigation and install hints', 
   assert.ok(html.indexOf('id="performance"') < html.indexOf('id="results"'));
   assert.match(html, /aria-label="Mobile app navigation"/);
   assert.match(html, /id="install-app"/);
+  assert.match(html, /id="fixtures-more"/);
   assert.match(html, /id="connection-banner"/);
   assert.match(css, /env\(safe-area-inset-bottom/);
   assert.match(css, /min-height:44px/);
   assert.match(css, /\.mobile-nav\{position:fixed/);
   assert.match(js, /beforeinstallprompt/);
+  assert.match(js, /filtered\.slice\(0, fixtureVisible\)/);
   assert.match(js, /serviceWorker\.register\('\/sw\.js'/);
   assert.match(js, /window\.addEventListener\('offline'/);
 });
