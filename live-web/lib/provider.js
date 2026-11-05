@@ -30,32 +30,27 @@ async function providerGet(path, attempt = 0) {
 }
 
 export async function fetchRealFixtures(now = new Date()) {
-  const start = now.toISOString().slice(0, 10);
-  const end = new Date(now.getTime() + 14 * 86400000).toISOString().slice(0, 10);
+  const end = new Date(now.getTime() + 14 * 86400000);
   const leagues = [], errors = [];
   for (const competition of COMPETITIONS) {
     try {
-      const past = await providerGet(
-        `/competitions/${competition.code}/matches?status=FINISHED`);
-      await sleep(350);
-      const schedule = await providerGet(
-        `/competitions/${competition.code}/matches?dateFrom=${start}&dateTo=${end}`);
+      // One current-season request per league obtains both pre-match fixtures
+      // and final results. This conserves the free 10-requests/minute quota.
+      const response = await providerGet(
+        `/competitions/${competition.code}/matches`);
+      const all = response.matches;
       leagues.push({
         code: competition.code, name: competition.name,
-        finished: past.matches,
-        upcoming: schedule.matches.filter(m =>
+        finished: all.filter(m => m.status === 'FINISHED'),
+        upcoming: all.filter(m =>
           ['SCHEDULED', 'TIMED'].includes(m.status) &&
-          new Date(m.utcDate) > now)
+          new Date(m.utcDate) > now && new Date(m.utcDate) <= end)
       });
-      if (schedule.available !== null && schedule.available < 1) break;
-      await sleep(350);
+      if (response.available !== null && response.available < 1) break;
+      await sleep(500);
     } catch (err) {
       errors.push({ competition: competition.code, code: err.message });
-      if ([401, 403, 429].includes(err.status)) {
-        // A bad credential or exhausted quota cannot be repaired by
-        // fabricating fixtures. Preserve existing predictions instead.
-        if (err.status === 401 || err.status === 429) break;
-      }
+      if ([401, 429].includes(err.status)) break;
     }
   }
   return { leagues, errors };
