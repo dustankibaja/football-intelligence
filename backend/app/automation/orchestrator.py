@@ -422,8 +422,14 @@ class OperationalOrchestrator:
                 }
                 self._save_live_shadow_predictions(fixture_meta_map=fixture_meta_map)
 
-            # Stage 10: Synchronize Result State (Phase 6.1)
-            raw_results = results_due or []
+            # Stage 10: Poll real provider results for eligible past fixtures
+            # when the caller did not explicitly supply a replay result batch.
+            if results_due is not None:
+                raw_results = results_due
+            elif self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                raw_results = self._fetch_live_due_results(summary)
+            else:
+                raw_results = []
             summary.results_processed = len(raw_results)
 
             # Stage 11: Call Phase 6.3 Scoring for Unscored Eligible Predictions
@@ -458,7 +464,7 @@ class OperationalOrchestrator:
                             summary.evaluations_reused += 1
                         else:
                             if not dry_run:
-                                self.scoring_service.score_prediction(
+                                evaluation = self.scoring_service.score_prediction(
                                     prediction=matching_pred,
                                     actual_home_goals=home_goals,
                                     actual_away_goals=away_goals,
@@ -466,7 +472,19 @@ class OperationalOrchestrator:
                                     result_version=res_version,
                                     observed_at=self.clock.now(),
                                 )
-                            summary.evaluations_created += 1
+                                if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                                    with self.session_factory() as session:
+                                        _, created = ShadowPredictionRepository.persist_evaluation(
+                                            session, evaluation
+                                        )
+                                    if created:
+                                        summary.evaluations_created += 1
+                                    else:
+                                        summary.evaluations_reused += 1
+                                else:
+                                    summary.evaluations_created += 1
+                            else:
+                                summary.evaluations_created += 1
 
             # Stage 12: Run Observational Monitoring & Deduplicate Alerts
             # Label-Free Monitoring
@@ -549,6 +567,62 @@ class OperationalOrchestrator:
                 self._persist_operational_run_summary(summary)
 
         return summary
+
+    def _fetch_live_due_results(self, summary: OperationalRunSummary) -> list[dict[str, Any]]:
+        """Poll only genuine, persisted pre-match predictions awaiting finality."""
+        if self.session_factory is None or self.live_provider is None:
+            raise ConfigurationError("LIVE_RESULTS_DEPENDENCY_MISSING", "Live result polling requires SQL and provider.")
+        from app.db.models.shadow import ShadowEvaluation, ShadowPrediction
+        from app.providers.live.adapter import LiveIngestionAdapter
+
+        due: dict[str, UUID] = {}
+        with self.session_factory() as session:
+            candidates = session.query(ShadowPrediction).filter(
+                ShadowPrediction.kickoff_utc < self.clock.now(),
+                ShadowPrediction.score_matrix.isnot(None),
+            ).order_by(ShadowPrediction.kickoff_utc.asc()).limit(100).all()
+            for row in candidates:
+                if session.query(ShadowEvaluation).filter_by(
+                    prediction_id=row.id, result_version=1
+                ).first() is not None:
+                    continue
+                pred = self.prediction_service._persisted_predictions.get(row.id)
+                if pred is None:
+                    continue
+                try:
+                    ShadowPredictionRepository.verify_certified_live_prediction(session, pred)
+                except ValueError:
+                    continue
+                meta = row.feature_snapshot.data_quality_metadata or {}
+                provider_id = meta.get("source_fixture_id")
+                if provider_id and meta.get("source_provider") == self.live_provider.provider_name:
+                    due[str(provider_id)] = row.fixture_id
+                if len(due) >= 30:
+                    break
+
+        if not due:
+            return []
+        dtos = self._handle_provider_call_with_retry(
+            lambda: self.live_provider.get_fixture_results(list(due)), summary
+        )
+        adapter = LiveIngestionAdapter(clock=self.clock)
+        results = []
+        for dto in dtos:
+            provider_id = str(dto.provider_fixture_id)
+            if provider_id not in due:
+                continue
+            normalized = adapter.adapt_live_result_to_scoring_record(dto)
+            if not normalized.get("score_match") or normalized.get("status") != "FINISHED":
+                continue
+            results.append({
+                "fixture_id": due[provider_id],
+                "match_status": "FINISHED",
+                "home_goals": normalized["home_score"],
+                "away_goals": normalized["away_score"],
+                "result_version": normalized["result_version"],
+                "source_payload_fingerprint": normalized["payload_fingerprint"],
+            })
+        return results
 
     def _persist_operational_run_summary(self, summary: OperationalRunSummary) -> None:
         """Durable operational run persistence (Sprint 7.1 / 7.2)."""
