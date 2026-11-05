@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api.v1.security import require_customer_api_token
+from app.api.v1.endpoints.predictions import _verified
 from app.db.models.automation import OperationalRun
 from app.db.models.shadow import ShadowEvaluation, ShadowPrediction
 from app.db.session import get_db
@@ -26,13 +27,15 @@ def private_operational_status(db: Session = Depends(get_db)):
     last = db.query(OperationalRun).filter_by(
         execution_mode="LIVE_SHADOW"
     ).order_by(OperationalRun.started_at.desc()).first()
-    last_pred = db.query(ShadowPrediction).filter(
+    predictions = db.query(ShadowPrediction).filter(
         ShadowPrediction.score_matrix.isnot(None),
         ShadowPrediction.feature_snapshot_id.isnot(None),
-    ).order_by(ShadowPrediction.generated_at.desc()).first()
-    last_eval = db.query(ShadowEvaluation).order_by(
+    ).order_by(ShadowPrediction.generated_at.desc()).limit(500).all()
+    last_pred = next((p for p in predictions if _verified(p)), None)
+    evaluations = db.query(ShadowEvaluation).order_by(
         ShadowEvaluation.result_observed_at.desc()
-    ).first()
+    ).limit(500).all()
+    last_eval = next((ev for ev in evaluations if _verified(ev.prediction)), None)
     completed_at = _aware(last.completed_at) if last else None
     # A recent cycle is evidence of recent execution, not proof that a
     # scheduler will remain running indefinitely.
