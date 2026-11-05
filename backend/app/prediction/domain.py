@@ -100,6 +100,8 @@ class ShadowPredictionResult:
 
     is_canonical_evaluation_prediction: bool
     prediction_schema_version: str = "1.0.0"
+    # Complete frozen goal distribution; retained for exact-score evaluation.
+    score_matrix: list[list[float]] | None = None
 
     @property
     def effective_model_1x2(self) -> str:
