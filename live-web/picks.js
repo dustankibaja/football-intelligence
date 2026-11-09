@@ -1,7 +1,6 @@
 import { isFresh, landingMatches } from './picks-core.js';
 
 const $ = id => document.getElementById(id);
-const DAY = 24 * 60 * 60 * 1000;
 let state = null;
 let days = 7;
 let view = 'green';
@@ -99,7 +98,7 @@ function render() {
   $('offline-banner').hidden = navigator.onLine;
 
   const errors = [
-    state.refreshError,
+    state.refreshError ? 'Provider refresh delayed' : null,
     ...(state.providerErrors || []).map(x => x.competition
       ? x.competition + ' update delayed' : 'Provider update delayed')
   ].filter(Boolean);
