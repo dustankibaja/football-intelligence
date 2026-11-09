@@ -18,7 +18,7 @@ export default async function handler(request, response) {
         const refreshed = await runRefresh({ force: manual && ageMs > 30 * 60000 });
         if (!refreshed.skipped) return response.status(200).json({
           ...refreshed.view, refresh: { created: refreshed.created,
-            evaluated: refreshed.evaluated }
+            revised: refreshed.revised, evaluated: refreshed.evaluated }
         });
       } catch (err) {
         refreshError = String(err.message).slice(0, 180);
