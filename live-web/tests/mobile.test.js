@@ -29,9 +29,21 @@ test('PWA manifest has a stable scope and real install icons', () => {
 });
 
 test('mobile layout provides viewport-safe touch navigation and install hints', () => {
-  const html = read('index.html');
+  const home = read('index.html');
+  const html = read('analysis.html');
   const css = read('styles.css');
   const js = read('app.js');
+  assert.match(home, /viewport-fit=cover/);
+  assert.match(home, /href="\/picks.css"/);
+  assert.match(home, /src="\/picks.js"/);
+  assert.match(home, /href="\/analysis.html"/);
+  assert.match(home, /data-days="1"/);
+  assert.match(home, /data-days="7"/);
+  assert.match(home, /data-days="14"/);
+  assert.match(home, /data-view="green"/);
+  assert.match(home, /data-view="all"/);
+  assert.match(home, /id="picks-list"/);
+  assert.match(home, /id="green-count"/);
   assert.match(html, /viewport-fit=cover/);
   assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
   assert.match(html, /rel="apple-touch-icon"/);
