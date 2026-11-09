@@ -1,0 +1,115 @@
+name: Prospective Shadow Post-Match Reconciliation (Noncommercial)
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/research/prospective_results.py'
+      - 'backend/tests/unit/test_prospective_result_reconciliation.py'
+      - '.github/workflows/prospective-results-research.yml'
+  push:
+    branches:
+      - master
+    paths:
+      - 'backend/app/research/prospective_results.py'
+      - 'backend/tests/unit/test_prospective_result_reconciliation.py'
+      - '.github/workflows/prospective-results-research.yml'
+  workflow_dispatch:
+    inputs:
+      forecast_run_id:
+        description: "Existing, immutable, pre-match GitHub Actions forecast run ID"
+        type: string
+        required: true
+        default: "42615042665"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  reconcile-only:
+    name: Check original saved pre-match ledger against later actual results
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Prove immutable reconciliation rules
+        working-directory: backend
+        run: |
+          pytest -q tests/unit/test_prospective_result_reconciliation.py
+
+      - name: Download original earlier shadow forecast evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: football-prospective-shadow-evidence
+          path: research_inputs
+          run-id: ${{ github.event.inputs.forecast_run_id || '42615042665' }}
+          github-token: ${{ github.token }}
+
+      - name: Verify original saved forecast before contacting results
+        run: |
+          cd backend
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from app.research.prospective_results import verify_original_forecast_ledger
+          ledger = json.loads(Path("../research_inputs/prospective_shadow_2026_27.json").read_text())
+          print("Immutable forecast source ledger:", verify_original_forecast_ledger(ledger))
+          print("Issued UTC:", ledger["generated_at_utc"])
+          print("Forecasts:", len(ledger["predictions"]))
+          PY
+
+      - name: Fetch current source-pinned completed outcomes and reconcile
+        working-directory: backend
+        run: |
+          python -m app.research.prospective_results \
+            --forecast-ledger ../research_inputs/prospective_shadow_2026_27.json \
+            --output ../research_outputs/prospective_postmatch_results.json
+
+      - name: Enforce non-retroactive result audit invariants
+        run: |
+          python - <<'PY'
+          from datetime import UTC, datetime
+          import hashlib
+          import json
+          from pathlib import Path
+          p = Path("research_outputs/prospective_postmatch_results.json")
+          x = json.loads(p.read_text())
+          original = json.loads(Path("research_inputs/prospective_shadow_2026_27.json").read_text())
+          assert x["source_forecast_ledger_sha256"] == original["ledger_sha256"]
+          assert x["forecast_count"] == len(original["predictions"]) > 0
+          assert x["evaluated_count"] <= x["forecast_count"]
+          assert sum(x["evaluation_counts"].values()) == x["forecast_count"]
+          assert len(x["result_source_receipts"]) == 5
+          assert x["status"] == "PROSPECTIVE_RESEARCH_AUDIT_NOT_PRODUCTION_CERTIFICATION"
+          unsigned = dict(x)
+          digest = unsigned.pop("report_sha256")
+          assert hashlib.sha256(json.dumps(unsigned, sort_keys=True).encode()).hexdigest() == digest
+          now = datetime.now(UTC).date()
+          if all(datetime.fromisoformat(f["expected_calendar_date"]).date() >= now for f in original["predictions"]):
+              assert x["evaluated_count"] == 0, "Cannot score future fixtures."
+          if x["evaluated_count"] == 0:
+              assert x["observed_score_metrics"] is None
+              assert x["calibration_sample_sufficient"] is False
+          print("Immutable research score audit verified:", x["evaluation_counts"])
+          PY
+
+      - name: Archive report separately (no rewriting forecasts or raw data)
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-prospective-postmatch-audit
+          path: research_outputs/prospective_postmatch_results.json
+          retention-days: 90
+          if-no-files-found: error
