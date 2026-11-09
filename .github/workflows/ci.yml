@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   lint-policy:
-    name: Codebase Lint Policy (Ruff)
+    name: Advisory Ruff Lint Statistics (non-blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -101,7 +101,7 @@ jobs:
         run: |
           cd backend
           alembic upgrade head --sql > offline_migrations.sql
-          grep "CREATE TABLE" offline_migrations.sql | head -n 5
+          grep -m 5 "CREATE TABLE" offline_migrations.sql
 
       - name: Execute Clean-Chain Alembic Migrations to Head
         env:
@@ -114,16 +114,43 @@ jobs:
           cd backend
           alembic upgrade head
 
-      - name: Verify Alembic Migration Head
+      - name: Verify Alembic Migration Head Against Repository
         env:
-          PGPASSWORD: postgres
+          POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: football_intelligence_test
         run: |
-          DB_HEAD=$(psql -h localhost -p 5432 -U postgres -d football_intelligence_test -t -A -c "SELECT version_num FROM alembic_version;")
-          echo "Database Alembic revision: $DB_HEAD"
-          if [ "$DB_HEAD" != "20261023_0006" ]; then
-            echo "ERROR: Database revision ($DB_HEAD) does not match expected repository head (20261023_0006)"
-            exit 1
-          fi
+          cd backend
+          python - <<'PY'
+          from alembic.config import Config
+          from alembic.script import ScriptDirectory
+          from sqlalchemy import create_engine, text
+          from app.core.config import settings
+
+          heads = ScriptDirectory.from_config(Config("alembic.ini")).get_heads()
+          if len(heads) != 1:
+              raise SystemExit(f"Expected exactly one repository migration head, found: {heads}")
+
+          engine = create_engine(settings.database_url)
+          try:
+              if engine.dialect.name != "postgresql":
+                  raise SystemExit("Migration head verification must use PostgreSQL")
+              with engine.connect() as connection:
+                  actual_head = connection.execute(
+                      text("SELECT version_num FROM alembic_version")
+                  ).scalar_one()
+                  current_db = connection.execute(text("SELECT current_database()")).scalar_one()
+          finally:
+              engine.dispose()
+
+          if current_db != "football_intelligence_test":
+              raise SystemExit("CI connected to an unexpected database")
+          if actual_head != heads[0]:
+              raise SystemExit(f"Database head {actual_head} != repository head {heads[0]}")
+          print(f"Verified clean PostgreSQL migration at head {actual_head}")
+          PY
 
       - name: Run Targeted PostgreSQL Integration Tests
         env:
