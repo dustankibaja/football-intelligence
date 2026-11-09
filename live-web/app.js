@@ -190,7 +190,8 @@ function renderHistory() {
     ['Qualified >60% forecasts', green.length],
     ['Qualified correct', greenCorrect],
     ['Qualified accuracy', green.length ? pct(greenCorrect / green.length) : '—'],
-    ['Misses caused by draws', drawMisses],
+    ['Incorrect outcomes: draws', drawMisses],
+    ['Incorrect outcomes: non-draws', incorrect - drawMisses],
     ['Expected correct (probability sum)', evaluated ? expectedCorrect.toFixed(1) : '—'],
     ['Not predicted', notPredicted]
   ];
