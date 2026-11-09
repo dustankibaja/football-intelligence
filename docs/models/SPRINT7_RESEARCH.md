@@ -14,7 +14,9 @@ The new **research candidate** acquires 20 completed competition-seasons
 `football-data.co.uk` using allowlisted URLs. It validates every source's
 schema, score/result consistency, season dates, fixture identity and coverage.
 Each source receives a SHA-256 and the normalized dataset gets a deterministic
-fingerprint. Raw bookmaker columns are not ingested into features or models.
+fingerprint. The verified 20-source checksums and dataset fingerprint are frozen
+in `backend/app/research/source-lock.json`; future source drift fails closed
+until a reviewed new research version is explicitly created. Raw bookmaker columns are not ingested into features or models.
 
 CSV source dates may not represent verified kickoff times. For leakage
 protection, **all same-day results are withheld until the following calendar
@@ -33,7 +35,10 @@ The GitHub Actions workflow `sprint7-research.yml` runs acquisition and
 benchmarking on an isolated runner and uploads only the JSON evidence report,
 not copyrighted raw provider CSV. Failure to fetch/verify any source fails
 the entire research run. The research data are **not yet approved or imported
-into the production canonical PostgreSQL dataset**.
+into the production canonical PostgreSQL dataset**. The first successful run
+verified **7,230** matches, with **2,892** fixtures across two untouched test
+seasons. The frozen source lock is a research evidence artifact, not an
+approved dataset release.
 
 ## 2. Competing models
 
