@@ -176,4 +176,4 @@ def selective_decision(row: FeatureRow, p: tuple[float, float, float]) -> str:
     top = sorted(enumerate(p), key=lambda x: x[1], reverse=True)
     if top[0][0] == 1 or top[0][1] <= .60 or top[0][1] - top[1][1] < .12 or p[1] > .28:
         return "ABSTAIN_UNCERTAIN"
-    return "WATCH_ONLY_UNCALIBRATED"
+    return "WATCH_ONLY_RESEARCH"
