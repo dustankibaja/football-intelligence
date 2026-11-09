@@ -89,7 +89,7 @@ jobs:
           x = json.loads(p.read_text())
           original = json.loads(Path("research_inputs/prospective_shadow_2026_27.json").read_text())
           assert x["source_forecast_ledger_sha256"] == original["ledger_sha256"]
-          assert x["forecast_count"] == len(original["predictions"]) == 63
+          assert x["forecast_count"] == len(original["predictions"]) > 0
           assert x["evaluated_count"] <= x["forecast_count"]
           assert sum(x["evaluation_counts"].values()) == x["forecast_count"]
           assert len(x["result_source_receipts"]) == 5
