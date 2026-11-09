@@ -3,6 +3,9 @@ import { predictFixture, evaluateForecast, summarizeEvaluations,
   MODEL_ID, walkForwardBacktest } from './model.js';
 import { fetchRealFixtures } from './provider.js';
 import { normalizeFinished, buildHistory, auditSummary } from './history.js';
+import { canonicalFixtureKey, latestForecastsByMatch,
+  latestUpcomingForecasts, needsForecastRevision,
+  selectLatestEvaluations } from './forecast-store.js';
 
 const PREFIX = 'footmo/private-trial/snapshots/';
 const HOURS = 60 * 60 * 1000;
@@ -33,10 +36,11 @@ export async function readState() {
 
 function applyProviderData(previous, feed, now) {
   const data = structuredClone(previous);
-  const forecastKeys = new Set(data.predictions.map(p => p.forecastKey));
+  const latestForecastByMatch = latestForecastsByMatch(data.predictions);
+  const correctedLeagues = new Set();
   const completed = new Map((data.finishedMatches || []).map(m => [m.fixtureId, m]));
   const corrections = data.resultCorrections || [];
-  let created = 0, evaluated = 0;
+  let created = 0, revised = 0, evaluated = 0;
   for (const league of feed.leagues) {
     // Source match history includes games played before this trial began.
     // Those matches must never be presented as successful/failed forecasts.
@@ -46,6 +50,7 @@ function applyProviderData(previous, feed, now) {
       const record = normalizeFinished(finished, league, now, prior);
       if (!record) continue;
       if (prior && record.resultVersion > prior.resultVersion) {
+        correctedLeagues.add(league.code);
         corrections.push({ fixtureId: id, competitionCode: league.code,
           from: `${prior.home}-${prior.away}`,
           to: `${record.home}-${record.away}`,
@@ -54,16 +59,29 @@ function applyProviderData(previous, feed, now) {
       completed.set(id, record);
     }
     for (const fixture of league.upcoming) {
-      const forecastKey = `${fixture.id}:${fixture.utcDate}`;
-      if (forecastKeys.has(forecastKey)) continue;
+      const key = canonicalFixtureKey({
+        fixtureId: fixture.id, kickoffUtc: fixture.utcDate
+      });
+      if (!key) continue;
+      const prior = latestForecastByMatch.get(key);
+      // Recompute when new results have become available. Previous forecasts
+      // remain immutable, and revisions are published before kickoff only.
       const prediction = predictFixture(fixture, league.finished, now);
-      if (!prediction) continue;
-      prediction.forecastKey = forecastKey;
+      if (!needsForecastRevision(prior, prediction, {
+        scoreCorrected: correctedLeagues.has(league.code)
+      })) continue;
+      const version = prior ? (prior.forecastVersion || 1) + 1 : 1;
+      prediction.forecastKey = prior
+        ? `${fixture.id}:${fixture.utcDate}:revision-${version}:${now.toISOString()}`
+        : `${fixture.id}:${fixture.utcDate}`;
+      prediction.forecastVersion = version;
+      prediction.revisionReason = prior ? 'NEW_VERIFIED_RESULTS_OR_CORRECTION' : 'INITIAL';
       prediction.competition = league.name;
       prediction.competitionCode = league.code;
       data.predictions.push(prediction);
-      forecastKeys.add(forecastKey);
-      created++;
+      latestForecastByMatch.set(key, prediction);
+      if (prior) revised++;
+      else created++;
     }
     const finals = new Map(league.finished.map(m => [String(m.id), m]));
     for (const prediction of data.predictions) {
@@ -114,24 +132,15 @@ function applyProviderData(previous, feed, now) {
     top1ScoreHitRate: weighted('top1ScoreHitRate'),
     perLeague: byLeague
   };
-  return { data, created, evaluated };
+  return { data, created, revised, evaluated };
 }
 
 export function viewState(data, now = new Date()) {
-  const latest = new Map();
-  for (const evaluation of data.evaluations) {
-    const prior = latest.get(evaluation.forecastKey);
-    if (!prior || prior.version < evaluation.version) {
-      latest.set(evaluation.forecastKey, evaluation);
-    }
-  }
-  const evaluations = [...latest.values()].sort((a, b) =>
-    b.observedAt.localeCompare(a.observedAt));
+  // Only one primary score per completed fixture: the latest published
+  // pre-kickoff forecast. All earlier revisions remain in private snapshots.
+  const evaluations = selectLatestEvaluations(data.predictions, data.evaluations);
   const history = buildHistory(data.finishedMatches || [], data.predictions, evaluations);
-  const upcoming = data.predictions.filter(p =>
-    new Date(p.kickoffUtc) > now &&
-    new Date(p.generatedAt) < new Date(p.kickoffUtc))
-    .sort((a, b) => a.kickoffUtc.localeCompare(b.kickoffUtc));
+  const upcoming = latestUpcomingForecasts(data.predictions, now);
   return {
     source: data.source, model: data.model,
     scientificCertification: 'NOT_CERTIFIED_PROVISIONAL_POISSON',
@@ -165,14 +174,14 @@ export async function runRefresh({ force = false } = {}) {
     throw new Error('NO_VERIFIED_PROVIDER_DATA:' + codes);
   }
   const current = await readState();
-  const { data, created, evaluated } = applyProviderData(current.data, feed, now);
+  const { data, created, revised, evaluated } = applyProviderData(current.data, feed, now);
   const unique = `${now.toISOString().replace(/[:.]/g, '-')}-${Math.random().toString(36).slice(2, 10)}`;
   await put(`${PREFIX}${unique}.json`, JSON.stringify(data), {
     access: 'private', contentType: 'application/json',
     addRandomSuffix: true, cacheControlMaxAge: 60
   });
   return {
-    skipped: false, created, evaluated,
+    skipped: false, created, revised, evaluated,
     verifiedLeagues: feed.leagues.length,
     providerErrors: feed.errors, view: viewState(data)
   };
