@@ -67,7 +67,10 @@ test('history marks correct, incorrect, pending and pre-trial games separately',
   const audit = auditSummary(rows);
   assert.deepEqual(audit, {
     finishedMatches: 4, evaluated: 2, correct: 1, incorrect: 1,
-    pending: 1, notPredicted: 1, accuracy: 0.5
+    pending: 1, notPredicted: 1, accuracy: 0.5,
+    greenEvaluated: 1, greenCorrect: 0, greenIncorrect: 1,
+    greenAccuracy: 0, drawMisses: 1, nonDrawMisses: 0,
+    expectedCorrect: 1.3
   });
 });
 
@@ -77,6 +80,8 @@ test('future forecasts and old fixtures are excluded from rolling windows', () =
   assert.equal(inRollingWindow('2026-12-04T12:00:00Z', 30, now, 'future'), true);
   assert.equal(inRollingWindow('2026-12-06T12:00:00Z', 30, now, 'future'), false);
   assert.equal(inRollingWindow('2026-11-04T12:00:00Z', 1, now, 'past'), true);
+  assert.equal(inRollingWindow('2026-11-03T12:00:00Z', 2, now, 'past'), true);
+  assert.equal(inRollingWindow('2026-11-03T11:59:59Z', 2, now, 'past'), false);
   assert.equal(inRollingWindow('2026-11-04T11:59:59Z', 1, now, 'past'), false);
   assert.equal(inRollingWindow('2026-09-01T12:00:00Z', 'ALL', now, 'past'), true);
 });
