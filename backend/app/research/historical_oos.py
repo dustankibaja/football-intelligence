@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 import csv
 from collections import defaultdict, deque
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime, time as clock_time
 import hashlib
 import io
@@ -29,6 +29,11 @@ from sklearn.preprocessing import StandardScaler
 from app.models.evaluation import ModelEvaluator
 from app.models.baselines.attack_defense_poisson import AttackDefensePoissonModel
 from app.models.dataset_dto import ModelingRowDTO
+from app.research.uncertainty import (
+    date_clustered_log_loss_skill,
+    draw_probability_audit,
+    selective_skill_audit,
+)
 
 
 LEAGUE_MATCH_COUNTS = {"E0": 380, "SP1": 380, "I1": 380, "D1": 306}
@@ -492,8 +497,18 @@ def evaluate_real_historical(
                 np.mean(np.argmax(test_probs_cal[mask], axis=1) == y[test_ids][mask])
             )
 
+    test_match_dates = [fixtures[i].match_date for i in test_ids]
+    skill_interval = date_clustered_log_loss_skill(
+        y[test_ids], test_probs_cal, baseline_probs, test_match_dates,
+        n_bootstrap=2000, seed=20261109,
+    )
+    draw_diagnostics = draw_probability_audit(y[test_ids], test_probs_cal)
+    selective_baseline = selective_skill_audit(
+        y[test_ids], test_probs_cal, baseline_probs, selected_threshold,
+    )
+
     return {
-        "schema_version": "independent_research_1.1.0",
+        "schema_version": "independent_research_1.2.0",
         "status": "OUT_OF_SAMPLE_RESEARCH_NOT_CERTIFIED_FOR_PUBLICATION",
         "research_note": (
             "Independent causal outcome-only challenger; does not use the 251-feature "
@@ -527,6 +542,9 @@ def evaluate_real_historical(
             "challenger_temperature_calibrated": _metric_summary(y[test_ids], test_probs_cal),
             "per_league_calibrated": by_league,
         },
+        "skill_uncertainty": asdict(skill_interval),
+        "draw_calibration_diagnostics": draw_diagnostics,
+        "selective_baseline_audit": selective_baseline,
         "selective_1x2": {
             "confidence_policy": "max calibrated probability above fixed validation-chosen cutoff",
             "threshold_chosen_on_calibration_only": selected_threshold,
@@ -576,6 +594,11 @@ def main() -> None:
             for code, metrics in report["heldout_metrics"]["per_league_calibrated"].items()
         },
         "selective_1x2": report["selective_1x2"],
+        "skill_interval_95": report["skill_uncertainty"]["confidence_interval_95"],
+        "draw_observed_frequency": report["draw_calibration_diagnostics"]["actual_draw_frequency"],
+        "draw_mean_predicted": report["draw_calibration_diagnostics"]["mean_predicted_draw_probability"],
+        "selective_same_fixtures_prior_accuracy": report["selective_baseline_audit"].get("same_fixtures_training_prior_accuracy"),
+        "selective_accuracy_gain_vs_prior": report["selective_baseline_audit"].get("accuracy_difference_vs_training_prior"),
         "champion_compared": False,
         "report": str(output),
     }, indent=2))
