@@ -15,6 +15,9 @@ export default async function handler(request, response) {
       ok: true, skipped: result.skipped,
       reason: result.reason || null, created: result.created || 0,
       revised: result.revised || 0, evaluated: result.evaluated || 0,
+      shadowCreated: result.shadowCreated || 0,
+      shadowRevised: result.shadowRevised || 0,
+      shadowEvaluated: result.shadowEvaluated || 0,
       verifiedLeagues: result.verifiedLeagues || 0,
       providerErrors: result.providerErrors || []
     });
