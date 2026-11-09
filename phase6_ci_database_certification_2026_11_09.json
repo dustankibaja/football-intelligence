@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.1.0",
+  "certification_date_utc": "2026-11-09",
+  "scope": "Docker-independent GitHub Actions PostgreSQL 16 clean-chain migration and tests; not live science or production runtime certification",
+  "repository": "dustankibaja/football-intelligence",
+  "default_branch": "master",
+  "workflow_path": ".github/workflows/ci.yml",
+  "workflow_sha256": "becad174842cf5523e88dbf8b6879f80725630abfb8e7fe14bb6b556a4f094e3",
+  "primary_ci_run": {
+    "run_id": 42601715801,
+    "run_number": 257,
+    "run_url": "https://github.com/dustankibaja/football-intelligence/actions/runs/42601715801",
+    "workflow_name": "Football Intelligence System CI",
+    "event": "pull_request",
+    "certified_pr_head_sha": "d31bd07fe65eba3754b3489ac6a25de8259a7456",
+    "merged_master_sha": "2a277749776de8d5520e5c6237820d1351792412",
+    "status": "completed",
+    "conclusion": "success",
+    "postgresql_job": {
+      "name": "PostgreSQL Clean-Chain Migration & Integration Tests",
+      "job_id": 129107550406,
+      "conclusion": "success"
+    },
+    "lint_job": {
+      "name": "Advisory Ruff Lint Statistics (non-blocking)",
+      "job_id": 129107550137,
+      "conclusion": "success",
+      "ruff_errors_reported": 468,
+      "policy": "advisory_not_certified"
+    }
+  },
+  "confirmation_after_scoring_change": {
+    "run_id": 42602898739,
+    "run_number": 259,
+    "run_url": "https://github.com/dustankibaja/football-intelligence/actions/runs/42602898739",
+    "event": "pull_request",
+    "certified_pr_head_sha": "0bd603d047f74729a90fcee44d0c595a226504be",
+    "merged_master_sha": "689f7f1b8c7b207f7d061964a753aeb153a3ac47",
+    "status": "completed",
+    "conclusion": "success",
+    "postgresql_job_id": 129111466034
+  },
+  "runtime": {
+    "runner": "ubuntu-latest",
+    "python": "3.11.18",
+    "postgresql": "16.15",
+    "database": "football_intelligence_test",
+    "alembic": "1.20.1",
+    "sqlalchemy": "2.1.8",
+    "migration_head": "20261023_0006",
+    "initial_public_tables": 0
+  },
+  "primary_tests": {
+    "targeted_integration": {
+      "collected": 533,
+      "selected": 60,
+      "passed": 57,
+      "skipped": 3,
+      "deselected": 473,
+      "failed": 0,
+      "warnings": 7
+    },
+    "full_regression": {
+      "collected": 533,
+      "passed": 522,
+      "skipped": 11,
+      "failed": 0,
+      "warnings": 7
+    }
+  },
+  "post_scoring_tests": {
+    "targeted_integration": {
+      "collected": 537,
+      "selected": 60,
+      "passed": 57,
+      "skipped": 3,
+      "deselected": 477,
+      "failed": 0,
+      "warnings": 7
+    },
+    "full_regression": {
+      "collected": 537,
+      "passed": 526,
+      "skipped": 11,
+      "failed": 0,
+      "warnings": 7
+    }
+  },
+  "safety": {
+    "github_permissions": "contents: read",
+    "ephemeral_postgresql_service": true,
+    "docker_required_on_developer_pc": false,
+    "wsl_required_on_developer_pc": false,
+    "production_credential_references_in_workflow": 0,
+    "ci_sqlite_fallback_disabled": true,
+    "ci_database_host_restricted_to_localhost": true,
+    "ci_database_name_enforced": true
+  },
+  "frozen_models_modified_by_pr_6_or_pr_7": false,
+  "limitations": [
+    "Ruff reports 468 pre-existing lint violations and is explicitly non-blocking.",
+    "Scoring v1.1 changes new evaluation semantics only; historical evaluation rows were not rewritten.",
+    "No actual production database, VPS, continuous scheduler, or live model-quality certification is claimed.",
+    "Some tests were skipped; their specific reasons must be read from GitHub logs.",
+    "Migration graph content fingerprint and standalone manifest SHA-256 are not included; this evidence record does not self-certify its own Git commit."
+  ],
+  "source_pull_requests": [
+    "https://github.com/dustankibaja/football-intelligence/pull/6",
+    "https://github.com/dustankibaja/football-intelligence/pull/7"
+  ]
+}
