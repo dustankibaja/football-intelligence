@@ -123,6 +123,18 @@ def _download(url: str) -> bytes:
     raise RuntimeError("Download failed")
 
 
+def verify_source_lock(manifest: dict, lock: dict) -> None:
+    """Fail closed if the provider silently edits any frozen research source."""
+    observed = {f"{s['competition']}:{s['season']}": s["sha256"]
+                for s in manifest["sources"]}
+    if lock.get("schema") != 1 or lock.get("sourceCount") != len(observed):
+        raise ValueError("Research source lock schema/coverage mismatch")
+    if observed != lock.get("sources"):
+        raise ValueError("Research source checksum drift: new version requires review")
+    if manifest["datasetFingerprintSha256"] != lock.get("datasetFingerprintSha256"):
+        raise ValueError("Research dataset fingerprint drift")
+
+
 def acquire(cache_dir: Path, *, offline: bool = False) -> tuple[list[Match], dict]:
     """Download 20 completed competition-seasons, validate and fingerprint.
 
@@ -160,7 +172,7 @@ def acquire(cache_dir: Path, *, offline: bool = False) -> tuple[list[Match], dic
                      x.competition, x.season, x.day, x.home, x.away))]
     fingerprint = hashlib.sha256(json.dumps(canonical,
         separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
-    return all_matches, {
+    manifest = {
         "provider": PROVIDER, "sourceCount": len(sources),
         "totalFixtures": len(all_matches), "seasons": list(SEASONS),
         "competitions": list(COMPETITIONS), "sources": sources,
@@ -169,3 +181,8 @@ def acquire(cache_dir: Path, *, offline: bool = False) -> tuple[list[Match], dic
         "temporalPrecision": "DATE_ONLY_PREVIOUS_DAY_ONLY",
         "bookmakerFieldsUsed": False
     }
+    lock_path = Path(__file__).with_name("source-lock.json")
+    if not lock_path.exists():
+        raise FileNotFoundError("Frozen research source lock is required")
+    verify_source_lock(manifest, json.loads(lock_path.read_text(encoding="utf-8")))
+    return all_matches, manifest
