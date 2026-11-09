@@ -19,6 +19,7 @@ if (process.env.VERCEL_ENV !== 'production') {
     verifiedLeagues: result.verifiedLeagues,
     leagueCounts: data.leagueCounts,
     newForecasts: result.created,
+    revisedForecasts: result.revised,
     newEvaluations: result.evaluated,
     upcomingForecasts: view.upcoming.length,
     observedEvaluations: view.performance.sampleSize,
