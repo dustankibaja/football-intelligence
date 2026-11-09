@@ -27,6 +27,31 @@ function node(tag, className, value) {
   return el;
 }
 function empty(message) { return node('div', 'empty', message); }
+function renderShadow(shadow) {
+  if (!shadow) {
+    $('shadow-summary').textContent = 'Shadow evaluation has not started. No candidate has been promoted.';
+    $('shadow-stats').replaceChildren();
+    return;
+  }
+  $('shadow-summary').textContent = shadow.enabled
+    ? `Candidate: ${shadow.candidateModel} · ${shadow.status.replaceAll('_', ' ')} · no automatic promotion.`
+    : 'Shadow model disabled. Production forecasts remain unchanged.';
+  const rows = [
+    ['Upcoming shadow forecasts', shadow.pendingUpcoming || 0],
+    ['Watch-only candidates', shadow.watchOnlyUpcoming || 0],
+    ['Shadow evaluations', shadow.shadowEvaluated || 0],
+    ['Paired evaluations', shadow.pairedEvaluated || 0],
+    ['Paired 1X2 log-loss difference', shadow.pairedLogLossDelta == null
+      ? '—' : Number(shadow.pairedLogLossDelta).toFixed(3)],
+    ['Paired Brier difference', shadow.pairedBrierDelta == null
+      ? '—' : Number(shadow.pairedBrierDelta).toFixed(3)]
+  ];
+  $('shadow-stats').replaceChildren(...rows.map(([label, value]) => {
+    const box = node('div', 'history-stat');
+    box.append(node('span', '', label), node('strong', '', String(value)));
+    return box;
+  }));
+}
 function renderMetrics(performance) {
   const values = [
     ['Evaluated fixtures', String(performance.sampleSize ?? 0)],
@@ -50,6 +75,7 @@ function renderMetrics(performance) {
     : performance.sampleSize < 50
       ? `Small sample · ${performance.sampleSize} matches`
       : `Observed · ${performance.sampleSize} matches`;
+  renderShadow(data?.shadow);
 }
 function fixtureCard(p) {
   const card = node('article', 'fixture');
