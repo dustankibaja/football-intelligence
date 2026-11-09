@@ -1,0 +1,78 @@
+name: Real Historical Football Research (Independent OOS)
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/research/historical_oos.py'
+      - 'backend/tests/unit/test_real_historical_oos_research.py'
+      - '.github/workflows/historical-research.yml'
+  push:
+    branches:
+      - master
+    paths:
+      - 'backend/app/research/historical_oos.py'
+      - 'backend/tests/unit/test_real_historical_oos_research.py'
+      - '.github/workflows/historical-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  historical-real-outcomes:
+    name: Download 28 real football CSVs and score 2025-26 sealed holdout
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout immutable source commit
+        uses: actions/checkout@v4
+
+      - name: Install Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install project scientific dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Validate offline anti-leakage and provider contracts
+        working-directory: backend
+        run: |
+          pytest -q tests/unit/test_real_historical_oos_research.py
+
+      - name: Download authentic completed seasons and measure OOS quality
+        working-directory: backend
+        run: |
+          python -m app.research.historical_oos \
+            --raw-dir ../data/research_football_data_raw \
+            --output ../research_outputs/sealed_2025_26_oos.json
+
+      - name: Assert complete provenance and no fabricated outcomes
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("research_outputs/sealed_2025_26_oos.json")
+          x = json.loads(p.read_text(encoding="utf-8"))
+          assert x["coverage"]["total_finished_fixtures"] == 10122, x["coverage"]
+          assert x["coverage"]["sealed_test_2025_26"] == 1446, x["coverage"]
+          assert len(x["source_manifest"]) == 28
+          assert len({(s["season"], s["league"]) for s in x["source_manifest"]}) == 28
+          assert all(s["finished_matches"] in (306, 380) for s in x["source_manifest"])
+          assert all(len(s["sha256"]) == 64 for s in x["source_manifest"])
+          assert x["status"] == "OUT_OF_SAMPLE_RESEARCH_NOT_CERTIFIED_FOR_PUBLICATION"
+          for variant in ("training_only_class_prior", "challenger_raw", "challenger_temperature_calibrated"):
+              assert x["heldout_metrics"][variant]["sample_size"] == 1446
+          print("Real-data provenance, independent OOS metrics and release boundary verified")
+          PY
+
+      - name: Upload reproducible aggregated scientific evidence (no raw provider redistribution)
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-research-sealed-2025-26-oos
+          path: research_outputs/sealed_2025_26_oos.json
+          retention-days: 30
+          if-no-files-found: error
