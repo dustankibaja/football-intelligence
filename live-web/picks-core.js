@@ -45,9 +45,21 @@ export function landingMatches(upcoming, { days = 7, view = 'green',
   if (!Array.isArray(upcoming)) return [];
   const period = WINDOWS.has(Number(days)) ? Number(days) : 7;
   const end = now + period * DAY_MS;
-  const rows = [];
+  // A rescheduled fixture may have multiple immutable pre-kickoff forecasts.
+  // Use only the latest generated version, never two competing picks.
+  const latestByFixture = new Map();
   for (const p of upcoming) {
-    if (!validForecast(p)) continue;
+    if (!validForecast(p) || Date.parse(p.generatedAt) > now) continue;
+    const key = p.fixtureId == null
+      ? `${p.competitionCode}:${p.homeTeam}:${p.awayTeam}:${p.kickoffUtc}`
+      : String(p.fixtureId);
+    const prior = latestByFixture.get(key);
+    if (!prior || Date.parse(p.generatedAt) > Date.parse(prior.generatedAt)) {
+      latestByFixture.set(key, p);
+    }
+  }
+  const rows = [];
+  for (const p of latestByFixture.values()) {
     const kickoff = Date.parse(p.kickoffUtc);
     if (kickoff <= now || kickoff > end) continue;
     const candidate = teamWinCandidate(p);
