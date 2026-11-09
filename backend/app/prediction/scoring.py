@@ -82,14 +82,26 @@ class PostMatchScoringService:
         btts_ll, btts_brier = calculate_binary_metrics(prediction.btts_yes, actual_btts)
         ou_ll, ou_brier = calculate_binary_metrics(prediction.over_2_5, actual_ou25)
 
-        # Exact score evaluation
+        # Score probability must use the full modeled score grid, not just the
+        # five highest-ranked scorelines. Top-k is only used for hit metrics.
+        # Historical v1.0.0 evaluations remain immutable; new scores are v1.1.0.
+        # The original matrix is not persisted; lambdas are stored to 3 decimal
+        # places, so this is a reconstruction to the persisted lambda precision.
+        from app.prediction.service import compute_score_matrix
+
         actual_score_prob = 0.0
+        if 0 <= actual_home_goals < 10 and 0 <= actual_away_goals < 10:
+            reconstructed_matrix = compute_score_matrix(
+                float(prediction.lambda_home), float(prediction.lambda_away), max_goals=10
+            )
+            actual_score_prob = round(
+                reconstructed_matrix[actual_home_goals][actual_away_goals], 5
+            )
+
         top1_hit = False
         top3_hit = False
-
         for item in prediction.top_scorelines:
             if item["home_goals"] == actual_home_goals and item["away_goals"] == actual_away_goals:
-                actual_score_prob = item["probability"]
                 if item["rank"] == 1:
                     top1_hit = True
                 if item["rank"] <= 3:
@@ -116,7 +128,7 @@ class PostMatchScoringService:
             actual_score_probability=actual_score_prob,
             top1_score_hit=top1_hit,
             top3_score_hit=top3_hit,
-            evaluation_schema_version="1.0.0",
+            evaluation_schema_version="1.1.0",
         )
 
         self._evaluations[key] = evaluation
