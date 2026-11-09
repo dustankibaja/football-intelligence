@@ -66,6 +66,12 @@ jobs:
           assert x["status"] == "OUT_OF_SAMPLE_RESEARCH_NOT_CERTIFIED_FOR_PUBLICATION"
           for variant in ("training_only_class_prior", "challenger_raw", "challenger_temperature_calibrated"):
               assert x["heldout_metrics"][variant]["sample_size"] == 1446
+          assert x["skill_uncertainty"]["completed_matches"] == 1446
+          assert x["skill_uncertainty"]["unique_match_dates"] >= 20
+          assert len(x["skill_uncertainty"]["confidence_interval_95"]) == 2
+          assert x["draw_calibration_diagnostics"]["sample_size"] == 1446
+          assert sum(b["count"] for b in x["draw_calibration_diagnostics"]["reliability_bins"]) == 1446
+          assert x["selective_baseline_audit"]["n_selected"] == x["selective_1x2"]["test_selected"]
           print("Real-data provenance, independent OOS metrics and release boundary verified")
           PY
 
