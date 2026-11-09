@@ -247,3 +247,7 @@ button:disabled{cursor:wait;opacity:.65}
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+@media(max-width:760px){
+  .mobile-nav.analysis-nav{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
