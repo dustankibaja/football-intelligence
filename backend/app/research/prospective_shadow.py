@@ -330,7 +330,7 @@ def prospective_shadow(
             "publication_eligible": False,
         },
         "counts": {
-            "future_schedule_rows_in_window": len(due) + len(blocked),
+            "future_schedule_rows_in_window": len(issued) + len(blocked),
             "candidate_mapped": len(due),
             "forecasts_issued": len(issued),
             "blocked": len(blocked),
