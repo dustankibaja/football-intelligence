@@ -232,6 +232,67 @@ def evaluate_command(args: argparse.Namespace) -> None:
         print(f"Dataset : {args.dataset}:{args.version} ({len(rows)} rows)")
         print(f"Strategy: {args.split_strategy.upper()}")
 
+        if args.split_strategy == "rolling_origin":
+            from datetime import timedelta
+            from app.models.rolling_origin import (
+                evaluate_rolling_origin,
+                make_rolling_origin_folds,
+            )
+
+            kickoff_groups = len({row.kickoff_utc for row in rows})
+            train_groups = max(20, int(kickoff_groups * 0.50))
+            val_groups = max(5, int(kickoff_groups * 0.10))
+            folds = make_rolling_origin_folds(
+                rows,
+                n_folds=args.folds,
+                initial_train_groups=train_groups,
+                validation_groups=val_groups,
+                embargo=timedelta(hours=args.embargo_hours),
+            )
+            oos = evaluate_rolling_origin(folds, model_cls)
+            metrics = oos.pooled_test
+            print("\n--- ROLLING ORIGIN / OUT-OF-SAMPLE / SHADOW RESEARCH ---")
+            print(f"Fold count          : {len(oos.per_fold)}")
+            print(f"Unique OOS fixtures : {metrics.sample_size}")
+            print(f"Pooled Log Loss     : {metrics.log_loss:.4f}")
+            print(f"Pooled Brier Score  : {metrics.brier_score:.4f}")
+            print(f"Pooled RPS          : {metrics.ranked_probability_score:.4f}")
+            print(f"Pooled ECE          : {metrics.expected_calibration_error:.4f}")
+            for idx, fold_metric in enumerate(oos.per_fold, start=1):
+                print(
+                    f"Fold {idx}: train={oos.train_counts[idx-1]}, "
+                    f"val={oos.validation_counts[idx-1]}, "
+                    f"test={oos.test_counts[idx-1]}, "
+                    f"LL={fold_metric.log_loss:.4f}, "
+                    f"Brier={fold_metric.brier_score:.4f}"
+                )
+            print("NON-PRODUCTION: do not publish or replace the champion.")
+            if args.output:
+                output = {
+                    "evaluation_mode": oos.mode,
+                    "model_key": oos.model_key,
+                    "dataset_release": f"{args.dataset}:{args.version}",
+                    "fold_count": len(oos.per_fold),
+                    "embargo_hours": args.embargo_hours,
+                    "pooled_test": metrics.model_dump(),
+                    "folds": [
+                        {
+                            "fold": i + 1,
+                            "train_count": oos.train_counts[i],
+                            "validation_count": oos.validation_counts[i],
+                            "test_count": oos.test_counts[i],
+                            "metrics": metric.model_dump(),
+                        }
+                        for i, metric in enumerate(oos.per_fold)
+                    ],
+                    "tested_match_ids": list(oos.tested_match_ids),
+                }
+                os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
+                with open(args.output, "w", encoding="utf-8") as out:
+                    json.dump(output, out, indent=2, sort_keys=True)
+                print(f"Saved independent research report to: {args.output}")
+            return
+
         if args.split_strategy == "season_holdout":
             split_manifest, (train_rows, val_rows, test_rows) = TemporalSplitter.split_season_holdout(
                 rows, season_id_to_year=s_map
@@ -405,7 +466,9 @@ def main() -> None:
     ev_parser.add_argument("--model", required=True, help="Model key (e.g. class_prior_1x2_v1)")
     ev_parser.add_argument("--dataset", default="mvp_a_historical", help="Dataset key")
     ev_parser.add_argument("--version", default="v1", help="Dataset version")
-    ev_parser.add_argument("--split-strategy", default="season_holdout", choices=["season_holdout", "expanding_window"], help="Temporal split strategy")
+    ev_parser.add_argument("--split-strategy", default="season_holdout", choices=["season_holdout", "expanding_window", "rolling_origin"], help="Temporal split strategy")
+    ev_parser.add_argument("--folds", type=int, default=3, help="Rolling-origin out-of-sample folds")
+    ev_parser.add_argument("--embargo-hours", type=float, default=3.0, help="Temporal embargo between folds, in hours")
     ev_parser.add_argument("--limit", type=int, help="Optional row limit")
     ev_parser.add_argument("--output", help="Optional output JSON report path")
 
