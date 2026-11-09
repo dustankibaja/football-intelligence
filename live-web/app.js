@@ -145,7 +145,7 @@ function historyCard(match) {
     const isGreen = match.predictedOutcome !== 'D' &&
       match.predictedConfidence > 0.60;
     detail.textContent = `Top outcome: ${pick} (${pct(match.predictedConfidence)}) · ` +
-      (isGreen ? 'Green signal >60% · ' : 'No green signal · ') +
+      (isGreen ? 'Qualifies >60% · ' : 'No green signal · ') +
       `Actual: ${match.outcome === 'D' ? 'Draw' : match.winner}` +
       (match.logLoss1x2 == null ? '' : ` · 1X2 log loss: ${metric(match.logLoss1x2)}`);
   }
@@ -187,9 +187,9 @@ function renderHistory() {
     ['Correct top outcomes', correct],
     ['Incorrect top outcomes', incorrect],
     ['All-outcome accuracy', accuracy],
-    ['Green signals evaluated', green.length],
-    ['Green signals correct', greenCorrect],
-    ['Green-signal accuracy', green.length ? pct(greenCorrect / green.length) : '—'],
+    ['Qualified >60% forecasts', green.length],
+    ['Qualified correct', greenCorrect],
+    ['Qualified accuracy', green.length ? pct(greenCorrect / green.length) : '—'],
     ['Misses caused by draws', drawMisses],
     ['Expected correct (probability sum)', evaluated ? expectedCorrect.toFixed(1) : '—'],
     ['Not predicted', notPredicted]
