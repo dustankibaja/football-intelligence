@@ -1,9 +1,10 @@
 // Footmo private-trial app shell only. Scientific data and authenticated API
 // responses are ALWAYS network-only: never store match predictions or results.
-const SHELL_CACHE = 'footmo-shell-v1';
+const SHELL_CACHE = 'footmo-shell-v2';
 const OFFLINE_PAGE = '/offline.html';
 const SHELL_ASSETS = [
-  OFFLINE_PAGE, '/styles.css', '/app.js', '/manifest.webmanifest',
+  OFFLINE_PAGE, '/picks.css', '/picks.js', '/picks-core.js',
+  '/styles.css', '/app.js', '/manifest.webmanifest',
   '/icons/footmo-192.png', '/icons/footmo-512.png'
 ];
 self.addEventListener('install', event => {
