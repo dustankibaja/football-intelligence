@@ -182,3 +182,34 @@ def evaluate_exact_scores(
         report["top5_hit_rate"] = sum(x["actual_in_top_5"] for x in scored) / len(scored)
     report["report_sha256"] = _digest(report)
     return report
+
+
+def main() -> None:
+    """Score archived pre-match score extension against separately verified results."""
+    import argparse
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(description="Read-only prospective exact-score scoring")
+    parser.add_argument("--preissued-extension", required=True)
+    parser.add_argument("--result-assessment", required=True)
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
+    inputs = [Path(args.preissued_extension), Path(args.result_assessment)]
+    destination = Path(args.output)
+    if destination.resolve() in {item.resolve() for item in inputs}:
+        raise ValueError("NEVER_OVERWRITE_PREISSUED_FORECAST_OR_RESULT_RECEIPT")
+    extension = json.loads(inputs[0].read_text(encoding="utf-8"))
+    outcomes = json.loads(inputs[1].read_text(encoding="utf-8"))
+    report = evaluate_exact_scores(extension, outcomes)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "status": report["status"],
+        "completed": report["n_completed"],
+        "pending": report["n_pending"],
+        "report_sha256": report["report_sha256"],
+    }, indent=2))
+
+
+if __name__ == "__main__":
+    main()
