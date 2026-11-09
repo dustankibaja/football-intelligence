@@ -149,6 +149,10 @@ function historyCard(match) {
       `Actual: ${match.outcome === 'D' ? 'Draw' : match.winner}` +
       (match.logLoss1x2 == null ? '' : ` · 1X2 log loss: ${metric(match.logLoss1x2)}`);
   }
+  if (match.forecastVersion > 1) {
+    detail.append(node('span', 'history-correction',
+      ` · Pre-kickoff forecast revision v${match.forecastVersion}`));
+  }
   if (match.resultVersion > 1) {
     detail.append(node('span', 'history-correction',
       ` · Provider score revision v${match.resultVersion}`));
