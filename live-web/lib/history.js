@@ -77,6 +77,7 @@ export function buildHistory(finishedMatches = [], predictions = [], evaluations
       predictedLabel: pick ? OUTCOMES[pick.code] : null,
       predictedConfidence: pick?.confidence ?? null,
       predictionGeneratedAt: forecast?.generatedAt || null,
+      forecastVersion: forecast?.forecastVersion || (forecast ? 1 : null),
       logLoss1x2: evaluation?.logLoss1x2 ?? null,
       evaluationVersion: evaluation?.version ?? null
     };
