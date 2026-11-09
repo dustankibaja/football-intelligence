@@ -9,12 +9,13 @@ import argparse
 import csv
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime, time as clock_time
 import hashlib
 import io
 import json
 import math
 from pathlib import Path
+from uuid import NAMESPACE_URL, uuid5
 import time
 from urllib.request import Request, urlopen
 
@@ -26,6 +27,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from app.models.evaluation import ModelEvaluator
+from app.models.baselines.attack_defense_poisson import AttackDefensePoissonModel
+from app.models.dataset_dto import ModelingRowDTO
 
 
 LEAGUE_MATCH_COUNTS = {"E0": 380, "SP1": 380, "I1": 380, "D1": 306}
@@ -238,6 +241,101 @@ def build_pre_match_features(fixtures: list[Fixture]) -> tuple[np.ndarray, np.nd
     return result, labels
 
 
+RESEARCH_FEATURE_NAMES = (
+    "league_home_goals_mean", "league_away_goals_mean",
+    "home_recent_points", "away_recent_points",
+    "home_recent_scored", "home_recent_allowed",
+    "away_recent_scored", "away_recent_allowed",
+    "home_venue_scored", "home_venue_allowed",
+    "away_venue_scored", "away_venue_allowed",
+    "home_rest_days", "away_rest_days",
+    "home_observed_matches", "away_observed_matches",
+    "league_is_E0", "league_is_SP1", "league_is_I1", "league_is_D1",
+)
+STRUCTURAL_CANDIDATES = ("M1_ATTACK_DEFENSE", "M1_DECAY_365", "M3_DIXON_COLES")
+
+
+def _research_modeling_rows(
+    fixtures: list[Fixture], features: np.ndarray, source_manifest: list[dict],
+) -> list[ModelingRowDTO]:
+    """Use *research-only* team and league IDs; never impersonate canonical Phase 6."""
+    release_hash = hashlib.sha256(
+        json.dumps(source_manifest, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    result = []
+    for match, vector in zip(fixtures, features):
+        match_token = (
+            f"{match.league}:{match.season}:{match.match_date.isoformat()}:"
+            f"{match.home}:{match.away}"
+        )
+        vector_hash = hashlib.sha256(
+            f"{match_token}:{vector.astype(float).tolist()}".encode("utf-8")
+        ).hexdigest()
+        result.append(ModelingRowDTO(
+            match_id=uuid5(NAMESPACE_URL, f"historical-outcomes/match/{match_token}"),
+            competition_id=uuid5(NAMESPACE_URL, f"historical-outcomes/league/{match.league}"),
+            season_id=uuid5(NAMESPACE_URL, f"historical-outcomes/season/{match.league}/{match.season}"),
+            # Original CSV has only reliable date precision. Noon is a DTO
+            # placeholder, NOT a certified timestamp or live kickoff record.
+            kickoff_utc=datetime.combine(match.match_date, clock_time(12, 0), tzinfo=UTC),
+            temporal_precision="DATE_ONLY",
+            home_team_id=uuid5(NAMESPACE_URL, f"historical-outcomes/team/{match.league}/{match.home}"),
+            away_team_id=uuid5(NAMESPACE_URL, f"historical-outcomes/team/{match.league}/{match.away}"),
+            home_team_name=match.home,
+            away_team_name=match.away,
+            dataset_release_key="football_data_research_2019_2026:v1",
+            dataset_release_fingerprint=release_hash,
+            feature_set_key="research_outcomes_20_v1",
+            feature_set_fingerprint=vector_hash,
+            ordered_feature_names=list(RESEARCH_FEATURE_NAMES),
+            feature_values=vector.astype(float).tolist(),
+            targets={
+                "home_goals_v1": match.home_goals,
+                "away_goals_v1": match.away_goals,
+                "match_result_1x2_v1": match.outcome,
+            },
+        ))
+    return result
+
+
+def _structural_model(name: str) -> AttackDefensePoissonModel:
+    if name == "M1_ATTACK_DEFENSE":
+        result = AttackDefensePoissonModel(regularization_gamma=0.2)
+    elif name == "M1_DECAY_365":
+        result = AttackDefensePoissonModel(
+            regularization_gamma=0.2, time_decay_half_life_days=365.0
+        )
+    elif name == "M3_DIXON_COLES":
+        result = AttackDefensePoissonModel(
+            regularization_gamma=0.2, optimize_rho=True
+        )
+    else:
+        raise ValueError("UNREGISTERED_STRUCTURAL_CANDIDATE")
+    result.feature_set_key = "research_outcomes_20_v1"
+    return result
+
+
+def _structural_probabilities(
+    model: AttackDefensePoissonModel,
+    rows: list[ModelingRowDTO],
+    indices: list[int],
+) -> np.ndarray:
+    forecast = []
+    for index in indices:
+        # Target labels are excluded from the scored research DTO.
+        row = rows[index].model_copy(update={"targets": {}})
+        p = model.predict_raw(row)
+        forecast.append([p.prob_home_win, p.prob_draw, p.prob_away_win])
+    result = np.asarray(forecast, dtype=float)
+    if (
+        result.shape != (len(indices), 3)
+        or not np.isfinite(result).all()
+        or not np.allclose(result.sum(axis=1), 1, atol=1e-4)
+    ):
+        raise ValueError("INVALID_STRUCTURAL_PROBABILITY_OUTPUT")
+    return result
+
+
 def _model(name: str):
     if name.startswith("L2_"):
         c = float(name.split("_")[1])
@@ -306,19 +404,44 @@ def evaluate_real_historical(
     if max(fixtures[i].match_date for i in calibration_ids) >= min(fixtures[i].match_date for i in test_ids):
         raise ValueError("CALIBRATION_HOLDOUT_TIME_LEAKAGE")
 
-    # Hyperparameters are ranked exclusively using pre-holdout tuning data.
-    candidates = ["L2_0.1", "L2_0.5", "L2_1.0", "L2_3.0", "HGB_120"]
+    # All candidate choices and hyperparameters are fixed before opening test.
+    candidates = [
+        "L2_0.1", "L2_0.5", "L2_1.0", "L2_3.0", "HGB_120",
+        *STRUCTURAL_CANDIDATES,
+    ]
     scores = {}
+    fitted = {}
+    structural_rows = _research_modeling_rows(fixtures, x, source_manifest)
     for name in candidates:
-        candidate = _model(name)
-        candidate.fit(x[train_ids], y[train_ids])
-        scores[name] = _log_loss(y[tune_ids], _probabilities(candidate, x[tune_ids]))
+        if name in STRUCTURAL_CANDIDATES:
+            candidate = _structural_model(name)
+            candidate.fit([structural_rows[i] for i in train_ids])
+            # A structural fit that did not converge is not a candidate.
+            diagnostics = (
+                candidate.artifact.weights_payload.get("competitions", {})
+            )
+            if len(diagnostics) != len(LEAGUE_MATCH_COUNTS) or not all(
+                c.get("diagnostics", {}).get("success") for c in diagnostics.values()
+            ):
+                raise ValueError(f"STRUCTURAL_CHALLENGER_NONCONVERGENCE: {name}")
+            candidate_probs = _structural_probabilities(candidate, structural_rows, tune_ids)
+        else:
+            candidate = _model(name)
+            candidate.fit(x[train_ids], y[train_ids])
+            candidate_probs = _probabilities(candidate, x[tune_ids])
+        scores[name] = _log_loss(y[tune_ids], candidate_probs)
+        fitted[name] = candidate
+
     champion_name = min(scores, key=lambda key: (scores[key], key))
-    selected = _model(champion_name)
-    selected.fit(x[train_ids], y[train_ids])
+    selected = fitted[champion_name]
+
+    def score_selected(indices: list[int]) -> np.ndarray:
+        if champion_name in STRUCTURAL_CANDIDATES:
+            return _structural_probabilities(selected, structural_rows, indices)
+        return _probabilities(selected, x[indices])
 
     # Fit ONLY a scalar temperature on the later, disjoint calibration block.
-    calibration_probs = _probabilities(selected, x[calibration_ids])
+    calibration_probs = score_selected(calibration_ids)
     optimization = minimize_scalar(
         lambda t: _log_loss(y[calibration_ids], _temperature(calibration_probs, t)),
         method="bounded", bounds=(0.5, 3.0), options={"xatol": 1e-5},
@@ -346,7 +469,7 @@ def evaluate_real_historical(
             viable.append((conditional_accuracy, threshold))
     selected_threshold = sorted(viable, key=lambda item: (-item[0], item[1]))[0][1] if viable else None
 
-    test_probs_raw = _probabilities(selected, x[test_ids])
+    test_probs_raw = score_selected(test_ids)
     test_probs_cal = _temperature(test_probs_raw, temperature)
     class_counts = np.bincount(y[train_ids], minlength=3)
     class_prior = class_counts / class_counts.sum()
@@ -370,7 +493,7 @@ def evaluate_real_historical(
             )
 
     return {
-        "schema_version": "independent_research_1.0.0",
+        "schema_version": "independent_research_1.1.0",
         "status": "OUT_OF_SAMPLE_RESEARCH_NOT_CERTIFIED_FOR_PUBLICATION",
         "research_note": (
             "Independent causal outcome-only challenger; does not use the 251-feature "
