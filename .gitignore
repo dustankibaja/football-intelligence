@@ -79,3 +79,7 @@ out/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Sprint 7 external historical provider CSV and local research outputs
+/data/research/sprint7/raw/
+/data/research/sprint7/report.json

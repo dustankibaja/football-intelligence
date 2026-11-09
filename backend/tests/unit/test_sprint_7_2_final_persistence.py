@@ -221,9 +221,10 @@ def test_live_prediction_does_not_depend_on_json_cache(clean_sqlite_session_fact
         session_factory=clean_sqlite_session_factory,
         live_api_key="mock_key",
     )
-    # Orchestrator recovers from relational DB even if JSON file does not exist
-    assert pred.prediction_id in orch.prediction_service._persisted_predictions
-    assert len(orch.prediction_service._persisted_predictions) == 1
+    # Legacy synthetic predictions remain append-only in SQL, but must NOT
+    # be served by the verified live pipeline without actual feature lineage.
+    assert pred.prediction_id not in orch.prediction_service._persisted_predictions
+    assert len(orch.prediction_service._persisted_predictions) == 0
 
 
 # 8. Relational predictions append-only guarantee

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071521">
+  <meta name="description" content="Footmo provides transparent, scientifically grounded football match probabilities.">
+  <title>Footmo — Football intelligence</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Footmo home">
+      <span class="brand-mark" aria-hidden="true">F<span>•</span></span>
+      <span>FOOTMO</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#fixtures">Fixtures</a>
+      <a href="#results">Results</a>
+      <a href="#methodology">Our method</a>
+    </nav>
+    <div class="header-right"><span class="status-dot" id="connection-dot"></span><span id="connection-label">Not connected</span></div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-content">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> FOOTBALL, MEASURED</div>
+        <h1>Less guessing.<br><em>More understanding.</em></h1>
+        <p>Match probabilities built from pre-match evidence, transparent statistical models, and a commitment to showing uncertainty.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#fixtures">Explore fixtures <span aria-hidden="true">↗</span></a>
+          <a class="button button-outline" href="#methodology">How our models work</a>
+        </div>
+        <p class="hero-disclaimer">Probabilities are estimates, not guarantees. No automated betting.</p>
+      </div>
+      <div class="hero-visual" aria-label="Football probability markets">
+        <div class="visual-top"><span>INTELLIGENCE ENGINE</span><span class="signal"><span></span> RESEARCH-LED</span></div>
+        <div class="pitch">
+          <div class="pitch-mid"></div><div class="pitch-circle"></div>
+          <div class="pitch-box left"></div><div class="pitch-box right"></div>
+          <div class="pitch-dot dot-a"></div><div class="pitch-dot dot-b"></div><div class="pitch-dot dot-c"></div><div class="pitch-dot dot-d"></div>
+        </div>
+        <div class="visual-bottom"><div><span>01 / MATCH OUTCOME</span><strong>1X2</strong></div><div><span>02 / GOAL MARKETS</span><strong>BTTS · O/U</strong></div><div><span>03 / DISTRIBUTION</span><strong>EXACT SCORE</strong></div></div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Coverage and approach">
+      <div><span class="strip-number">04</span><span class="strip-caption">SUPPORTED LEAGUES</span></div>
+      <div><span class="strip-number">251</span><span class="strip-caption">PRE-MATCH FEATURES</span></div>
+      <div><span class="strip-number">02</span><span class="strip-caption">COMPLEMENTARY MODELS</span></div>
+      <div><span class="strip-number">0</span><span class="strip-caption">ODDS AS INPUTS</span></div>
+    </section>
+
+    <section class="dashboard section-shell" id="fixtures">
+      <div class="section-header"><div><div class="eyebrow">LIVE WORKSPACE</div><h2>Upcoming fixtures<span class="heading-dot">.</span></h2><p>Only verified, pre-kickoff predictions are displayed. Unverified data is never substituted.</p></div><button id="refresh" class="button button-outline small" type="button" disabled>Refresh data ↻</button></div>
+
+      <div class="connection-panel" id="connection-panel">
+        <div><strong>Connect to the Footmo API</strong><p>Private staging access. Enter the API URL and your authorized access key; the key is kept in this page's memory only.</p></div>
+        <form id="connect-form" class="connection-form">
+          <label>API URL<input id="api-url" type="url" value="http://localhost:8000" required placeholder="https://api.example.com" autocomplete="url"></label>
+          <label>Access key<input id="api-token" type="password" required placeholder="Enter your access key" autocomplete="off"></label>
+          <button class="button button-primary" type="submit">Connect</button>
+        </form>
+        <div class="connection-error" id="connection-error" role="alert" hidden></div>
+      </div>
+
+      <div class="worker-status" aria-live="polite">
+        <span class="worker-status-label">UNATTENDED WORKER</span>
+        <strong id="worker-state">No verified activity yet</strong>
+        <span id="worker-last-run">Connect to inspect the latest recorded scheduler cycle.</span>
+      </div>
+      <div class="workspace-toolbar"><div class="workspace-label"><span class="workspace-line"></span><span id="fixture-count">0 verified predictions</span></div><label class="filter-label">League<select id="league-filter" disabled><option value="ALL">All leagues</option></select></label></div>
+      <div id="fixtures-list" class="fixture-grid" aria-live="polite"><div class="empty-state"><span class="empty-icon">◎</span><h3>Waiting for verified data</h3><p>Connect to the API to view real upcoming match probabilities. No sample predictions are shown.</p></div></div>
+    </section>
+
+    <section class="results-section section-shell" id="results">
+      <div class="section-header"><div><div class="eyebrow">ACCOUNTABILITY</div><h2>Results & evaluation<span class="heading-dot">.</span></h2><p>Predictions are recorded before kickoff. Final results are evaluated separately without rewriting the original forecast.</p></div></div>
+      <div class="performance-heading"><h3>Observed scientific performance</h3><p id="performance-caption" aria-live="polite">Connect to see performance calculated from real completed fixtures. Small samples are labelled.</p></div>
+      <div class="performance-grid" id="performance-grid" aria-live="polite">
+        <div class="performance-card"><span>Evaluated matches</span><strong>—</strong></div>
+        <div class="performance-card"><span>1X2 log loss</span><strong>—</strong></div>
+        <div class="performance-card"><span>1X2 Brier</span><strong>—</strong></div>
+        <div class="performance-card"><span>BTTS log loss</span><strong>—</strong></div>
+        <div class="performance-card"><span>O/U 2.5 log loss</span><strong>—</strong></div>
+        <div class="performance-card"><span>Top exact score hit</span><strong>—</strong></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Fixture</th><th>Final score</th><th>Outcome</th><th>1X2 log loss</th><th>Observed</th></tr></thead><tbody id="results-body"><tr><td colspan="5" class="table-empty">Connect to see verified post-match evaluations.</td></tr></tbody></table></div>
+    </section>
+
+    <section class="method-section section-shell" id="methodology">
+      <div class="eyebrow">BUILT ON EVIDENCE</div><h2>Two models. <em>One clearer picture.</em></h2>
+      <div class="method-grid">
+        <article class="method-card"><span class="method-index">01 — C1</span><h3>Match outcomes</h3><p>A trained multinomial logistic model estimates home win, draw, and away win probabilities from point-in-time features.</p><span class="method-tag">PRIMARY 1X2 MODEL</span></article>
+        <article class="method-card"><span class="method-index">02 — M1</span><h3>Goals & scorelines</h3><p>A competition-specific attack–defence Poisson model estimates expected goals and derives goal-market and exact-score probabilities.</p><span class="method-tag">GOALS + STRUCTURAL FALLBACK</span></article>
+        <article class="method-card"><span class="method-index">03 — QUALITY</span><h3>Confidence has context</h3><p>Missing history, model disagreement, and operational data quality are disclosed rather than hidden behind a single percentage.</p><span class="method-tag">TRANSPARENT QUALITY STATES</span></article>
+      </div>
+      <div class="responsibility"><span class="responsibility-icon">ⓘ</span><p><strong>Important:</strong> Footmo is an analytical information product. Statistical probabilities do not guarantee match results or financial returns. Data and model availability may vary.</p></div>
+    </section>
+  </main>
+
+  <footer><div class="footer-brand">FOOTMO<span>•</span></div><span>Football intelligence, responsibly delivered.</span><span>© <span id="year"></span> Footmo</span></footer>
+</body>
+</html>

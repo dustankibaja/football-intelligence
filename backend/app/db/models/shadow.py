@@ -110,6 +110,7 @@ class ShadowPrediction(Base, BaseMixin):
 
     exact_score_matrix_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     top_scorelines: Mapped[list] = mapped_column(JSON, nullable=False)
+    score_matrix: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     quality_state: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     quality_reasons: Mapped[list | None] = mapped_column(JSON, nullable=True)

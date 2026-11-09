@@ -1,0 +1,64 @@
+name: Footmo Sprint 7 Historical Research
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - gate1/live-science-fail-closed
+    paths:
+      - 'backend/app/research/**'
+      - 'backend/tests/unit/test_sprint7_research.py'
+      - '.github/workflows/sprint7-research.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: footmo-sprint7-research-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acquire-and-benchmark:
+    name: Verify 20 Historical Sources and Compare Research Models
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./backend
+          pip install pytest
+      - name: Verify leakage and research unit tests
+        run: python -m pytest backend/tests/unit/test_sprint7_research.py --confcutdir=backend/tests/unit -q
+      - name: Acquire verified completed seasons and run chronological benchmark
+        run: |
+          python -m app.research.cli \
+            --cache-dir "${RUNNER_TEMP}/footmo-history" \
+            --output "${RUNNER_TEMP}/footmo-sprint7-report.json"
+      - name: Publish non-sensitive research report summary
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = json.loads((Path(os.environ["RUNNER_TEMP"]) / "footmo-sprint7-report.json").read_text())
+          print("Sources:", report["sourceManifest"]["sourceCount"])
+          print("Verified historical matches:", report["sourceManifest"]["totalFixtures"])
+          print("Out-of-sample fixtures:", report["benchmark"]["holdoutFixtureCount"])
+          for name, data in report["benchmark"]["aggregate"].items():
+              print(name, data["metrics"]["logLoss"], data["metrics"]["brier"],
+                    data["pairedVsEmpiricalPoisson"]["ci95"])
+          print("Research report SHA256:", report["reportFingerprintSha256"])
+          print("Production model changed: False")
+          PY
+      - name: Upload fingerprinted research report (no raw provider CSV)
+        uses: actions/upload-artifact@v4
+        with:
+          name: footmo-sprint7-research-report
+          path: ${{ runner.temp }}/footmo-sprint7-report.json
+          retention-days: 30
+          if-no-files-found: error

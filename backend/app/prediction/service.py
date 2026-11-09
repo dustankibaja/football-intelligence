@@ -117,10 +117,27 @@ def compute_m1_markets(matrix: list[list[float]], lh: float, la: float, max_goal
 class ShadowPredictionService:
     """Core service managing shadow forward pass and immutable persistence."""
 
-    def __init__(self, persistence_backend: Any = None) -> None:
+    def __init__(self, persistence_backend: Any = None, frozen_inference: Any = None) -> None:
         self.persistence = persistence_backend
+        self.frozen_inference = frozen_inference
         self._persisted_predictions: dict[UUID, ShadowPredictionResult] = {}
         self._canonical_timing_rule = "LATEST_VALID_PREDICTION_BEFORE_KICKOFF"
+
+    def assert_live_inference_ready(self) -> None:
+        """Prevent commercial/live inference until frozen artifacts are genuinely loaded.
+
+        A model name or hard-coded fingerprint is not proof that the certified
+        C1/M1 parameters were used. The existing predict() implementation
+        still contains heuristic coefficients and MUST NOT serve live fixtures.
+        Replace this guard only with a verified frozen-artifact forward pass
+        and independent parity tests (Gate 1).
+        """
+        if self.frozen_inference is None:
+            raise RuntimeError(
+                "LIVE_ARTIFACT_INFERENCE_NOT_CONNECTED: certified C1/M1 forward "
+                "inference has not been wired into the live prediction service."
+            )
+        self.frozen_inference.verify()
 
     def predict(
         self,
@@ -149,33 +166,60 @@ class ShadowPredictionService:
             ):
                 return pred
 
-        # 3. M1 Structural Inference (Poisson Expected Goals)
-        # Re-derive lambdas from relative attack/defense features deterministically
-        # Feature vector has 251 values; indices correspond to certified feature set
-        lh = max(0.2, min(5.0, 1.45 + 0.15 * (inp.feature_values[0] if len(inp.feature_values) > 0 else 0.0)))
-        la = max(0.2, min(5.0, 1.15 - 0.10 * (inp.feature_values[1] if len(inp.feature_values) > 1 else 0.0)))
+        # 3–4. Frozen-artifact forward inference for scientifically verified
+        # snapshots. The legacy replay branch is deliberately NOT a live path.
+        if self.frozen_inference is not None:
+            if inp.competition_id is None or inp.season_id is None:
+                raise ValueError("CANONICAL_COMPETITION_OR_SEASON_MISSING")
+            frozen = self.frozen_inference.predict(
+                inp, competition_id=inp.competition_id, season_id=inp.season_id
+            )
+            lh, la = frozen.lambda_home, frozen.lambda_away
+            c1_h, c1_d, c1_a = frozen.c1_probabilities
+            struct_h, struct_d, struct_a = frozen.m1_probabilities
+            m1_markets = {
+                "btts_yes": frozen.btts_yes,
+                "btts_no": 1.0 - frozen.btts_yes,
+                "over_2_5": frozen.over_2_5,
+                "under_2_5": 1.0 - frozen.over_2_5,
+                "top_scorelines": frozen.top_scorelines,
+                "matrix_fingerprint": frozen.score_matrix_fingerprint,
+            }
+            c1_artifact_fp = frozen.c1_artifact_fingerprint
+            m1_artifact_fp = frozen.m1_artifact_fingerprint
+            model_cold_start = frozen.home_cold_start or frozen.away_cold_start
+        else:
+            # Re-derive lambdas from relative attack/defense features deterministically
+            # Feature vector has 251 values; indices correspond to certified feature set
+            lh = max(0.2, min(5.0, 1.45 + 0.15 * (inp.feature_values[0] if len(inp.feature_values) > 0 else 0.0)))
+            la = max(0.2, min(5.0, 1.15 - 0.10 * (inp.feature_values[1] if len(inp.feature_values) > 1 else 0.0)))
 
-        matrix = compute_score_matrix(lh, la, max_goals=10)
-        m1_markets = compute_m1_markets(matrix, lh, la, max_goals=10)
+            matrix = compute_score_matrix(lh, la, max_goals=10)
+            m1_markets = compute_m1_markets(matrix, lh, la, max_goals=10)
 
-        struct_h = m1_markets["prob_home"]
-        struct_d = m1_markets["prob_draw"]
-        struct_a = m1_markets["prob_away"]
+            struct_h = m1_markets["prob_home"]
+            struct_d = m1_markets["prob_draw"]
+            struct_a = m1_markets["prob_away"]
 
-        # 4. C1 Primary 1X2 Inference (Multinomial Logistic forward pass)
-        # Softmax over calibrated linear scores
-        score_h = 0.5 + 0.2 * (inp.feature_values[0] if len(inp.feature_values) > 0 else 0.0)
-        score_d = 0.0
-        score_a = -0.3 + 0.1 * (inp.feature_values[1] if len(inp.feature_values) > 1 else 0.0)
+            # 4. C1 Primary 1X2 Inference (Multinomial Logistic forward pass)
+            # Softmax over calibrated linear scores
+            score_h = 0.5 + 0.2 * (inp.feature_values[0] if len(inp.feature_values) > 0 else 0.0)
+            score_d = 0.0
+            score_a = -0.3 + 0.1 * (inp.feature_values[1] if len(inp.feature_values) > 1 else 0.0)
 
-        exp_h = math.exp(score_h)
-        exp_d = math.exp(score_d)
-        exp_a = math.exp(score_a)
-        sum_exp = exp_h + exp_d + exp_a
+            exp_h = math.exp(score_h)
+            exp_d = math.exp(score_d)
+            exp_a = math.exp(score_a)
+            sum_exp = exp_h + exp_d + exp_a
 
-        c1_h = exp_h / sum_exp
-        c1_d = exp_d / sum_exp
-        c1_a = exp_a / sum_exp
+            c1_h = exp_h / sum_exp
+            c1_d = exp_d / sum_exp
+            c1_a = exp_a / sum_exp
+
+
+            c1_artifact_fp = FROZEN_C1_FINGERPRINT
+            m1_artifact_fp = FROZEN_M1_FINGERPRINT
+            model_cold_start = inp.known_cold_start
 
         # 5. Model Disagreement Calculation via Frozen Phase 5.2 Policy
         disagreement_val, disagreement_band = Phase5_2_PolicyEngine.compute_model_disagreement(
@@ -192,7 +236,7 @@ class ShadowPredictionService:
             is_eligible=True,
             eligibility_reason=None,
             critical_feature_absent=inp.critical_feature_absent,
-            known_cold_start=inp.known_cold_start,
+            known_cold_start=model_cold_start,
             missingness_count=inp.missingness_count,
             drift_psi=inp.drift_psi,
             disagreement_value=disagreement_val,
@@ -230,24 +274,25 @@ class ShadowPredictionService:
             phase6_2_manifest_hash=FROZEN_PHASE6_2_CANONICAL_HASH,
             c1_model_key=FROZEN_C1_KEY,
             c1_model_version=FROZEN_C1_VERSION,
-            c1_artifact_fingerprint=FROZEN_C1_FINGERPRINT,
+            c1_artifact_fingerprint=c1_artifact_fp,
             m1_model_key=FROZEN_M1_KEY,
             m1_model_version=FROZEN_M1_VERSION,
-            m1_artifact_fingerprint=FROZEN_M1_FINGERPRINT,
+            m1_artifact_fingerprint=m1_artifact_fp,
             prob_home=round(final_h, 5),
             prob_draw=round(final_d, 5),
             prob_away=round(final_a, 5),
             structural_prob_home=round(struct_h, 5),
             structural_prob_draw=round(struct_d, 5),
             structural_prob_away=round(struct_a, 5),
-            lambda_home=round(lh, 3),
-            lambda_away=round(la, 3),
+            lambda_home=round(lh, 4) if self.frozen_inference is not None else round(lh, 3),
+            lambda_away=round(la, 4) if self.frozen_inference is not None else round(la, 3),
             btts_yes=round(m1_markets["btts_yes"], 5),
             btts_no=round(m1_markets["btts_no"], 5),
             over_2_5=round(m1_markets["over_2_5"], 5),
             under_2_5=round(m1_markets["under_2_5"], 5),
             exact_score_matrix_fingerprint=m1_markets["matrix_fingerprint"],
             top_scorelines=m1_markets["top_scorelines"],
+            score_matrix=frozen.score_matrix if self.frozen_inference is not None else None,
             quality_state=quality_state,
             quality_reasons=quality_reasons,
             fallback_used=fallback_used,

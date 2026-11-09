@@ -22,7 +22,7 @@ FROZEN_PHASE6_1_INGESTION_HASH = "98c0e07bee158e0493dbfbff036bc6b3e8c2f763c87c9d
 FROZEN_PHASE6_2_CANONICAL_HASH = "7ac6041ff6169a321524b39f7c2bd3610913c94c3b4fc350a89c2550690a8b7b"
 FROZEN_SPRINT6_3_SHADOW_HASH = "e59dbe19c9a0568271e25fb9b1250a267a4a78c80ef202641c89bb6ce99b98ee"
 
-EXPECTED_ALEMBIC_HEAD = "20261023_0006"
+EXPECTED_ALEMBIC_HEAD = "20261105_0007"
 
 DEFAULT_RUN_STALE_AFTER_HOURS: float = 24.0
 DEFAULT_PREDICTION_STALE_AFTER_HOURS: float = 48.0
@@ -163,7 +163,7 @@ class HealthWatchdog:
         # Check manifest file if available on disk
         manifest_path = Path(__file__).resolve().parents[3] / "phase6_3_shadow_prediction_manifest.json"
         if not manifest_path.exists():
-            return True  # Fallback to in-memory check
+            return False  # Missing scientific evidence is never a healthy state.
 
         try:
             with open(manifest_path, encoding="utf-8") as f:

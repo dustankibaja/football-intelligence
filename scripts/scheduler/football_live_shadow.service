@@ -7,7 +7,7 @@ Wants=postgresql.service
 Type=oneshot
 User=football-ops
 Group=football-ops
-WorkingDirectory=/opt/football-intelligence
+WorkingDirectory=/opt/football-intelligence/backend
 Environment="PATH=/opt/football-intelligence/.venv/bin:/usr/local/bin:/usr/bin"
 EnvironmentFile=/etc/football-intelligence/live.env
 ExecStart=/opt/football-intelligence/.venv/bin/python -m app.automation.cli --mode LIVE_SHADOW --trigger SYSTEMD_TIMER

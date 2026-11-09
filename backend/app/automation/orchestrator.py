@@ -88,7 +88,15 @@ class OperationalOrchestrator:
         self.execution_mode = execution_mode
         self.session_factory = session_factory or (SessionLocal if self.execution_mode == ExecutionMode.LIVE_SHADOW else None)
         self.lease_manager = lease_manager or LeaseManager(clock=self.clock, session_factory=self.session_factory)
-        self.prediction_service = prediction_service or ShadowPredictionService()
+        if prediction_service is not None:
+            self.prediction_service = prediction_service
+        elif self.execution_mode == ExecutionMode.LIVE_SHADOW:
+            from app.prediction.frozen_inference import FrozenArtifactInference
+            self.prediction_service = ShadowPredictionService(
+                frozen_inference=FrozenArtifactInference()
+            )
+        else:
+            self.prediction_service = ShadowPredictionService()
         self.scoring_service = scoring_service or PostMatchScoringService()
         self.monitoring_service = monitoring_service or ShadowMonitoringService()
         self.retry_policy = retry_policy or RetryPolicy(clock=self.clock)
@@ -145,6 +153,10 @@ class OperationalOrchestrator:
             run_status=OperationalRunStatus.STARTED,
         )
 
+        # Dry-run lease is process-local: no scheduler-lease SQL writes.
+        active_lease_manager = (
+            LeaseManager(clock=self.clock) if dry_run else self.lease_manager
+        )
         lease_acquired = False
         current_lease: LeaseRecord | None = None
 
@@ -153,7 +165,7 @@ class OperationalOrchestrator:
             summary.run_status = OperationalRunStatus.RUNNING
 
             # Stage 2: Acquire Distributed Scheduler Lease + Monotonic Fencing Token
-            acquired, lease = self.lease_manager.acquire(
+            acquired, lease = active_lease_manager.acquire(
                 lease_name="operational_scheduler_lease",
                 lease_owner=self.scheduler_instance_id,
                 ttl_seconds=60.0,
@@ -194,6 +206,30 @@ class OperationalOrchestrator:
             raw_fixtures = fixtures_due
             if raw_fixtures is None and self.execution_mode == ExecutionMode.LIVE_SHADOW and self.live_provider is not None:
                 summary.provider_status = "CONNECTED"
+                # Incremental recent-result history ingestion is real-provider
+                # sourced and precedes PIT feature materialization.
+                if not dry_run and hasattr(self.live_provider, "get_recent_finished_matches"):
+                    from app.providers.live.history import LiveHistoryIngestor
+                    finished_history = self._handle_provider_call_with_retry(
+                        lambda: self.live_provider.get_recent_finished_matches(
+                            days_back=2, window_days=2
+                        ), summary
+                    )
+                    history_stats = LiveHistoryIngestor(self.session_factory).ingest(
+                        finished_history
+                    )
+                    if history_stats["rejected"]:
+                        summary.failure_code = "UNRESOLVED_LIVE_HISTORY"
+                        summary.failure_summary = (
+                            f"{history_stats['rejected']} provider history records "
+                            "failed canonical reconciliation."
+                        )
+                        self._record_failure(
+                            summary.run_id, "INGESTION", "HISTORY_RECONCILIATION",
+                            ErrorCategory.DATA, Retryability.PERMANENT,
+                            "UNRESOLVED_LIVE_HISTORY",
+                            f"{history_stats['rejected']} recent completed fixtures were rejected.",
+                        )
                 from app.providers.live.adapter import LiveIngestionAdapter
                 adapter = LiveIngestionAdapter(clock=self.clock, session_factory=self.session_factory)
                 live_dtos = self._handle_provider_call_with_retry(
@@ -210,8 +246,52 @@ class OperationalOrchestrator:
 
             summary.fixtures_refreshed = len(raw_fixtures)
 
-            # Stage 8: Determine & Materialize Due Feature Snapshots (Phase 6.2)
-            # In Phase 6.2, valid snapshots have exact certified 251-feature width
+            # Gate 1 safety boundary: live fixtures may not reach heuristic
+            # inference while frozen C1/M1 artifact execution is disconnected.
+            # The prediction service must independently verify real loaded
+            # artifacts before this gate can pass.
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and any(
+                f.get("is_mapped", True) for f in raw_fixtures
+            ):
+                try:
+                    self.prediction_service.assert_live_inference_ready()
+                except RuntimeError as exc:
+                    raise ScientificIntegrityError(
+                        "LIVE_ARTIFACT_INFERENCE_NOT_CONNECTED", str(exc)
+                    ) from exc
+
+            current_time = self.clock.now()
+            # Stage 8: Genuine Phase 6.2 PIT materialization. A provider
+            # fixture DTO is never accepted as a feature snapshot.
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and not dry_run:
+                from app.features.live import (
+                    LiveFeatureMaterializationError,
+                    LiveFeatureMaterializer,
+                )
+                materializer = LiveFeatureMaterializer(self.session_factory)
+                verified_fixtures = []
+                for fixture in raw_fixtures:
+                    if not fixture.get("is_mapped", True) or fixture.get("missed_window"):
+                        verified_fixtures.append(fixture)
+                        continue
+                    try:
+                        verified_fixtures.append(
+                            materializer.materialize(fixture, cutoff=current_time)
+                        )
+                    except LiveFeatureMaterializationError as exc:
+                        summary.snapshots_failed += 1
+                        self._record_failure(
+                            summary.run_id, "FEATURES", "PIT_MATERIALIZATION",
+                            ErrorCategory.DATA, Retryability.PERMANENT,
+                            str(exc), "Live feature materialization blocked: " + str(exc),
+                        )
+                        verified_fixtures.append({
+                            **fixture, "is_mapped": False,
+                            "unresolved_reason": str(exc),
+                        })
+                raw_fixtures = verified_fixtures
+
+            # Count only verified, materialized snapshots.
             for f in raw_fixtures:
                 if not f.get("is_mapped", True):
                     summary.predictions_blocked += 1
@@ -225,6 +305,11 @@ class OperationalOrchestrator:
                         f"Fixture {f.get('provider_fixture_id', 'unknown')} blocked due to unresolved mapping.",
                     )
                     continue
+                if f.get("missed_window"):
+                    continue
+                if dry_run and self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                    # The work is due, but no snapshot was actually written.
+                    continue
                 if f.get("needs_snapshot", True):
                     summary.snapshots_created += 1
                 else:
@@ -232,13 +317,25 @@ class OperationalOrchestrator:
 
             # Stage 9: Generate Due Shadow Predictions (Phase 6.3)
             # Stale worker protection check before making protected prediction commit
-            if not self.lease_manager.validate_token("operational_scheduler_lease", self.scheduler_instance_id, current_lease.fencing_token):
+            if not active_lease_manager.validate_token("operational_scheduler_lease", self.scheduler_instance_id, current_lease.fencing_token):
                 raise OperationalException(
                     ErrorCategory.INTERNAL,
                     Retryability.PERMANENT,
                     "STALE_FENCING_TOKEN",
                     f"Worker {self.scheduler_instance_id} holds obsolete fencing token {current_lease.fencing_token}. Protected commit rejected.",
                 )
+
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and not dry_run:
+                from app.db.models.shadow import ShadowPredictionRun
+                with self.session_factory() as session:
+                    if session.query(ShadowPredictionRun).filter_by(id=summary.run_id).first() is None:
+                        session.add(ShadowPredictionRun(
+                            id=summary.run_id,
+                            started_at=summary.started_at,
+                            status="RUNNING",
+                            candidate_count=len(raw_fixtures),
+                        ))
+                        session.commit()
 
             current_time = self.clock.now()
             for f in raw_fixtures:
@@ -265,6 +362,35 @@ class OperationalOrchestrator:
                         f"Kickoff passed ({kickoff.isoformat()}) before prediction. Post-kickoff backfill strictly forbidden.",
                     )
                     continue
+
+                # Live mode must never use the replay-only synthetic defaults.
+                if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                    if f.get("drift_psi") is None:
+                        summary.predictions_blocked += 1
+                        self._record_failure(
+                            summary.run_id, "PREDICTION", "QUALITY_DRIFT",
+                            ErrorCategory.SCIENTIFIC_INTEGRITY, Retryability.PERMANENT,
+                            "LIVE_DRIFT_REFERENCE_NOT_VERIFIED",
+                            "Frozen Phase 5.2 drift input has not been measured.",
+                        )
+                        continue
+                    if (
+                        not f.get("feature_snapshot_id")
+                        or not f.get("feature_snapshot_fingerprint")
+                        or not f.get("history_fingerprint")
+                        or len(f.get("feature_values", [])) != 251
+                        or len(f.get("feature_keys", [])) != 251
+                        or not f.get("competition_id")
+                        or not f.get("season_id")
+                    ):
+                        summary.predictions_blocked += 1
+                        self._record_failure(
+                            summary.run_id, "PREDICTION", "SNAPSHOT_VERIFICATION",
+                            ErrorCategory.SCIENTIFIC_INTEGRITY, Retryability.PERMANENT,
+                            "LIVE_SNAPSHOT_PROVENANCE_INCOMPLETE",
+                            "Live prediction rejected: verified 251-feature snapshot required.",
+                        )
+                        continue
 
                 # Prepare Phase 6.3 ShadowPredictionInput
                 feat_vals = f.get("feature_values", [0.5, -0.3] + [0.0] * 249)
@@ -297,6 +423,8 @@ class OperationalOrchestrator:
                     known_cold_start=f.get("known_cold_start", False),
                     missingness_count=f.get("missingness_count", 0),
                     drift_psi=f.get("drift_psi", 0.05),
+                    competition_id=f.get("competition_id"),
+                    season_id=f.get("season_id"),
                 )
 
                 if simulate_db_failure_at_stage == "PREDICTION_PERSISTENCE":
@@ -337,8 +465,14 @@ class OperationalOrchestrator:
                 }
                 self._save_live_shadow_predictions(fixture_meta_map=fixture_meta_map)
 
-            # Stage 10: Synchronize Result State (Phase 6.1)
-            raw_results = results_due or []
+            # Stage 10: Poll real provider results for eligible past fixtures
+            # when the caller did not explicitly supply a replay result batch.
+            if results_due is not None:
+                raw_results = results_due
+            elif self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                raw_results = self._fetch_live_due_results(summary, persist_poll_audit=not dry_run)
+            else:
+                raw_results = []
             summary.results_processed = len(raw_results)
 
             # Stage 11: Call Phase 6.3 Scoring for Unscored Eligible Predictions
@@ -373,7 +507,7 @@ class OperationalOrchestrator:
                             summary.evaluations_reused += 1
                         else:
                             if not dry_run:
-                                self.scoring_service.score_prediction(
+                                evaluation = self.scoring_service.score_prediction(
                                     prediction=matching_pred,
                                     actual_home_goals=home_goals,
                                     actual_away_goals=away_goals,
@@ -381,7 +515,48 @@ class OperationalOrchestrator:
                                     result_version=res_version,
                                     observed_at=self.clock.now(),
                                 )
-                            summary.evaluations_created += 1
+                                if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                                    if not res.get("source_payload_fingerprint"):
+                                        raise ScientificIntegrityError(
+                                            "LIVE_RESULT_PROVENANCE_MISSING",
+                                            "Cannot persist a live evaluation without provider result provenance.",
+                                        )
+                                    from app.db.models.core import Match, SystemAuditLog
+                                    with self.session_factory() as session:
+                                        _, created = ShadowPredictionRepository.persist_evaluation(
+                                            session, evaluation
+                                        )
+                                        if created:
+                                            match = session.query(Match).filter_by(id=fixture_id).one()
+                                            if (
+                                                match.status == "FINISHED"
+                                                and (match.home_score, match.away_score) != (home_goals, away_goals)
+                                                and res_version <= 1
+                                            ):
+                                                raise ScientificIntegrityError(
+                                                    "RESULT_CORRECTION_REQUIRES_NEW_VERSION",
+                                                    "A changed final result requires a new version.",
+                                                )
+                                            match.status = "FINISHED"
+                                            match.home_score = home_goals
+                                            match.away_score = away_goals
+                                            match.completed_at = self.clock.now()
+                                            session.add(SystemAuditLog(
+                                                event_type="LIVE_RESULT_FINALIZED",
+                                                description=(
+                                                    f"{fixture_id}:v{res_version}:"
+                                                    f"{res['source_payload_fingerprint']}"
+                                                )[:255],
+                                            ))
+                                            session.commit()
+                                    if created:
+                                        summary.evaluations_created += 1
+                                    else:
+                                        summary.evaluations_reused += 1
+                                else:
+                                    summary.evaluations_created += 1
+                            else:
+                                summary.evaluations_created += 1
 
             # Stage 12: Run Observational Monitoring & Deduplicate Alerts
             # Label-Free Monitoring
@@ -403,8 +578,24 @@ class OperationalOrchestrator:
                         self._recorded_alert_signatures.add(sig)
                         summary.alerts_created += 1
 
-            # Stage 13: Persist Run Summary
-            summary.run_status = OperationalRunStatus.SUCCESS
+            # Stage 13: Persist Run Summary. A run that blocked live fixtures
+            # must never report a clean SUCCESS or imply science certification.
+            if self.execution_mode == ExecutionMode.LIVE_SHADOW and (
+                summary.snapshots_failed
+                or summary.predictions_blocked
+                or summary.predictions_failed
+                or summary.evaluations_failed
+                or summary.failure_code
+            ):
+                summary.run_status = OperationalRunStatus.PARTIAL_SUCCESS
+                if not summary.failure_code:
+                    summary.failure_code = "LIVE_SCIENTIFIC_GATES_BLOCKED"
+                    summary.failure_summary = (
+                        "One or more live fixtures were blocked by scientific integrity "
+                        "or operational quality checks; no synthetic fallback permitted."
+                    )
+            else:
+                summary.run_status = OperationalRunStatus.SUCCESS
             summary.completed_at = self.clock.now()
 
         except OperationalException as op_exc:
@@ -439,17 +630,144 @@ class OperationalOrchestrator:
         finally:
             # Stage 13: Release Lease if held
             if lease_acquired and current_lease is not None:
-                self.lease_manager.release(
+                active_lease_manager.release(
                     lease_name="operational_scheduler_lease",
                     lease_owner=self.scheduler_instance_id,
                     fencing_token=current_lease.fencing_token,
                 )
 
             # Persist OperationalRun record if session_factory is active
-            if self.session_factory is not None:
+            if self.session_factory is not None and not dry_run:
                 self._persist_operational_run_summary(summary)
 
         return summary
+
+    def _fetch_live_due_results(
+        self, summary: OperationalRunSummary, persist_poll_audit: bool = True
+    ) -> list[dict[str, Any]]:
+        """Poll pending results and rotate recent final-score correction checks.
+
+        Every poll is source-backed. Unchanged scores do not create a second
+        evaluation; changed scores get a new immutable result version. SQL
+        audit timestamps prevent the same recent fixture from monopolizing
+        the limited provider quota on every unattended run.
+        """
+        if self.session_factory is None or self.live_provider is None:
+            raise ConfigurationError(
+                "LIVE_RESULTS_DEPENDENCY_MISSING",
+                "Live result polling requires SQL and provider.",
+            )
+        from datetime import timedelta
+        from app.db.models.core import SystemAuditLog
+        from app.db.models.shadow import ShadowEvaluation, ShadowPrediction
+        from app.providers.live.adapter import LiveIngestionAdapter
+
+        now = self.clock.now()
+        with self.session_factory() as session:
+            poll_rows = session.query(SystemAuditLog).filter_by(
+                event_type="LIVE_RESULT_POLL"
+            ).order_by(SystemAuditLog.created_at.desc()).limit(4000).all()
+            last_checked = {}
+            for audit in poll_rows:
+                if audit.description not in last_checked:
+                    checked = audit.created_at
+                    last_checked[audit.description] = (
+                        checked.replace(tzinfo=UTC)
+                        if checked.tzinfo is None else checked.astimezone(UTC)
+                    )
+
+            candidates = session.query(ShadowPrediction).filter(
+                ShadowPrediction.kickoff_utc < now,
+                ShadowPrediction.score_matrix.isnot(None),
+            ).order_by(
+                ShadowPrediction.kickoff_utc.desc(),
+                ShadowPrediction.generated_at.desc(),
+            ).limit(5000).all()
+            pending, correction = [], []
+            seen = set()
+            for row in candidates:
+                if row.fixture_id in seen:
+                    continue
+                pred = self.prediction_service._persisted_predictions.get(row.id)
+                if pred is None:
+                    continue
+                try:
+                    ShadowPredictionRepository.verify_certified_live_prediction(
+                        session, pred
+                    )
+                except ValueError:
+                    continue
+                meta = row.feature_snapshot.data_quality_metadata or {}
+                provider_id = meta.get("source_fixture_id")
+                if not provider_id or meta.get("source_provider") != self.live_provider.provider_name:
+                    continue
+                seen.add(row.fixture_id)
+                latest = session.query(ShadowEvaluation).filter_by(
+                    prediction_id=row.id
+                ).order_by(ShadowEvaluation.result_version.desc()).first()
+                candidate = (
+                    str(provider_id), row.fixture_id,
+                    0 if latest is None else latest.result_version,
+                    None if latest is None else (
+                        latest.actual_home_goals, latest.actual_away_goals
+                    ),
+                )
+                kickoff_utc = (
+                    row.kickoff_utc.replace(tzinfo=UTC)
+                    if row.kickoff_utc.tzinfo is None
+                    else row.kickoff_utc.astimezone(UTC)
+                )
+                if latest is None:
+                    pending.append((kickoff_utc, candidate))
+                elif kickoff_utc >= now - timedelta(days=14):
+                    correction.append((
+                        last_checked.get(str(row.fixture_id), datetime.min.replace(tzinfo=UTC)),
+                        candidate,
+                    ))
+
+        # Pending results are the priority; recent corrections get two
+        # rotating checks per run. Keep total match-ID requests <= 6.
+        pending.sort(key=lambda item: item[0])
+        correction.sort(key=lambda item: item[0])
+        selected = [c for _, c in pending[:4]] + [c for _, c in correction[:2]]
+        if not selected:
+            return []
+        due = {provider_id: (fixture_id, version, scores)
+               for provider_id, fixture_id, version, scores in selected}
+        dtos = self._handle_provider_call_with_retry(
+            lambda: self.live_provider.get_fixture_results(list(due)), summary
+        )
+        adapter = LiveIngestionAdapter(clock=self.clock)
+        results = []
+        checked_fixture_ids = []
+        for dto in dtos:
+            provider_id = str(dto.provider_fixture_id)
+            if provider_id not in due:
+                continue
+            fixture_id, previous_version, previous_scores = due[provider_id]
+            checked_fixture_ids.append(str(fixture_id))
+            normalized = adapter.adapt_live_result_to_scoring_record(dto)
+            if not normalized.get("score_match") or normalized.get("status") != "FINISHED":
+                continue
+            observed_scores = (normalized["home_score"], normalized["away_score"])
+            if previous_scores == observed_scores:
+                continue
+            results.append({
+                "fixture_id": fixture_id,
+                "match_status": "FINISHED",
+                "home_goals": observed_scores[0],
+                "away_goals": observed_scores[1],
+                "result_version": previous_version + 1,
+                "source_payload_fingerprint": normalized["payload_fingerprint"],
+            })
+        if persist_poll_audit and checked_fixture_ids:
+            with self.session_factory() as session:
+                for fixture_id in checked_fixture_ids:
+                    session.add(SystemAuditLog(
+                        event_type="LIVE_RESULT_POLL", description=fixture_id,
+                    ))
+                session.commit()
+        return results
 
     def _persist_operational_run_summary(self, summary: OperationalRunSummary) -> None:
         """Durable operational run persistence (Sprint 7.1 / 7.2)."""
@@ -488,9 +806,21 @@ class OperationalOrchestrator:
                     failure_summary=summary.failure_summary,
                 )
                 session.add(op_run)
+                if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                    from app.db.models.shadow import ShadowPredictionRun
+                    prediction_run = session.query(ShadowPredictionRun).filter_by(
+                        id=summary.run_id
+                    ).first()
+                    if prediction_run is not None:
+                        prediction_run.status = summary.run_status.value
+                        prediction_run.completed_at = summary.completed_at
+                        prediction_run.predicted_count = summary.predictions_created
+                        prediction_run.blocked_count = summary.predictions_blocked
                 session.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            summary.run_status = OperationalRunStatus.FAILED
+            summary.failure_code = "OPERATIONAL_RUN_PERSISTENCE_FAILED"
+            summary.failure_summary = str(exc)
 
     def _verify_scientific_manifests(self, manifest_override: dict[str, str] | None = None) -> None:
         """Verify five frozen parent manifest hashes. Aborts on any discrepancy."""
@@ -598,75 +928,35 @@ class OperationalOrchestrator:
         return Path("data/processed/live_shadow_predictions.json")
 
     def _load_live_shadow_predictions(self) -> None:
-        """
-        Loads live shadow predictions.
-        Primary authoritative store: Relational database (shadow_predictions table).
-        Secondary cache/export store: JSON file (data/processed/live_shadow_predictions.json).
-        """
-        # 1. Primary: Load from relational database if session factory is available
-        if self.session_factory is not None:
-            try:
-                with self.session_factory() as session:
-                    db_preds = ShadowPredictionRepository.load_all_predictions(session)
-                    if db_preds:
-                        self.prediction_service._persisted_predictions.update(db_preds)
-                        return
-            except Exception:
-                pass
+        """Load only verified scientific predictions from authoritative SQL.
 
-        # 2. Secondary: Load from JSON cache/export artifact (offline/dry-run replay fallback)
-        store_path = self._get_live_store_path()
-        if not store_path.exists():
-            return
-        try:
-            with open(store_path, "r", encoding="utf-8") as f:
-                records = json.load(f)
-            for d in records:
-                d_copy = dict(d)
-                d_copy["prediction_id"] = UUID(d_copy["prediction_id"])
-                d_copy["fixture_id"] = UUID(d_copy["fixture_id"])
-                d_copy["prediction_run_id"] = UUID(d_copy["prediction_run_id"]) if d_copy.get("prediction_run_id") else None
-                d_copy["feature_snapshot_id"] = UUID(d_copy["feature_snapshot_id"]) if d_copy.get("feature_snapshot_id") else None
-                d_copy["generated_at"] = datetime.fromisoformat(d_copy["generated_at"]).astimezone(UTC)
-                d_copy["kickoff_utc"] = datetime.fromisoformat(d_copy["kickoff_utc"]).astimezone(UTC)
-                pred = ShadowPredictionResult(**d_copy)
+        Historical synthetic rows are preserved in the database but excluded
+        from the active live cache; JSON exports are never trusted as source.
+        """
+        if self.session_factory is None:
+            raise ConfigurationError("LIVE_DATABASE_REQUIRED", "Live mode requires SQL persistence.")
+        with self.session_factory() as session:
+            db_preds = ShadowPredictionRepository.load_all_predictions(session)
+            for pred in db_preds.values():
+                try:
+                    ShadowPredictionRepository.verify_certified_live_prediction(session, pred)
+                except ValueError:
+                    # Append-only quarantine: do not modify or delete old rows.
+                    continue
                 self.prediction_service._persisted_predictions[pred.prediction_id] = pred
-        except Exception:
-            pass
 
     def _save_live_shadow_predictions(
         self, fixture_meta_map: dict[UUID, dict[str, Any]] | None = None
     ) -> None:
-        """
-        Saves live shadow predictions.
-        Primary authoritative write: Relational database (shadow_predictions table).
-        Secondary cache/export write: JSON file (data/processed/live_shadow_predictions.json).
-        """
-        # 1. Primary: Persist to relational database
-        if self.session_factory is not None:
-            try:
-                with self.session_factory() as session:
-                    for p in self.prediction_service._persisted_predictions.values():
-                        meta = (fixture_meta_map or {}).get(p.fixture_id)
-                        ShadowPredictionRepository.persist_prediction(session, p, fixture_meta=meta)
-            except Exception:
-                pass
-
-        # 2. Secondary: Export to JSON cache artifact
-        store_path = self._get_live_store_path()
-        try:
-            store_path.parent.mkdir(parents=True, exist_ok=True)
-            serialized = []
-            for p in self.prediction_service._persisted_predictions.values():
-                d = dataclasses.asdict(p)
-                d["prediction_id"] = str(p.prediction_id)
-                d["fixture_id"] = str(p.fixture_id)
-                d["prediction_run_id"] = str(p.prediction_run_id) if p.prediction_run_id else None
-                d["feature_snapshot_id"] = str(p.feature_snapshot_id) if p.feature_snapshot_id else None
-                d["generated_at"] = p.generated_at.isoformat()
-                d["kickoff_utc"] = p.kickoff_utc.isoformat()
-                serialized.append(d)
-            with open(store_path, "w", encoding="utf-8") as f:
-                json.dump(serialized, f, indent=2)
-        except Exception:
-            pass
+        """Persist only verified live predictions to SQL, never silently fall back."""
+        if self.session_factory is None:
+            raise ConfigurationError("LIVE_DATABASE_REQUIRED", "Live mode requires SQL persistence.")
+        with self.session_factory() as session:
+            for pred in self.prediction_service._persisted_predictions.values():
+                ShadowPredictionRepository.verify_certified_live_prediction(
+                    session, pred, allow_running=True
+                )
+                meta = (fixture_meta_map or {}).get(pred.fixture_id)
+                ShadowPredictionRepository.persist_prediction(
+                    session, pred, fixture_meta=meta, strict_live=True
+                )

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071321">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Footmo">
+  <meta name="description" content="Footmo football win probabilities: see upcoming fixtures and model-estimated team win chances, with a clear >60% watchlist.">
+  <title>Footmo · Win Chances</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icons/footmo.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/footmo-180.png">
+  <link rel="stylesheet" href="/picks.css">
+  <script type="module" src="/picks.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#picks">Skip to match picks</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="Footmo home">
+        <span class="brand-mark" aria-hidden="true">F<span>•</span></span>
+        <span class="brand-word">FOOTMO<small>FOOTBALL INTELLIGENCE</small></span>
+      </a>
+      <div class="header-actions">
+        <a class="analysis-link" href="/analysis.html">Full analysis <span aria-hidden="true">↗</span></a>
+        <button id="install-app" class="install-button" type="button" hidden>Install</button>
+        <button id="refresh" class="refresh-button" type="button" aria-label="Refresh forecasts" title="Refresh forecasts">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 4v7h-7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="offline-banner" class="notice-banner" role="status" hidden>You're offline. Live picks are paused until you reconnect.</div>
+
+  <main>
+    <section class="intro" aria-labelledby="headline">
+      <div class="eyebrow"><span class="live-dot" aria-hidden="true"></span> FOOTBALL WIN PROBABILITIES</div>
+      <h1 id="headline">The stronger side.<br><span>At a glance.</span></h1>
+      <p>See which team Footmo gives the better chance of winning. Only estimates <strong>above 60%</strong> receive a green signal.</p>
+    </section>
+
+    <section id="picks" class="picks-section" aria-labelledby="picks-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">YOUR MATCH WATCHLIST</span>
+          <h2 id="picks-title">Upcoming matches</h2>
+        </div>
+        <span id="data-status" class="data-status" role="status" aria-live="polite">Connecting…</span>
+      </div>
+
+      <div class="controls">
+        <div class="control-block">
+          <span class="control-label">Time period</span>
+          <div id="period-filters" class="segmented" role="group" aria-label="Upcoming match time period">
+            <button type="button" data-days="1" aria-pressed="false">24 hours</button>
+            <button type="button" data-days="7" class="selected" aria-pressed="true">7 days</button>
+            <button type="button" data-days="14" aria-pressed="false">14 days</button>
+          </div>
+        </div>
+        <div class="control-block">
+          <span class="control-label">Show</span>
+          <div id="view-filters" class="segmented" role="group" aria-label="Filter match recommendations">
+            <button type="button" data-view="green" class="selected" aria-pressed="true"><span class="green-dot" aria-hidden="true"></span> Green picks</button>
+            <button type="button" data-view="all" aria-pressed="false">All matches</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-heading">
+        <div class="signal-count">
+          <span class="signal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></span>
+          <div><strong id="green-count">—</strong><span>green signals</span></div>
+        </div>
+        <span id="last-update" class="last-update">Checking match data…</span>
+      </div>
+
+      <div id="error-message" class="error-message" role="alert" hidden></div>
+      <div id="picks-list" class="picks-list" aria-live="polite">
+        <div class="empty-state">Loading verified upcoming fixtures…</div>
+      </div>
+      <button id="load-more" class="load-more" type="button" hidden>Show more matches</button>
+    </section>
+
+    <section class="explain" aria-label="What a green signal means">
+      <span class="explain-icon" aria-hidden="true">i</span>
+      <p><strong>What does green mean?</strong> A team has a model-estimated win chance strictly above 60%. It's a <strong>betting watchlist, not a guaranteed or automatically profitable bet</strong>. Compare the offered odds and consider the risk before placing any wager. The current Footmo model is provisional, not scientifically certified.</p>
+    </section>
+
+    <div class="bottom-link">
+      <a href="/analysis.html">See all probabilities, results and model performance <span aria-hidden="true">↗</span></a>
+    </div>
+    <p id="ios-install-tip" class="ios-tip" hidden>iPhone: open in Safari, tap Share, then “Add to Home Screen” to install Footmo.</p>
+  </main>
+
+  <footer class="site-footer"><span>FOOTMO · PRIVATE TRIAL</span><span>Data: football-data.org · No guaranteed outcomes</span></footer>
+
+  <nav class="mobile-nav" aria-label="Mobile app navigation">
+    <a href="/" class="mobile-nav-item current" aria-current="page">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/></svg><span>Picks</span>
+    </a>
+    <a href="/analysis.html" class="mobile-nav-item">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-8M22 20V9"/></svg><span>Analysis</span>
+    </a>
+  </nav>
+</body>
+</html>

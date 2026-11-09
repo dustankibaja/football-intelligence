@@ -1,0 +1,35 @@
+{
+  "id": "/",
+  "name": "Footmo — Football Intelligence",
+  "short_name": "Footmo",
+  "description": "Private football intelligence: real pre-match probabilities, verified scores and prediction history.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#071321",
+  "theme_color": "#071321",
+  "orientation": "any",
+  "lang": "en",
+  "categories": [
+    "sports",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icons/footmo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/footmo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
