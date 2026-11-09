@@ -14,7 +14,7 @@ export default async function handler(request, response) {
     return response.status(200).json({
       ok: true, skipped: result.skipped,
       reason: result.reason || null, created: result.created || 0,
-      evaluated: result.evaluated || 0,
+      revised: result.revised || 0, evaluated: result.evaluated || 0,
       verifiedLeagues: result.verifiedLeagues || 0,
       providerErrors: result.providerErrors || []
     });
