@@ -70,7 +70,7 @@
 
     <section class="section history-section" id="history" aria-labelledby="history-title">
       <div class="section-header"><div><div class="eyebrow">FULL-TIME RESULTS &amp; FORECAST AUDIT</div><h2 id="history-title">Match history</h2></div><span id="history-count" class="sample">— matches</span></div>
-      <p class="history-intro">See verified final scores and separate <strong>all top-outcome forecasts</strong> from <strong>green signals above 60%</strong>. An incorrect low-confidence top outcome was not a green betting signal. Pre-trial games are never counted as model wins or losses.</p>
+      <p class="history-intro">See verified final scores and separate <strong>all top-outcome forecasts</strong> from <strong>forecasts qualifying above 60%</strong>. An incorrect low-confidence top outcome was not a green betting signal. Pre-trial games are never counted as model wins or losses.</p>
       <div class="history-toolbar">
         <div><div class="filter-label">Match kickoff date</div><div class="filters" id="history-window" aria-label="Match history date range">
           <button type="button" data-history-days="1">24 hours</button>
@@ -82,7 +82,7 @@
         </div></div>
         <div><div class="filter-label">Forecast verdict</div><div class="filters" id="history-verdict" aria-label="Prediction outcome filter">
           <button class="active" type="button" data-verdict="ALL">All results</button>
-          <button type="button" data-verdict="GREEN">Green signals (&gt;60%)</button>
+          <button type="button" data-verdict="GREEN">Qualified &gt;60%</button>
           <button type="button" data-verdict="LOW_CONFIDENCE">Below green threshold</button>
           <button type="button" data-verdict="CORRECT">Correct picks</button>
           <button type="button" data-verdict="INCORRECT">Incorrect picks</button>
@@ -100,7 +100,7 @@
       <div id="history-stats" class="history-stats" aria-live="polite"></div>
       <div class="history-list" id="history-list"><div class="empty">Loading verified football results…</div></div>
       <button id="history-more" class="load-more" type="button" hidden>Load more results</button>
-      <p class="fineprint">Correct/incorrect means the highest-probability 1X2 outcome matched or did not match the result, not that a green betting recommendation won or lost. Green means strictly above 60% team-win probability, not guaranteed profit. The provisional model is not certified. Historical forecast revisions remain immutable; current scores come from football-data.org and may be corrected.</p>
+      <p class="fineprint">Correct/incorrect means the highest-probability 1X2 outcome matched or did not match the result, not that a green betting recommendation won or lost. The >60% historical classification is reconstructed from archived pre-kickoff probabilities; it does not prove a green badge was shown when each match was played. It is not a guarantee of profit. The provisional model is not certified. Historical forecast revisions remain immutable; current scores come from football-data.org and may be corrected.</p>
     </section>
     <section class="section metrics-section" id="performance" aria-labelledby="metrics-title">
       <div class="section-header"><div><div class="eyebrow">POST-MATCH VERIFICATION</div><h2 id="metrics-title">Scientific performance</h2></div><div id="sample-label" class="sample">Awaiting observed results</div></div>
