@@ -6,7 +6,7 @@ Phase 5.2 Quality Policy, and Phase 6.3 Shadow Prediction Service.
 from __future__ import annotations
 
 from typing import Any
-from uuid import NAMESPACE_URL, uuid4, uuid5
+from uuid import NAMESPACE_URL, uuid5
 
 from app.automation.clock import Clock, SystemClock
 from app.providers.live.base import LiveFixtureDTO, LiveFixtureStatus, LiveResultDTO
@@ -36,7 +36,6 @@ class LiveIngestionAdapter:
 
         # Deterministic canonical fixture and snapshot identity
         fix_id = uuid5(NAMESPACE_URL, f"{dto.provider_name}:{dto.provider_fixture_id}")
-        snap_id = uuid5(NAMESPACE_URL, f"{dto.provider_name}:{dto.provider_fixture_id}:snapshot:{dto.payload_fingerprint}")
 
         # 2. Check canonical team mapping
         if dto.canonical_home_team_id is None or dto.canonical_away_team_id is None:
@@ -103,12 +102,13 @@ class LiveIngestionAdapter:
             "is_mapped": True,
             "needs_snapshot": True,
             "known_cold_start": is_cold_start,
-            # Phase 6.2 251-feature snapshot placeholders (mockable for unit tests or real point-in-time calculation)
-            "feature_snapshot_id": snap_id,
-            "feature_snapshot_fingerprint": f"feat_fp_live_{dto.provider_fixture_id}_{dto.payload_fingerprint[:8]}",
-            "history_fingerprint": f"hist_fp_{dto.provider_fixture_id}",
-            "feature_values": [0.45, -0.2] + [0.0] * 249,
-            "snapshot_quality_state": "VALID",
+            # A provider fixture is NOT a certified Phase 6.2 feature snapshot.
+            # Never manufacture 251 feature values or label them VALID.
+            # The live orchestrator must fail closed until a real approved
+            # point-in-time materializer supplies the ordered feature vector,
+            # committed snapshot identity, and provenance fingerprint.
+            "snapshot_quality_state": "UNMATERIALIZED",
+            "snapshot_block_reason": "LIVE_FEATURE_SNAPSHOT_NOT_MATERIALIZED",
         }
 
     def adapt_live_result_to_scoring_record(

@@ -225,6 +225,13 @@ class OperationalOrchestrator:
                         f"Fixture {f.get('provider_fixture_id', 'unknown')} blocked due to unresolved mapping.",
                     )
                     continue
+                if (
+                    self.execution_mode == ExecutionMode.LIVE_SHADOW
+                    and f.get("snapshot_quality_state") != "VALID"
+                ):
+                    # Discovery does not imply the Phase 6.2 snapshot exists.
+                    summary.snapshots_failed += 1
+                    continue
                 if f.get("needs_snapshot", True):
                     summary.snapshots_created += 1
                 else:
@@ -266,12 +273,51 @@ class OperationalOrchestrator:
                     )
                     continue
 
-                # Prepare Phase 6.3 ShadowPredictionInput
-                feat_vals = f.get("feature_values", [0.5, -0.3] + [0.0] * 249)
-                if len(feat_vals) < 251:
-                    feat_vals = feat_vals + [0.0] * (251 - len(feat_vals))
-                elif len(feat_vals) > 251:
-                    feat_vals = feat_vals[:251]
+                # Prepare Phase 6.3 ShadowPredictionInput.
+                # LIVE_SHADOW must NEVER insert placeholder values, pad/truncate
+                # missing live features or create fake model-ready snapshots.
+                if self.execution_mode == ExecutionMode.LIVE_SHADOW:
+                    required = (
+                        "feature_values",
+                        "feature_keys",
+                        "feature_snapshot_id",
+                        "feature_snapshot_fingerprint",
+                        "history_fingerprint",
+                        "home_team_id",
+                        "away_team_id",
+                    )
+                    feature_values = f.get("feature_values")
+                    feature_keys = f.get("feature_keys")
+                    missing = [name for name in required if not f.get(name)]
+                    if (
+                        f.get("snapshot_quality_state") != "VALID"
+                        or missing
+                        or not isinstance(feature_values, list)
+                        or len(feature_values) != 251
+                        or not isinstance(feature_keys, list)
+                        or len(feature_keys) != 251
+                    ):
+                        summary.predictions_blocked += 1
+                        self._record_failure(
+                            summary.run_id,
+                            "FEATURES",
+                            "LIVE_SNAPSHOT_GATE",
+                            ErrorCategory.DATA,
+                            Retryability.PERMANENT,
+                            "LIVE_FEATURE_SNAPSHOT_UNAVAILABLE",
+                            "Live prediction blocked: canonical 251-feature snapshot "
+                            "and provenance are required before inference.",
+                        )
+                        continue
+                    feat_vals = feature_values
+                else:
+                    # Existing deterministic synthetic inputs remain available
+                    # only to the test/simulation modes.
+                    feat_vals = f.get("feature_values", [0.5, -0.3] + [0.0] * 249)
+                    if len(feat_vals) < 251:
+                        feat_vals = feat_vals + [0.0] * (251 - len(feat_vals))
+                    elif len(feat_vals) > 251:
+                        feat_vals = feat_vals[:251]
 
                 home_id = f.get("home_team_id", uuid4())
                 away_id = f.get("away_team_id")

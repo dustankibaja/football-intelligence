@@ -252,8 +252,12 @@ def test_live_provider_features_delegate_to_phase6_2(fake_clock: FakeClock):
         payload_fingerprint="fp5678",
     )
     record = adapter.adapt_live_fixture_to_orchestrator_record(dto)
-    assert len(record["feature_values"]) == 251
-    assert "feat_fp_live_" in record["feature_snapshot_fingerprint"]
+    # A provider fixture is not a materialized point-in-time feature snapshot.
+    assert record["snapshot_quality_state"] == "UNMATERIALIZED"
+    assert record["snapshot_block_reason"] == "LIVE_FEATURE_SNAPSHOT_NOT_MATERIALIZED"
+    assert "feature_values" not in record
+    assert "feature_snapshot_id" not in record
+    assert "feature_snapshot_fingerprint" not in record
 
 
 # 15. Live provider prediction delegates to Phase 6.3 ShadowPredictionService
@@ -600,7 +604,12 @@ def test_live_ingestion_adapter_fixture_id_is_deterministic(fake_clock: FakeCloc
     r1 = adapter.adapt_live_fixture_to_orchestrator_record(dto)
     r2 = adapter.adapt_live_fixture_to_orchestrator_record(dto)
     assert r1["fixture_id"] == r2["fixture_id"]
-    assert r1["feature_snapshot_id"] == r2["feature_snapshot_id"]
+    # The provider fixture ID is deterministic; a scientific snapshot must
+    # instead be materialized and fingerprinted by the real feature engine.
+    assert "feature_snapshot_id" not in r1
+    assert "feature_snapshot_id" not in r2
+    assert r1["snapshot_quality_state"] == "UNMATERIALIZED"
+    assert r2["snapshot_quality_state"] == "UNMATERIALIZED"
 
 
 # 33. Pre-registered mappings resolve certified clubs deterministically
