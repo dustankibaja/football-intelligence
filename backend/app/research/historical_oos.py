@@ -9,7 +9,7 @@ import argparse
 import csv
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time as clock_time
 import hashlib
 import io
 import json
@@ -277,7 +277,7 @@ def _research_modeling_rows(
             season_id=uuid5(NAMESPACE_URL, f"historical-outcomes/season/{match.league}/{match.season}"),
             # Original CSV has only reliable date precision. Noon is a DTO
             # placeholder, NOT a certified timestamp or live kickoff record.
-            kickoff_utc=datetime.combine(match.match_date, time(12, 0), tzinfo=UTC),
+            kickoff_utc=datetime.combine(match.match_date, clock_time(12, 0), tzinfo=UTC),
             temporal_precision="DATE_ONLY",
             home_team_id=uuid5(NAMESPACE_URL, f"historical-outcomes/team/{match.league}/{match.home}"),
             away_team_id=uuid5(NAMESPACE_URL, f"historical-outcomes/team/{match.league}/{match.away}"),
