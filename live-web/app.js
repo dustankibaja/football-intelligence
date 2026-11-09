@@ -1,7 +1,7 @@
 const $ = id => document.getElementById(id);
 let data = null, activeLeague = 'ALL', activeWindow = 14;
 let fixtureVisible = 20;
-let historyDays = 7, historyVerdict = 'ALL', historyLeague = 'ALL';
+let historyDays = 2, historyVerdict = 'ALL', historyLeague = 'ALL';
 let historyVisible = 24;
 const DAY_MS = 24 * 60 * 60 * 1000;
 function withinWindow(iso, days, direction = 'future') {
@@ -116,8 +116,8 @@ function renderResults() {
 }
 const OUTCOME_NAMES = { H: 'Home win', D: 'Draw', A: 'Away win' };
 const VERDICTS = {
-  CORRECT: ['Correct pick', 'correct'],
-  INCORRECT: ['Incorrect pick', 'incorrect'],
+  CORRECT: ['Correct top outcome', 'correct'],
+  INCORRECT: ['Incorrect top outcome', 'incorrect'],
   NO_FORECAST: ['Not predicted', 'unpredicted'],
   PENDING_EVALUATION: ['Awaiting evaluation', 'pending']
 };
@@ -142,7 +142,10 @@ function historyCard(match) {
   } else {
     const pick = match.predictedOutcome === 'D' ? 'Draw'
       : match.predictedOutcome === 'H' ? match.homeTeam : match.awayTeam;
-    detail.textContent = `Footmo pick: ${pick} (${pct(match.predictedConfidence)}) · ` +
+    const isGreen = match.predictedOutcome !== 'D' &&
+      match.predictedConfidence > 0.60;
+    detail.textContent = `Top outcome: ${pick} (${pct(match.predictedConfidence)}) · ` +
+      (isGreen ? 'Green signal >60% · ' : 'No green signal · ') +
       `Actual: ${match.outcome === 'D' ? 'Draw' : match.winner}` +
       (match.logLoss1x2 == null ? '' : ` · 1X2 log loss: ${metric(match.logLoss1x2)}`);
   }
@@ -164,12 +167,27 @@ function renderHistory() {
   const notPredicted = period.filter(m => m.forecastStatus === 'NO_FORECAST').length;
   const evaluated = correct + incorrect;
   const accuracy = evaluated ? pct(correct / evaluated) : '—';
+  const scored = period.filter(m =>
+    m.forecastStatus === 'CORRECT' || m.forecastStatus === 'INCORRECT');
+  const isGreen = m => m.predictedOutcome !== 'D' &&
+    typeof m.predictedConfidence === 'number' && m.predictedConfidence > 0.60;
+  const green = scored.filter(isGreen);
+  const greenCorrect = green.filter(m => m.forecastStatus === 'CORRECT').length;
+  const drawMisses = scored.filter(m =>
+    m.forecastStatus === 'INCORRECT' && m.outcome === 'D').length;
+  const expectedCorrect = scored.reduce((sum, m) =>
+    sum + (m.predictedConfidence || 0), 0);
   const stats = [
     ['Finished matches', period.length],
-    ['Evaluated picks', evaluated],
-    ['Correct picks', correct],
-    ['Incorrect picks', incorrect],
-    ['Pick accuracy', accuracy],
+    ['All evaluated top outcomes', evaluated],
+    ['Correct top outcomes', correct],
+    ['Incorrect top outcomes', incorrect],
+    ['All-outcome accuracy', accuracy],
+    ['Green signals evaluated', green.length],
+    ['Green signals correct', greenCorrect],
+    ['Green-signal accuracy', green.length ? pct(greenCorrect / green.length) : '—'],
+    ['Misses caused by draws', drawMisses],
+    ['Expected correct (probability sum)', evaluated ? expectedCorrect.toFixed(1) : '—'],
     ['Not predicted', notPredicted]
   ];
   $('history-stats').replaceChildren(...stats.map(([label, value]) => {
@@ -177,8 +195,11 @@ function renderHistory() {
     box.append(node('span', '', label), node('strong', '', String(value)));
     return box;
   }));
-  const filtered = period.filter(m =>
-    historyVerdict === 'ALL' || m.forecastStatus === historyVerdict);
+  const filtered = period.filter(m => {
+    if (historyVerdict === 'GREEN') return scored.includes(m) && isGreen(m);
+    if (historyVerdict === 'LOW_CONFIDENCE') return scored.includes(m) && !isGreen(m);
+    return historyVerdict === 'ALL' || m.forecastStatus === historyVerdict;
+  });
   $('history-count').textContent = `${filtered.length} results` +
     (pending ? ` · ${pending} pending evaluation` : '');
   $('history-list').replaceChildren(...(filtered.length
