@@ -164,3 +164,50 @@ def collect_result_receipts(
                 "source_payload_sha256": raw_hash,
             })
     return sorted(receipts, key=lambda r: r["fixture_sha256"])
+
+
+def main() -> None:
+    """Reconcile archived real issued forecasts against current public scores.
+
+    The original ledger is read-only and never overwritten. Caller must
+    archive both the original ledger and this separate output for provenance.
+    """
+    import argparse
+    import json
+    from pathlib import Path
+
+    from app.research.prospective_reconciliation import reconcile_prospective_results
+
+    parser = argparse.ArgumentParser(description="Read-only prospective football result verification")
+    parser.add_argument("--original-ledger", required=True)
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
+    original_path = Path(args.original_ledger)
+    output_path = Path(args.output)
+    if original_path.resolve() == output_path.resolve():
+        raise ValueError("ORIGINAL_IMMUTABLE_LEDGER_CANNOT_BE_OVERWRITTEN")
+    original = json.loads(original_path.read_text(encoding="utf-8"))
+    retrieved_at = datetime.now(UTC)
+    fetched = collect_result_receipts(original, retrieved_at_utc=retrieved_at)
+    assessment = reconcile_prospective_results(
+        original,
+        fetched,
+        evaluated_at_utc=datetime.now(UTC),
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(assessment, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps({
+        "status": assessment["status"],
+        "original_forecasts": assessment["original_forecasts"],
+        "finished_evaluated": assessment["finished_evaluated"],
+        "pending_or_unverified": assessment["pending_or_unverified"],
+        "original_ledger_sha256": assessment["original_forecast_ledger_sha256"],
+        "evaluation_sha256": assessment["report_sha256"],
+        "output": str(output_path),
+    }, indent=2))
+
+
+if __name__ == "__main__":
+    main()
