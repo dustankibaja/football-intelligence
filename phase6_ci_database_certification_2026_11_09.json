@@ -98,7 +98,7 @@
   },
   "frozen_models_modified_by_pr_6_or_pr_7": false,
   "limitations": [
-    "Ruff reports 468 pre-existing lint violations and is explicitly non-blocking.",
+    "Ruff reports 468 lint violations and is explicitly non-blocking. The advisory lint job is not a lint certification.",
     "Scoring v1.1 changes new evaluation semantics only; historical evaluation rows were not rewritten.",
     "No actual production database, VPS, continuous scheduler, or live model-quality certification is claimed.",
     "Some tests were skipped; their specific reasons must be read from GitHub logs.",
