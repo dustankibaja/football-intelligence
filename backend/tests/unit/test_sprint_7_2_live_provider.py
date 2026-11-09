@@ -604,7 +604,12 @@ def test_live_ingestion_adapter_fixture_id_is_deterministic(fake_clock: FakeCloc
     r1 = adapter.adapt_live_fixture_to_orchestrator_record(dto)
     r2 = adapter.adapt_live_fixture_to_orchestrator_record(dto)
     assert r1["fixture_id"] == r2["fixture_id"]
-    assert r1["feature_snapshot_id"] == r2["feature_snapshot_id"]
+    # The provider fixture ID is deterministic; a scientific snapshot must
+    # instead be materialized and fingerprinted by the real feature engine.
+    assert "feature_snapshot_id" not in r1
+    assert "feature_snapshot_id" not in r2
+    assert r1["snapshot_quality_state"] == "UNMATERIALIZED"
+    assert r2["snapshot_quality_state"] == "UNMATERIALIZED"
 
 
 # 33. Pre-registered mappings resolve certified clubs deterministically
