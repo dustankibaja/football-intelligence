@@ -1,3 +1,4 @@
+import { latestForecastsByMatch } from './forecast-store.js';
 // Auditable match history for the private trial. A football result and a
 // correct pre-match prediction are different facts; never conflate them.
 export const OUTCOMES = Object.freeze({ H: 'Home win', D: 'Draw', A: 'Away win' });
@@ -48,27 +49,22 @@ function canonicalKey(id, kickoff) {
 }
 
 export function buildHistory(finishedMatches = [], predictions = [], evaluations = []) {
-  const eligible = predictions.filter(p => p &&
-    new Date(p.generatedAt).getTime() < new Date(p.kickoffUtc).getTime());
-  // Provider timestamps may use Z while stored ISO timestamps use .000Z.
-  // Compare canonical instants, not their original string formatting.
-  const forecastByKey = new Map(eligible.map(p =>
-    [canonicalKey(p.fixtureId, p.kickoffUtc), p]));
-  const originalForecastByKey = new Map(eligible.map(p => [p.forecastKey, p]));
-  const evaluatedByKey = new Map();
+  // A fixture can have multiple immutable forecasts. Score only the most
+  // recent valid pre-kickoff revision, and only its matching evaluation.
+  const forecastByKey = latestForecastsByMatch(predictions);
+  const evaluatedByForecastKey = new Map();
   for (const ev of evaluations) {
-    const linked = originalForecastByKey.get(ev.forecastKey);
-    const key = canonicalKey(ev.fixtureId ?? linked?.fixtureId,
-      ev.kickoffUtc ?? linked?.kickoffUtc);
-    if (!key) continue;
-    const prev = evaluatedByKey.get(key);
-    if (!prev || ev.version > prev.version) evaluatedByKey.set(key, ev);
+    if (!ev?.forecastKey) continue;
+    const prev = evaluatedByForecastKey.get(ev.forecastKey);
+    if (!prev || Number(ev.version || 0) > Number(prev.version || 0)) {
+      evaluatedByForecastKey.set(ev.forecastKey, ev);
+    }
   }
   return finishedMatches.map(match => {
     const key = canonicalKey(match.fixtureId, match.kickoffUtc);
     const forecast = forecastByKey.get(key);
     const pick = forecast ? bestPick(forecast.p1x2) : null;
-    const evaluation = evaluatedByKey.get(key);
+    const evaluation = forecast ? evaluatedByForecastKey.get(forecast.forecastKey) : null;
     const verdict = !forecast || !pick ? 'NO_FORECAST'
       : !evaluation ? 'PENDING_EVALUATION'
         : pick.code === match.outcome ? 'CORRECT' : 'INCORRECT';
@@ -88,14 +84,27 @@ export function buildHistory(finishedMatches = [], predictions = [], evaluations
 }
 
 export function auditSummary(history) {
-  const correct = history.filter(m => m.forecastStatus === 'CORRECT').length;
-  const incorrect = history.filter(m => m.forecastStatus === 'INCORRECT').length;
-  const pending = history.filter(m => m.forecastStatus === 'PENDING_EVALUATION').length;
-  const evaluated = correct + incorrect;
+  const scored = history.filter(m =>
+    m.forecastStatus === 'CORRECT' || m.forecastStatus === 'INCORRECT');
+  const correct = scored.filter(m => m.forecastStatus === 'CORRECT').length;
+  const incorrect = scored.length - correct;
+  const green = scored.filter(m => m.predictedOutcome !== 'D' &&
+    typeof m.predictedConfidence === 'number' && m.predictedConfidence > 0.60);
+  const greenCorrect = green.filter(m => m.forecastStatus === 'CORRECT').length;
+  const misses = scored.filter(m => m.forecastStatus === 'INCORRECT');
+  const round = x => Math.round(x * 1000000) / 1000000;
   return {
-    finishedMatches: history.length, evaluated, correct, incorrect, pending,
+    finishedMatches: history.length, evaluated: scored.length, correct, incorrect,
+    pending: history.filter(m => m.forecastStatus === 'PENDING_EVALUATION').length,
     notPredicted: history.filter(m => m.forecastStatus === 'NO_FORECAST').length,
-    accuracy: evaluated ? Math.round(correct / evaluated * 1000000) / 1000000 : null
+    accuracy: scored.length ? round(correct / scored.length) : null,
+    greenEvaluated: green.length, greenCorrect,
+    greenIncorrect: green.length - greenCorrect,
+    greenAccuracy: green.length ? round(greenCorrect / green.length) : null,
+    drawMisses: misses.filter(m => m.outcome === 'D').length,
+    nonDrawMisses: misses.filter(m => m.outcome !== 'D').length,
+    expectedCorrect: scored.length ? round(scored.reduce((sum, m) =>
+      sum + m.predictedConfidence, 0)) : null
   };
 }
 
@@ -104,7 +113,7 @@ export function inRollingWindow(iso, days, now = new Date(), direction = 'past')
   const current = now.getTime();
   if (!Number.isFinite(date) || !Number.isFinite(current)) return false;
   if (days === 'ALL') return direction === 'past' ? date <= current : date > current;
-  if (![1, 7, 14, 30].includes(days)) return false;
+  if (![1, 2, 7, 14, 30].includes(days)) return false;
   const span = days * 86400000;
   return direction === 'past'
     ? date <= current && date >= current - span
