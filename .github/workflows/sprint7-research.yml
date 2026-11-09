@@ -34,7 +34,7 @@ jobs:
           pip install -e ./backend
           pip install pytest
       - name: Verify leakage and research unit tests
-        run: python -m pytest backend/tests/unit/test_sprint7_research.py -q
+        run: python -m pytest backend/tests/unit/test_sprint7_research.py --confcutdir=backend/tests/unit -q
       - name: Acquire verified completed seasons and run chronological benchmark
         run: |
           python -m app.research.cli \
