@@ -56,7 +56,7 @@ def evaluate_multiseason_stability(fixtures, receipts):
         test_indices = [i for i, row in enumerate(fixtures) if row.season == year]
         if (
             len(test_indices) != sum(LEAGUE_MATCH_COUNTS.values())
-            or len(train_indices) < 3000
+            or len(train_indices) < 3 * sum(LEAGUE_MATCH_COUNTS.values())
         ):
             raise ValueError("ROLLING_SEASON_SOURCE_COVERAGE_MISMATCH")
         max_train_date = max(fixtures[i].match_date for i in train_indices)
