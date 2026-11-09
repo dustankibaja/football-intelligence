@@ -32,6 +32,8 @@ test('mobile layout provides viewport-safe touch navigation and install hints', 
   const home = read('index.html');
   const html = read('analysis.html');
   const css = read('styles.css');
+  const landingCss = read('picks.css');
+  const landingJs = read('picks.js');
   const js = read('app.js');
   assert.match(home, /viewport-fit=cover/);
   assert.match(home, /href="\/picks.css"/);
@@ -44,6 +46,12 @@ test('mobile layout provides viewport-safe touch navigation and install hints', 
   assert.match(home, /data-view="all"/);
   assert.match(home, /id="picks-list"/);
   assert.match(home, /id="green-count"/);
+  assert.match(landingCss, /@media\(max-width: 580px\)/);
+  assert.match(landingCss, /env\(safe-area-inset-bottom/);
+  assert.match(landingCss, /grid-template-columns: minmax\(0,1fr\)/);
+  assert.match(landingJs, /landingMatches\(state\.upcoming/);
+  assert.match(landingJs, /beforeinstallprompt/);
+  assert.match(landingJs, /serviceWorker\.register\('\/sw\.js'/);
   assert.match(html, /viewport-fit=cover/);
   assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
   assert.match(html, /rel="apple-touch-icon"/);
