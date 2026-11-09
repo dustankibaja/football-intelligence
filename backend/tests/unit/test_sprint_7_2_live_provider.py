@@ -252,8 +252,12 @@ def test_live_provider_features_delegate_to_phase6_2(fake_clock: FakeClock):
         payload_fingerprint="fp5678",
     )
     record = adapter.adapt_live_fixture_to_orchestrator_record(dto)
-    assert len(record["feature_values"]) == 251
-    assert "feat_fp_live_" in record["feature_snapshot_fingerprint"]
+    # A provider fixture is not a materialized point-in-time feature snapshot.
+    assert record["snapshot_quality_state"] == "UNMATERIALIZED"
+    assert record["snapshot_block_reason"] == "LIVE_FEATURE_SNAPSHOT_NOT_MATERIALIZED"
+    assert "feature_values" not in record
+    assert "feature_snapshot_id" not in record
+    assert "feature_snapshot_fingerprint" not in record
 
 
 # 15. Live provider prediction delegates to Phase 6.3 ShadowPredictionService
