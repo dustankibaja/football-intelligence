@@ -2,7 +2,7 @@ import { get, put, list } from '@vercel/blob';
 import { predictFixture, evaluateForecast, summarizeEvaluations,
   MODEL_ID, walkForwardBacktest } from './model.js';
 import { fetchRealFixtures } from './provider.js';
-import { normalizeFinished, buildHistory, auditSummary } from './history.js';
+import { normalizeFinished, buildHistory, auditSummary, inRollingWindow } from './history.js';
 import { canonicalFixtureKey, latestForecastsByMatch,
   latestUpcomingForecasts, needsForecastRevision,
   selectLatestEvaluations } from './forecast-store.js';
@@ -152,6 +152,8 @@ export function viewState(data, now = new Date()) {
     results: evaluations.slice(0, 100),
     history: history.slice(0, 2000),
     historyAudit: auditSummary(history),
+    historyAudit48h: auditSummary(history.filter(m =>
+      inRollingWindow(m.kickoffUtc, 2, now, 'past'))),
     resultCorrections: (data.resultCorrections || []).length,
     performance: summarizeEvaluations(evaluations),
     backtest: data.backtest || null
