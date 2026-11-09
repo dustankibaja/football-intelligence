@@ -228,6 +228,17 @@ def build_pre_match_features(fixtures: list[Fixture]) -> tuple[np.ndarray, np.nd
             matrix[row_index] = features
 
         for _, match in daily:
+            # Research shadow may ask for features of scheduled/unplayed
+            # fixtures. Such fixtures have (-1, -1, -1) sentinels and MUST
+            # NOT update match outcome state, even for later scheduled days.
+            if (
+                match.outcome == -1
+                and match.home_goals == -1
+                and match.away_goals == -1
+            ):
+                continue
+            if match.outcome not in (0, 1, 2):
+                raise ValueError("INVALID_HISTORICAL_OUTCOME_IN_FEATURE_HISTORY")
             league_totals[match.league][0] += 1
             league_totals[match.league][1] += match.home_goals
             league_totals[match.league][2] += match.away_goals
