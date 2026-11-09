@@ -1,0 +1,101 @@
+name: Prospective Football Research Shadow (Noncommercial)
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/research/prospective_shadow.py'
+      - 'backend/app/research/historical_oos.py'
+      - 'backend/tests/unit/test_prospective_shadow_research.py'
+      - '.github/workflows/prospective-shadow-research.yml'
+  push:
+    branches:
+      - master
+    paths:
+      - 'backend/app/research/prospective_shadow.py'
+      - 'backend/app/research/historical_oos.py'
+      - 'backend/tests/unit/test_prospective_shadow_research.py'
+      - '.github/workflows/prospective-shadow-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prospective-shadow:
+    name: Issue dated shadow forecasts for genuine upcoming fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout source commit
+        uses: actions/checkout@v4
+
+      - name: Install Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Prove no future score or source-provenance leakage
+        working-directory: backend
+        run: |
+          pytest -q tests/unit/test_prospective_shadow_research.py
+
+      - name: Issue authentic pre-match research shadow snapshots
+        working-directory: backend
+        run: |
+          python -m app.research.prospective_shadow \
+            --raw-dir ../data/research_football_data_raw \
+            --output ../research_outputs/prospective_shadow_2026_27.json \
+            --lookahead-days 21
+
+      - name: Assert research-only forecast integrity
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from datetime import UTC, datetime
+          from pathlib import Path
+
+          p = Path("research_outputs/prospective_shadow_2026_27.json")
+          result = json.loads(p.read_text(encoding="utf-8"))
+          as_of = datetime.fromisoformat(result["generated_at_utc"]).astimezone(UTC)
+          assert result["status"] == "RESEARCH_SHADOW_NOT_CERTIFIED_OR_COMMERCIAL"
+          assert result["model"]["publication_eligible"] is False
+          assert result["model"]["requires_new_calibration"] is True
+          assert result["model"]["probability_status"] == "RAW_UNCALIBRATED"
+          assert result["model"]["training_rows"] == 10122
+          assert len(result["fixture_source_commit"]) == 40
+          assert len(result["historical_source_receipts"]) == 28
+          assert result["counts"]["forecasts_issued"] == len(result["predictions"]) > 0
+          assert result["counts"]["future_schedule_rows_in_window"] == (
+              result["counts"]["forecasts_issued"] + result["counts"]["blocked"]
+          )
+          assert len({p["fixture_sha256"] for p in result["predictions"]}) == len(result["predictions"])
+          for forecast in result["predictions"]:
+              assert datetime.fromisoformat(
+                  forecast["expected_calendar_date"] + "T00:00:00+00:00"
+              ).date() > as_of.date()
+              assert abs(forecast["prob_home"] + forecast["prob_draw"] + forecast["prob_away"] - 1) < 1e-4
+              assert forecast["lambda_home"] > 0 and forecast["lambda_away"] > 0
+              assert 0 <= forecast["prob_over_2_5"] <= 1
+              assert 0 <= forecast["prob_btts_yes"] <= 1
+              assert forecast["status"] == "SHADOW_ONLY_UNCALIBRATED_WAITING_FOR_MATCH"
+              assert len(forecast["model_artifact_sha256"]) == 64
+          unsigned = dict(result)
+          checksum = unsigned.pop("ledger_sha256")
+          assert hashlib.sha256(json.dumps(unsigned, sort_keys=True).encode()).hexdigest() == checksum
+          print(f"Prospective scientific ledger verified: {len(result['predictions'])} future forecasts, SHA-256 {checksum}")
+          PY
+
+      - name: Archive time-stamped noncommercial research ledger (no raw CSVs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-prospective-shadow-evidence
+          path: research_outputs/prospective_shadow_2026_27.json
+          retention-days: 30
+          if-no-files-found: error
