@@ -440,7 +440,19 @@ def main() -> None:
         "holdout": report["coverage"]["sealed_test_2025_26"],
         "selected": report["selection"]["selected_challenger"],
         "baseline_log_loss": report["heldout_metrics"]["training_only_class_prior"]["log_loss"],
+        "baseline_brier": report["heldout_metrics"]["training_only_class_prior"]["brier_score"],
+        "raw_model_log_loss": report["heldout_metrics"]["challenger_raw"]["log_loss"],
+        "raw_model_brier": report["heldout_metrics"]["challenger_raw"]["brier_score"],
         "challenger_log_loss": report["heldout_metrics"]["challenger_temperature_calibrated"]["log_loss"],
+        "challenger_brier": report["heldout_metrics"]["challenger_temperature_calibrated"]["brier_score"],
+        "challenger_ece": report["heldout_metrics"]["challenger_temperature_calibrated"]["expected_calibration_error"],
+        "challenger_accuracy": report["heldout_metrics"]["challenger_temperature_calibrated"]["accuracy"],
+        "calibration_temperature": report["selection"]["calibration_temperature"],
+        "per_league_log_loss": {
+            code: metrics["log_loss"]
+            for code, metrics in report["heldout_metrics"]["per_league_calibrated"].items()
+        },
+        "selective_1x2": report["selective_1x2"],
         "champion_compared": False,
         "report": str(output),
     }, indent=2))
