@@ -112,3 +112,25 @@ test('the only green UI class is assigned by the strict selector', () => {
   });
   assert.deepEqual(results.map(x => x.green), [false, false, true]);
 });
+
+test('rescheduled fixtures appear once using the latest pre-kickoff forecast', () => {
+  const earlier = fixture(42, [.85, .1, .05], 12);
+  const later = {
+    ...fixture(42, [.67, .2, .13], 72),
+    generatedAt: new Date(NOW - 10 * 60000).toISOString()
+  };
+  const selected = landingMatches([earlier, later], {
+    days: 7, view: 'green', fresh: true, now: NOW
+  });
+  assert.equal(selected.length, 1);
+  assert.equal(selected[0].forecast.kickoffUtc, later.kickoffUtc);
+  assert.equal(selected[0].candidate.probability, .67);
+});
+
+test('predictions generated in the future cannot be recommended now', () => {
+  const forecast = fixture(9, [.8, .1, .1], 12);
+  forecast.generatedAt = new Date(NOW + 1000).toISOString();
+  assert.equal(landingMatches([forecast], {
+    days: 7, view: 'green', fresh: true, now: NOW
+  }).length, 0);
+});
