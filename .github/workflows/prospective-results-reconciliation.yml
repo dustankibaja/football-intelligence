@@ -108,6 +108,59 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+      - name: Issue separate exact-score extension BEFORE fixture date
+        if: github.event_name == 'push' && steps.window.outputs.active == 'false'
+        working-directory: backend
+        run: |
+          python -m app.research.exact_score_extension \
+            --original-ledger ../research_outputs/original/prospective_shadow_2026_27.json \
+            --output ../research_outputs/locked_63_score_extension.json
+
+      - name: Archive pre-match exact-score extension as new immutable artifact
+        if: github.event_name == 'push' && steps.window.outputs.active == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-prospective-63-score-extension-locked
+          path: research_outputs/locked_63_score_extension.json
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Retrieve original pre-match score extension (never regenerate after kickoff)
+        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p research_outputs/preissued-score-extension
+          SCORE_RUN_ID="$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=football-prospective-63-score-extension-locked" --jq '[.artifacts[] | select(.name == "football-prospective-63-score-extension-locked" and (.expired | not) and .workflow_run.head_branch == "master")] | sort_by(.created_at) | first | .workflow_run.id // empty')"
+          if [ -z "$SCORE_RUN_ID" ]; then
+            echo "ERROR: No authentic PRE-MATCH exact-score extension artifact; no retroactive reconstruction"
+            exit 1
+          fi
+          gh run download "$SCORE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name football-prospective-63-score-extension-locked --dir research_outputs/preissued-score-extension
+
+      - name: Verify preissued score extension hash and original forecast lineage
+        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          p = Path("research_outputs/preissued-score-extension/locked_63_score_extension.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          checksum = data.pop("extension_ledger_sha256")
+          if hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest() != checksum:
+              raise SystemExit("Preissued score extension digest invalid")
+          if data["original_forecast_ledger_sha256"] != "a04e7d71389c0e18bae2aa2bbb21285f5de3d4d98874a51ff9559fd1e9de3412":
+              raise SystemExit("Score extension does not derive from original frozen 63 forecasts")
+          if data["count"] != 63 or len(data["predictions"]) != 63:
+              raise SystemExit("Scoreline extension lost one or more original fixtures")
+          from datetime import datetime, date, UTC
+          issued = datetime.fromisoformat(data["generated_at_utc"]).astimezone(UTC)
+          if any(date.fromisoformat(x["expected_calendar_date"]) <= issued.date() for x in data["predictions"]):
+              raise SystemExit("Score extension not issued before every match date")
+          print("Original pre-match score extension SHA-256:", checksum)
+          PY
+
       - name: Obtain independent official current-season results
         if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
         working-directory: backend
@@ -135,6 +188,39 @@ jobs:
               raise SystemExit("Prospective result report digest mismatch")
           print(f"VERIFIED: {data['finished_evaluated']} scored, {data['pending_or_unverified']} still pending/unverified")
           PY
+
+      - name: Evaluate exact scoreline likelihood against preissued score matrix
+        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        working-directory: backend
+        run: |
+          python -m app.research.exact_score_reconciliation \
+            --preissued-extension ../research_outputs/preissued-score-extension/locked_63_score_extension.json \
+            --result-assessment ../research_outputs/prospective_63_real_result_audit.json \
+            --output ../research_outputs/prospective_63_exact_score_metrics.json
+
+      - name: Confirm equal 1X2 and scoreline settlement sample counts
+        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          base = json.loads(Path("research_outputs/prospective_63_real_result_audit.json").read_text(encoding="utf-8"))
+          score = json.loads(Path("research_outputs/prospective_63_exact_score_metrics.json").read_text(encoding="utf-8"))
+          assert score["n_completed"] == base["finished_evaluated"]
+          assert score["n_pending"] == base["pending_or_unverified"]
+          assert score["original_forecast_ledger_sha256"] == base["original_forecast_ledger_sha256"]
+          assert score["status"] == "RESEARCH_ONLY_NOT_PUBLICATION_CERTIFIED"
+          print(f"Verified untruncated scoreline assessment: {score['n_completed']} completed, {score['n_pending']} pending")
+          PY
+
+      - name: Archive exact-score evaluation without altering either original ledger
+        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-prospective-63-exact-score-assessment
+          path: research_outputs/prospective_63_exact_score_metrics.json
+          retention-days: 90
+          if-no-files-found: error
 
       - name: Archive read-only result assessment (no raw provider CSVs)
         if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
