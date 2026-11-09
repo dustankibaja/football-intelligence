@@ -1,0 +1,85 @@
+name: Real Historical Four-Season Rolling OOS Audit
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/research/multiseason_stability.py'
+      - 'backend/tests/unit/test_multiseason_stability.py'
+      - '.github/workflows/multiseason-retrospective-research.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'backend/app/research/multiseason_stability.py'
+      - 'backend/tests/unit/test_multiseason_stability.py'
+      - '.github/workflows/multiseason-retrospective-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  genuine-retrospective-oos:
+    name: Fit M1 on prior years; score 2022-26 real completed results
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install scientific package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Prove rolling-origin and provenance invariants offline
+        working-directory: backend
+        run: pytest -q tests/unit/test_multiseason_stability.py
+
+      - name: Download real source CSV and execute 4 independent OOS season fits
+        working-directory: backend
+        run: |
+          python -m app.research.multiseason_stability \
+            --raw-dir ../data/research_football_data_raw \
+            --output ../research_outputs/four_season_retrospective_oos.json
+
+      - name: Validate 5,784 distinct historical OOS results and preserved disclosure
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          p = Path("research_outputs/four_season_retrospective_oos.json")
+          x = json.loads(p.read_text(encoding="utf-8"))
+          assert x["status"] == "RETROSPECTIVE_RESEARCH_SENSITIVITY_NOT_FRESH_HOLDOUT"
+          assert x["challenger"] == "M1_DECAY_365"
+          assert x["years"] == ["2223", "2324", "2425", "2526"]
+          assert x["total_oos_fixtures"] == 5784
+          assert x["pooled_baseline_metrics"]["sample_size"] == 5784
+          assert x["pooled_raw_challenger_metrics"]["sample_size"] == 5784
+          assert len(x["source_manifest"]) == 28
+          assert len({(s["league"], s["season"]) for s in x["source_manifest"]}) == 28
+          expected = {"E0":380,"SP1":380,"I1":380,"D1":306}
+          assert all(s["finished_matches"] == expected[s["league"]] for s in x["source_manifest"])
+          assert all(len(s["sha256"]) == 64 for s in x["source_manifest"])
+          assert [f["test_fixtures"] for f in x["folds"]] == [1446] * 4
+          assert [f["training_fixtures"] for f in x["folds"]] == [4338, 5784, 7230, 8676]
+          assert all(f["training_latest_date"] < f["test_earliest_date"] for f in x["folds"])
+          assert x["match_date_clustered_log_loss_skill"]["unique_match_dates"] >= 100
+          unsigned = dict(x)
+          digest = unsigned.pop("research_report_sha256")
+          assert hashlib.sha256(json.dumps(unsigned, sort_keys=True).encode()).hexdigest() == digest
+          print("TRUE historical data: 28 source receipts; 5784 OOS matches across 4 seasons")
+          print("Yearwise raw M1 skill:", [(f["test_season"], f["log_loss_skill"]) for f in x["folds"]])
+          print("Important: retrospective sensitivity only, NOT fresh sealed holdout.")
+          PY
+
+      - name: Archive scientific results with provenance but not raw source files
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-multiseason-genuine-oos-research
+          path: research_outputs/four_season_retrospective_oos.json
+          retention-days: 90
+          if-no-files-found: error
