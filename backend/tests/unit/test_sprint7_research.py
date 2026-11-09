@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import pytest
 
 from app.research.benchmark import benchmark, metrics
-from app.research.data import Match, parse_source, source_url
+from app.research.data import Match, parse_source, source_url, verify_source_lock
 from app.research.models import (
     FeatureRow, build_point_in_time_rows, goal_probabilities, selective_decision,
 )
@@ -98,3 +98,19 @@ def test_benchmark_fails_closed_on_insufficient_coverage():
                      (0.0,), {}, 0, 0, 0)
     with pytest.raises(ValueError, match="Insufficient chronological fold"):
         benchmark([row])
+
+
+def test_frozen_source_lock_rejects_any_checksum_or_membership_drift():
+    manifest = {"sources": [{"competition": "EPL", "season": "2021-22",
+                             "sha256": "a" * 64}],
+                "datasetFingerprintSha256": "b" * 64}
+    lock = {"schema": 1, "sourceCount": 1,
+            "sources": {"EPL:2021-22": "a" * 64},
+            "datasetFingerprintSha256": "b" * 64}
+    verify_source_lock(manifest, lock)
+    with pytest.raises(ValueError, match="checksum drift"):
+        verify_source_lock(manifest, {**lock,
+                           "sources": {"EPL:2021-22": "c" * 64}})
+    with pytest.raises(ValueError, match="fingerprint drift"):
+        verify_source_lock(manifest, {**lock,
+                           "datasetFingerprintSha256": "c" * 64})
