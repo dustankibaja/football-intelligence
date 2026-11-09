@@ -106,15 +106,40 @@ def reconcile_prospective_results(
             or not (0 <= home <= 20 and 0 <= away <= 20)
         ):
             raise ValueError("INVALID_AUTHENTIC_SCORE")
-        completed_at = _timestamp(str(record["completed_at_utc"]))
         retrieved_at = _timestamp(str(record["retrieved_at_utc"]))
-        if (
-            completed_at <= issued_at
-            or completed_at.date() < date.fromisoformat(forecast["expected_calendar_date"])
-            or retrieved_at < completed_at
-            or retrieved_at > now
-        ):
-            raise ValueError("RESULT_TIMELINE_IS_NOT_PROSPECTIVE")
+        precision = record.get("result_time_precision", "EXACT_TIMESTAMP")
+        expected_date = date.fromisoformat(forecast["expected_calendar_date"])
+        if precision == "DATE_ONLY":
+            # Football-Data's result CSV does not certify completion time.
+            # Conservatively score only on a later UTC calendar day; never
+            # manufacture or imply an exact UTC final whistle.
+            finished_date = date.fromisoformat(str(record["final_result_date"]))
+            if (
+                finished_date < expected_date
+                or finished_date <= issued_at.date()
+                or retrieved_at.date() <= finished_date
+                or retrieved_at > now
+            ):
+                raise ValueError("RESULT_TIMELINE_IS_NOT_PROSPECTIVE")
+            completion_receipt = {
+                "result_time_precision": "DATE_ONLY",
+                "final_result_date": finished_date.isoformat(),
+            }
+        elif precision == "EXACT_TIMESTAMP":
+            completed_at = _timestamp(str(record["completed_at_utc"]))
+            if (
+                completed_at <= issued_at
+                or completed_at.date() < expected_date
+                or retrieved_at < completed_at
+                or retrieved_at > now
+            ):
+                raise ValueError("RESULT_TIMELINE_IS_NOT_PROSPECTIVE")
+            completion_receipt = {
+                "result_time_precision": "EXACT_TIMESTAMP",
+                "completed_at_utc": completed_at.isoformat(),
+            }
+        else:
+            raise ValueError("UNSUPPORTED_RESULT_TIME_PRECISION")
         source = record.get("source_url")
         raw_sha = record.get("source_payload_sha256")
         if (
@@ -136,7 +161,7 @@ def reconcile_prospective_results(
             "result_source_url": source,
             "result_source_sha256": raw_sha,
             "retrieved_at_utc": retrieved_at.isoformat(),
-            "completed_at_utc": completed_at.isoformat(),
+            **completion_receipt,
             "actual_1x2": outcome,
             "original_probabilities_1x2": selected,
             "original_expected_calendar_date": forecast["expected_calendar_date"],
