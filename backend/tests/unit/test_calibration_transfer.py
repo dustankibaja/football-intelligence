@@ -7,7 +7,7 @@ from app.research import historical_oos as history
 from app.research import calibration_transfer as trial
 
 
-def _toy_corpus(monkeypatch, each=12):
+def _toy_corpus(monkeypatch, each=24):
     for league in trial.LEAGUE_MATCH_COUNTS:
         monkeypatch.setitem(trial.LEAGUE_MATCH_COUNTS, league, each)
     fixtures = []
@@ -62,16 +62,16 @@ def test_temperature_fit_is_separate_from_every_later_test_season(monkeypatch):
     report = trial.evaluate_temporal_calibration_transfer(rows, manifests)
     assert years == [2021, 2022, 2023]
     assert report["test_seasons"] == ["2324", "2425", "2526"]
-    assert report["total_distinct_test_fixtures"] == 3 * 4 * 12
-    assert report["pooled_calibrated"]["sample_size"] == 144
-    assert [f["training_count"] for f in report["folds"]] == [144, 192, 240]
+    assert report["total_distinct_test_fixtures"] == 3 * 4 * 24
+    assert report["pooled_calibrated"]["sample_size"] == 288
+    assert [f["training_count"] for f in report["folds"]] == [288, 384, 480]
     for fold in report["folds"]:
         assert (
             fold["latest_training_date"] < fold["earliest_tuning_date"]
             <= fold["latest_tuning_date"] < fold["earliest_test_date"]
         )
         assert 0.5 <= fold["temperature_fitted_on_tuning_only"] <= 3.0
-        assert fold["test_count"] == fold["tune_count"] == 48
+        assert fold["test_count"] == fold["tune_count"] == 96
         assert fold["selective_fixed_threshold_posthoc"]["threshold"] == 0.60
     assert len(report["research_report_sha256"]) == 64
 
