@@ -2,6 +2,8 @@ import { get, put, list } from '@vercel/blob';
 import { predictFixture, evaluateForecast, summarizeEvaluations,
   MODEL_ID, walkForwardBacktest } from './model.js';
 import { fetchRealFixtures } from './provider.js';
+import { predictShadowFixture, evaluateShadowForecast,
+  shadowComparison } from './shadow.js';
 import { normalizeFinished, buildHistory, auditSummary, inRollingWindow } from './history.js';
 import { canonicalFixtureKey, latestForecastsByMatch,
   latestUpcomingForecasts, needsForecastRevision,
@@ -12,6 +14,7 @@ const HOURS = 60 * 60 * 1000;
 const emptyState = () => ({
   schema: 1, source: 'football-data.org/v4', model: MODEL_ID,
   lastRefreshAt: null, predictions: [], evaluations: [],
+  shadowPredictions: [], shadowEvaluations: [],
   providerErrors: [], leagueCounts: [], backtest: null,
   finishedMatches: [], resultCorrections: []
 });
@@ -36,11 +39,16 @@ export async function readState() {
 
 function applyProviderData(previous, feed, now) {
   const data = structuredClone(previous);
+  // Existing v1 snapshots predate shadow mode. Never rewrite old snapshots.
+  data.shadowPredictions ||= [];
+  data.shadowEvaluations ||= [];
   const latestForecastByMatch = latestForecastsByMatch(data.predictions);
+  const shadowLatestByMatch = latestForecastsByMatch(data.shadowPredictions);
   const correctedLeagues = new Set();
   const completed = new Map((data.finishedMatches || []).map(m => [m.fixtureId, m]));
   const corrections = data.resultCorrections || [];
   let created = 0, revised = 0, evaluated = 0;
+  let shadowCreated = 0, shadowRevised = 0, shadowEvaluated = 0;
   for (const league of feed.leagues) {
     // Source match history includes games played before this trial began.
     // Those matches must never be presented as successful/failed forecasts.
@@ -63,25 +71,42 @@ function applyProviderData(previous, feed, now) {
         fixtureId: fixture.id, kickoffUtc: fixture.utcDate
       });
       if (!key) continue;
+      // Production model and challenger are independently versioned.
       const prior = latestForecastByMatch.get(key);
-      // Recompute when new results have become available. Previous forecasts
-      // remain immutable, and revisions are published before kickoff only.
       const prediction = predictFixture(fixture, league.finished, now);
-      if (!needsForecastRevision(prior, prediction, {
+      if (needsForecastRevision(prior, prediction, {
+        scoreCorrected: correctedLeagues.has(league.code)
+      })) {
+        const version = prior ? (prior.forecastVersion || 1) + 1 : 1;
+        prediction.forecastKey = prior
+          ? `${fixture.id}:${fixture.utcDate}:revision-${version}:${now.toISOString()}`
+          : `${fixture.id}:${fixture.utcDate}`;
+        prediction.forecastVersion = version;
+        prediction.revisionReason = prior ? 'NEW_VERIFIED_RESULTS_OR_CORRECTION' : 'INITIAL';
+        prediction.competition = league.name;
+        prediction.competitionCode = league.code;
+        data.predictions.push(prediction);
+        latestForecastByMatch.set(key, prediction);
+        if (prior) revised++;
+        else created++;
+      }
+      if (process.env.SHADOW_MODE_ENABLED === 'false') continue;
+      const shadowPrior = shadowLatestByMatch.get(key);
+      const candidate = predictShadowFixture(fixture, league.finished, now);
+      if (!needsForecastRevision(shadowPrior, candidate, {
         scoreCorrected: correctedLeagues.has(league.code)
       })) continue;
-      const version = prior ? (prior.forecastVersion || 1) + 1 : 1;
-      prediction.forecastKey = prior
-        ? `${fixture.id}:${fixture.utcDate}:revision-${version}:${now.toISOString()}`
-        : `${fixture.id}:${fixture.utcDate}`;
-      prediction.forecastVersion = version;
-      prediction.revisionReason = prior ? 'NEW_VERIFIED_RESULTS_OR_CORRECTION' : 'INITIAL';
-      prediction.competition = league.name;
-      prediction.competitionCode = league.code;
-      data.predictions.push(prediction);
-      latestForecastByMatch.set(key, prediction);
-      if (prior) revised++;
-      else created++;
+      const version = shadowPrior ? (shadowPrior.forecastVersion || 1) + 1 : 1;
+      candidate.forecastKey = shadowPrior
+        ? `shadow:${fixture.id}:${fixture.utcDate}:revision-${version}:${now.toISOString()}`
+        : `shadow:${fixture.id}:${fixture.utcDate}`;
+      candidate.forecastVersion = version;
+      candidate.competition = league.name;
+      candidate.competitionCode = league.code;
+      data.shadowPredictions.push(candidate);
+      shadowLatestByMatch.set(key, candidate);
+      if (shadowPrior) shadowRevised++;
+      else shadowCreated++;
     }
     const finals = new Map(league.finished.map(m => [String(m.id), m]));
     for (const prediction of data.predictions) {
@@ -105,6 +130,26 @@ function applyProviderData(previous, feed, now) {
         version: (latest?.version || 0) + 1
       });
       evaluated++;
+    }
+    // Shadow outcomes are evaluated only if an actual pre-kickoff challenger
+    // forecast was persisted. Never backfill older fixtures retrospectively.
+    for (const prediction of data.shadowPredictions) {
+      if (prediction.competitionCode !== league.code) continue;
+      const final = finals.get(prediction.fixtureId);
+      if (!final || new Date(final.utcDate).toISOString() !== prediction.kickoffUtc) continue;
+      const score = evaluateShadowForecast(prediction, final, now);
+      if (!score) continue;
+      const versions = data.shadowEvaluations.filter(e =>
+        e.forecastKey === prediction.forecastKey);
+      const latest = versions.at(-1);
+      if (latest?.scoreFingerprint === score.scoreFingerprint) continue;
+      data.shadowEvaluations.push({
+        ...score, forecastKey: prediction.forecastKey,
+        kickoffUtc: prediction.kickoffUtc,
+        competitionCode: prediction.competitionCode,
+        version: (latest?.version || 0) + 1
+      });
+      shadowEvaluated++;
     }
   }
   data.finishedMatches = [...completed.values()];
@@ -132,7 +177,8 @@ function applyProviderData(previous, feed, now) {
     top1ScoreHitRate: weighted('top1ScoreHitRate'),
     perLeague: byLeague
   };
-  return { data, created, revised, evaluated };
+  return { data, created, revised, evaluated,
+    shadowCreated, shadowRevised, shadowEvaluated };
 }
 
 export function viewState(data, now = new Date()) {
@@ -141,6 +187,10 @@ export function viewState(data, now = new Date()) {
   const evaluations = selectLatestEvaluations(data.predictions, data.evaluations);
   const history = buildHistory(data.finishedMatches || [], data.predictions, evaluations);
   const upcoming = latestUpcomingForecasts(data.predictions, now);
+  const shadowUpcoming = latestUpcomingForecasts(data.shadowPredictions || [], now);
+  const shadowWatch = shadowUpcoming.filter(p => p.selection?.status === 'WATCH_ONLY').length;
+  const shadow = shadowComparison(data.predictions, data.evaluations,
+    data.shadowPredictions || [], data.shadowEvaluations || []);
   return {
     source: data.source, model: data.model,
     scientificCertification: 'NOT_CERTIFIED_PROVISIONAL_POISSON',
@@ -156,7 +206,14 @@ export function viewState(data, now = new Date()) {
       inRollingWindow(m.kickoffUtc, 2, now, 'past'))),
     resultCorrections: (data.resultCorrections || []).length,
     performance: summarizeEvaluations(evaluations),
-    backtest: data.backtest || null
+    backtest: data.backtest || null,
+    shadow: {
+      ...shadow, enabled: process.env.SHADOW_MODE_ENABLED !== 'false',
+      pendingUpcoming: shadowUpcoming.length, watchOnlyUpcoming: shadowWatch,
+      abstainedUpcoming: shadowUpcoming.length - shadowWatch,
+      // Research-only aggregate. No shadow predictions are used in Picks.
+      publicRecommendations: false
+    }
   };
 }
 
@@ -176,7 +233,8 @@ export async function runRefresh({ force = false } = {}) {
     throw new Error('NO_VERIFIED_PROVIDER_DATA:' + codes);
   }
   const current = await readState();
-  const { data, created, revised, evaluated } = applyProviderData(current.data, feed, now);
+  const { data, created, revised, evaluated,
+    shadowCreated, shadowRevised, shadowEvaluated } = applyProviderData(current.data, feed, now);
   const unique = `${now.toISOString().replace(/[:.]/g, '-')}-${Math.random().toString(36).slice(2, 10)}`;
   await put(`${PREFIX}${unique}.json`, JSON.stringify(data), {
     access: 'private', contentType: 'application/json',
@@ -184,6 +242,7 @@ export async function runRefresh({ force = false } = {}) {
   });
   return {
     skipped: false, created, revised, evaluated,
+    shadowCreated, shadowRevised, shadowEvaluated,
     verifiedLeagues: feed.leagues.length,
     providerErrors: feed.errors, view: viewState(data)
   };
