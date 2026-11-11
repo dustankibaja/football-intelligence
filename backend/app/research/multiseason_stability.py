@@ -184,6 +184,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
     ensemble_pred = []
     elo_logistic_pred = []
     elo_blend_pred = []
+    elo_hgb_pred = []
+    hgb_blend_pred = []
     scored_dates: list[date] = []
     outcomes_seen = set()
     folds = []
@@ -227,6 +229,12 @@ def evaluate_multiseason_stability(fixtures, receipts):
         elo_blend = 0.5 * challenger + 0.5 * elo_logistic
         _accuracy_diagnostics(test_label, elo_logistic)
         _accuracy_diagnostics(test_label, elo_blend)
+        hgb_model = _model("HGB_120")
+        hgb_model.fit(elo_augmented[train_indices], train_label)
+        elo_hgb = _probabilities(hgb_model, elo_augmented[test_indices])
+        hgb_blend = 0.5 * challenger + 0.5 * elo_hgb
+        _accuracy_diagnostics(test_label, elo_hgb)
+        _accuracy_diagnostics(test_label, hgb_blend)
         if not np.isfinite(challenger).all():
             raise ValueError("NONFINITE_OOS_PROBABILITIES")
 
@@ -256,6 +264,10 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "fixed_elo_logistic_accuracy_diagnostics": _accuracy_diagnostics(test_label, elo_logistic),
             "fixed_elo_blend_metrics": _metric_summary(test_label, elo_blend),
             "fixed_elo_blend_accuracy_diagnostics": _accuracy_diagnostics(test_label, elo_blend),
+            "fixed_elo_hgb_metrics": _metric_summary(test_label, elo_hgb),
+            "fixed_elo_hgb_accuracy_diagnostics": _accuracy_diagnostics(test_label, elo_hgb),
+            "fixed_hgb_blend_metrics": _metric_summary(test_label, hgb_blend),
+            "fixed_hgb_blend_accuracy_diagnostics": _accuracy_diagnostics(test_label, hgb_blend),
             "log_loss_skill": _log_loss(test_label, baseline)
               - _log_loss(test_label, challenger),
             "per_league": {},
@@ -272,6 +284,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
                 "fixed_ensemble": _metric_summary(test_label[mask], ensemble[mask]),
                 "fixed_elo_logistic": _metric_summary(test_label[mask], elo_logistic[mask]),
                 "fixed_elo_blend": _metric_summary(test_label[mask], elo_blend[mask]),
+                "fixed_elo_hgb": _metric_summary(test_label[mask], elo_hgb[mask]),
+                "fixed_hgb_blend": _metric_summary(test_label[mask], hgb_blend[mask]),
             }
         folds.append(fold)
         observed.extend(test_label.tolist())
@@ -281,6 +295,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
         ensemble_pred.extend(ensemble.tolist())
         elo_logistic_pred.extend(elo_logistic.tolist())
         elo_blend_pred.extend(elo_blend.tolist())
+        elo_hgb_pred.extend(elo_hgb.tolist())
+        hgb_blend_pred.extend(hgb_blend.tolist())
         scored_dates.extend(fixtures[i].match_date for i in test_indices)
 
     y_all = np.asarray(observed, dtype=int)
@@ -290,6 +306,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
     p_ensemble = np.asarray(ensemble_pred, dtype=float)
     p_elo_logistic = np.asarray(elo_logistic_pred, dtype=float)
     p_elo_blend = np.asarray(elo_blend_pred, dtype=float)
+    p_elo_hgb = np.asarray(elo_hgb_pred, dtype=float)
+    p_hgb_blend = np.asarray(hgb_blend_pred, dtype=float)
     if len(y_all) != 4 * sum(LEAGUE_MATCH_COUNTS.values()):
         raise ValueError("ROLLING_TOTAL_HELDOUT_COUNT_MISMATCH")
     intervals = date_clustered_log_loss_skill(
@@ -305,7 +323,7 @@ def evaluate_multiseason_stability(fixtures, receipts):
         ).hexdigest(),
         "strategy": "YEARWISE_EXPANDING_TRAINING_ROLLING_ORIGIN",
         "challenger": STRUCTURAL_CHALLENGER,
-        "fixed_research_comparators": [FIXED_LOGISTIC_CHALLENGER, "M1_LOGISTIC_50_50", "CAUSAL_ELO_L2_1.0", "M1_ELO_L2_50_50"],
+        "fixed_research_comparators": [FIXED_LOGISTIC_CHALLENGER, "M1_LOGISTIC_50_50", "CAUSAL_ELO_L2_1.0", "M1_ELO_L2_50_50", "CAUSAL_ELO_HGB_120", "M1_ELO_HGB_50_50"],
         "fixed_elo_policy": {"rating_offset": 65, "k_factor": 24, "initial_rating_centered": 0.0, "extra_features": 4},
         "fixed_ensemble_m1_weight": FIXED_ENSEMBLE_M1_WEIGHT,
         "comparison_selection_policy": "NO_TEST_RESULT_SELECTION_NO_PRODUCTION_PROMOTION",
@@ -322,6 +340,11 @@ def evaluate_multiseason_stability(fixtures, receipts):
         "pooled_fixed_elo_logistic_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_elo_logistic),
         "pooled_fixed_elo_blend_metrics": _metric_summary(y_all, p_elo_blend),
         "pooled_fixed_elo_blend_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_elo_blend),
+        "pooled_fixed_elo_hgb_metrics": _metric_summary(y_all, p_elo_hgb),
+        "pooled_fixed_elo_hgb_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_elo_hgb),
+        "pooled_fixed_hgb_blend_metrics": _metric_summary(y_all, p_hgb_blend),
+        "pooled_fixed_hgb_blend_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_hgb_blend),
+        "fixed_hgb_blend_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_hgb_blend, p_challenger, scored_dates),
         "fixed_elo_blend_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_elo_blend, p_challenger, scored_dates),
         "fixed_elo_blend_vs_m1_clustered_log_loss_skill": {
             "improvement_log_loss": (elo_skill := date_clustered_log_loss_skill(
@@ -390,6 +413,8 @@ def main():
         "ensemble_accuracy": report["pooled_fixed_ensemble_accuracy_diagnostics"]["accuracy"],
         "elo_logistic_accuracy": report["pooled_fixed_elo_logistic_accuracy_diagnostics"]["accuracy"],
         "elo_blend_accuracy": report["pooled_fixed_elo_blend_accuracy_diagnostics"]["accuracy"],
+        "elo_hgb_accuracy": report["pooled_fixed_elo_hgb_accuracy_diagnostics"]["accuracy"],
+        "hgb_blend_accuracy": report["pooled_fixed_hgb_blend_accuracy_diagnostics"]["accuracy"],
         "ensemble_vs_m1_log_loss_skill": report["fixed_ensemble_vs_m1_clustered_log_loss_skill"],
         "report_sha256": report["research_report_sha256"],
     }, indent=2))
