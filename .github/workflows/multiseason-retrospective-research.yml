@@ -109,6 +109,9 @@ jobs:
                   if selection["selected"]:
                       assert abs(selection["accuracy"] - selection["correct"] / selection["selected"]) < 1e-12
           assert len(x["source_manifest"]) == 28
+          # Immutable 28-source historical snapshot used for the documented comparison.
+          # Fail closed if any provider row changes; a new source release requires review.
+          assert x["source_manifest_sha256"] == "e1ca1d96f708836f68dd7af66f14e0b7d74a57a9f2e4948cfab56dcaac25b522"
           assert len({(s["league"], s["season"]) for s in x["source_manifest"]}) == 28
           expected = {"E0":380,"SP1":380,"I1":380,"D1":306}
           assert all(s["finished_matches"] == expected[s["league"]] for s in x["source_manifest"])
