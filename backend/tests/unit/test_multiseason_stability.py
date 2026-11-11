@@ -86,6 +86,9 @@ def test_four_season_rolling_origin_scoring_never_trains_on_test_year(monkeypatc
     assert report["pooled_fixed_elo_hgb_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_fixed_hgb_blend_accuracy_diagnostics"]["sample_size"] == 192
     assert report["fixed_hgb_blend_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
+    assert report["pooled_fixed_league_elo_logistic_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["pooled_fixed_league_elo_blend_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["fixed_league_elo_blend_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
     assert report["fixed_elo_blend_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
     assert report["pooled_fixed_ensemble_metrics"]["sample_size"] == 192
     assert len(report["fixed_ensemble_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
@@ -167,7 +170,7 @@ def test_fixed_logistic_and_blend_fits_never_see_test_season(monkeypatch):
     monkeypatch.setattr(research, "_structural_probabilities",
                         lambda model, all_rows, idx: np.tile([0.46, 0.30, 0.24], (len(idx), 1)))
     report = research.evaluate_multiseason_stability(rows, receipts)
-    assert fitted_epochs == [(n, n) for n in (144, 192, 240, 288) for _ in range(3)]
+    assert fitted_epochs == [(size, size) for n in (144, 192, 240, 288) for size in ([n] * 3 + [n // 4] * 4)]
     assert report["pooled_fixed_ensemble_accuracy_diagnostics"]["sample_size"] == 192
     assert report["fixed_ensemble_m1_weight"] == 0.5
 
