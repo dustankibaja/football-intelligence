@@ -37,7 +37,7 @@ Validation: GitHub Actions run **42988729431** (Real Historical Four-Season Roll
 | 2024/25 | 49.862% | 52.628% |
 | 2025/26 | 51.314% | 51.176% |
 
-The causal-Elo candidate **does not outperform M1 in every year**. Historical results across several explored variants cannot establish an expected future accuracy level. A previously explored M1/Elo 50/50 blend produced a paired match-date-clustered accuracy difference of +1.556 percentage points versus M1 (exploratory 95% interval +0.950 to +2.201 points), but the interval is not adjusted for trying multiple models. The candidate-specific Elo logistic paired interval is added to the workflow in the subsequent commit.
+The causal-Elo candidate **does not outperform M1 in every year**. Historical results across several explored variants cannot establish an expected future accuracy level. A previously explored M1/Elo 50/50 blend produced a paired match-date-clustered accuracy difference of +1.556 percentage points versus M1 (exploratory 95% interval +0.950 to +2.201 points), but the interval is not adjusted for trying multiple models. The best observed Elo logistic comparator itself showed +1.625 percentage points against M1 (exploratory match-date-clustered 95% interval **+0.861 to +2.435 points**), verified by successful real-source workflow run **42989254008**. These descriptive bootstrap intervals are **not adjusted for multiple comparisons** and therefore are not proof of future superiority.
 
 ### Diagnostic finding: draws
 
