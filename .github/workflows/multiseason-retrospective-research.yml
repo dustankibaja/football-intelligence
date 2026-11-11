@@ -59,7 +59,59 @@ jobs:
           assert x["total_oos_fixtures"] == 5784
           assert x["pooled_baseline_metrics"]["sample_size"] == 5784
           assert x["pooled_raw_challenger_metrics"]["sample_size"] == 5784
+          assert x["fixed_research_comparators"] == ["L2_1.0", "M1_LOGISTIC_50_50", "CAUSAL_ELO_L2_1.0", "M1_ELO_L2_50_50", "CAUSAL_ELO_HGB_120", "M1_ELO_HGB_50_50", "LEAGUE_ELO_L2_1.0", "M1_LEAGUE_ELO_L2_50_50", "PRIOR_OOS_STACKED_META_L2_0.1"]
+          assert x["fixed_elo_policy"] == {"rating_offset": 65, "k_factor": 24, "initial_rating_centered": 0.0, "extra_features": 4}
+          assert x["fixed_ensemble_m1_weight"] == 0.5
+          assert x["comparison_selection_policy"] == "NO_TEST_RESULT_SELECTION_NO_PRODUCTION_PROMOTION"
+          assert x["pooled_fixed_logistic_metrics"]["sample_size"] == 5784
+          assert x["pooled_fixed_ensemble_metrics"]["sample_size"] == 5784
+          assert x["pooled_fixed_elo_logistic_metrics"]["sample_size"] == 5784
+          assert x["fixed_elo_logistic_vs_m1_clustered_accuracy_difference"]["sample_size"] == 5784
+          assert len(x["fixed_elo_logistic_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
+          assert x["pooled_fixed_elo_blend_metrics"]["sample_size"] == 5784
+          assert x["pooled_fixed_elo_hgb_metrics"]["sample_size"] == 5784
+          assert x["pooled_fixed_hgb_blend_metrics"]["sample_size"] == 5784
+          assert x["pooled_fixed_league_elo_logistic_metrics"]["sample_size"] == 5784
+          assert x["pooled_fixed_league_elo_blend_metrics"]["sample_size"] == 5784
+          assert x["pooled_stacked_meta_metrics"]["sample_size"] == 5784
+          assert [f["stacked_meta_training_oos_fixtures"] for f in x["folds"]] == [0, 1446, 2892, 4338]
+          assert [f["stacked_meta_training_seasons"] for f in x["folds"]] == [[], ["2223"], ["2223", "2324"], ["2223", "2324", "2425"]]
+          assert x["stacked_meta_policy"]["training"] == "EARLIER_SEASON_OOS_PREDICTIONS_AND_LABELS_ONLY"
+          assert len(x["fixed_elo_blend_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
+          assert len(x["fixed_ensemble_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
+          for candidate in ("fixed_logistic", "fixed_ensemble", "fixed_elo_logistic", "fixed_elo_blend", "fixed_hgb_blend", "fixed_league_elo_blend"):
+              comparison = x[f"{candidate}_vs_m1_clustered_accuracy_difference"]
+              assert comparison["sample_size"] == 5784
+              assert comparison["unique_match_dates"] >= 100
+              assert len(comparison["confidence_interval_95"]) == 2
+              point = x[f"pooled_{candidate}_accuracy_diagnostics"]["accuracy"] - x["pooled_challenger_accuracy_diagnostics"]["accuracy"]
+              assert abs(comparison["accuracy_difference"] - point) < 1e-12
+          assert all(f["fixed_logistic_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["fixed_ensemble_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["fixed_elo_logistic_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["fixed_elo_blend_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["fixed_elo_hgb_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["fixed_hgb_blend_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["fixed_league_elo_logistic_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["fixed_league_elo_blend_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          assert all(f["stacked_meta_metrics"]["sample_size"] == 1446 for f in x["folds"])
+          for prefix in ("pooled_baseline", "pooled_challenger", "pooled_fixed_logistic", "pooled_fixed_ensemble", "pooled_fixed_elo_logistic", "pooled_fixed_elo_blend", "pooled_fixed_elo_hgb", "pooled_fixed_hgb_blend", "pooled_fixed_league_elo_logistic", "pooled_fixed_league_elo_blend", "pooled_stacked_meta"):
+              diag = x[f"{prefix}_accuracy_diagnostics"]
+              assert diag["sample_size"] == 5784
+              assert 0 <= diag["correct"] <= 5784
+              assert abs(diag["accuracy"] - diag["correct"] / 5784) < 1e-12
+              assert [s["minimum_top_class_probability"] for s in diag["confidence_slices"]] == [0.45, 0.5, 0.55, 0.6]
+              for selection in diag["confidence_slices"]:
+                  assert selection["selected"] + selection["abstained"] == 5784
+                  assert 0 <= selection["correct"] <= selection["selected"]
+                  assert abs(selection["coverage"] - selection["selected"] / 5784) < 1e-12
+                  assert (selection["accuracy"] is None) == (selection["selected"] == 0)
+                  if selection["selected"]:
+                      assert abs(selection["accuracy"] - selection["correct"] / selection["selected"]) < 1e-12
           assert len(x["source_manifest"]) == 28
+          # Immutable 28-source historical snapshot used for the documented comparison.
+          # Fail closed if any provider row changes; a new source release requires review.
+          assert x["source_manifest_sha256"] == "e1ca1d96f708836f68dd7af66f14e0b7d74a57a9f2e4948cfab56dcaac25b522"
           assert len({(s["league"], s["season"]) for s in x["source_manifest"]}) == 28
           expected = {"E0":380,"SP1":380,"I1":380,"D1":306}
           assert all(s["finished_matches"] == expected[s["league"]] for s in x["source_manifest"])
@@ -73,6 +125,10 @@ jobs:
           assert hashlib.sha256(json.dumps(unsigned, sort_keys=True).encode()).hexdigest() == digest
           print("TRUE historical data: 28 source receipts; 5784 OOS matches across 4 seasons")
           print("Yearwise raw M1 skill:", [(f["test_season"], f["log_loss_skill"]) for f in x["folds"]])
+          print("Historical research accuracy:", {name: x[f"pooled_{name}_accuracy_diagnostics"]["accuracy"] for name in ("challenger", "fixed_logistic", "fixed_ensemble", "fixed_elo_logistic", "fixed_elo_blend", "fixed_elo_hgb", "fixed_hgb_blend", "fixed_league_elo_logistic", "fixed_league_elo_blend")})
+          print("Paired date-clustered accuracy evidence:", {name: x[f"{name}_vs_m1_clustered_accuracy_difference"] for name in ("fixed_logistic", "fixed_ensemble", "fixed_elo_logistic", "fixed_elo_blend", "fixed_hgb_blend", "fixed_league_elo_blend")})
+          print("Stacked meta accuracy:", x["pooled_stacked_meta_accuracy_diagnostics"]["accuracy"])
+          print("No direct C1 comparison / no production promotion.")
           print("Important: retrospective sensitivity only, NOT fresh sealed holdout.")
           PY
 
