@@ -1,6 +1,7 @@
 """Retrospective yearwise OOS boundaries: synthetic fixtures test mechanics only."""
 
 from datetime import date, timedelta
+from dataclasses import replace
 from types import SimpleNamespace
 
 import numpy as np
@@ -80,6 +81,9 @@ def test_four_season_rolling_origin_scoring_never_trains_on_test_year(monkeypatc
     assert len(report["research_report_sha256"]) == 64
     assert report["pooled_fixed_logistic_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_fixed_ensemble_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["pooled_fixed_elo_logistic_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["pooled_fixed_elo_blend_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["fixed_elo_blend_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
     assert report["pooled_fixed_ensemble_metrics"]["sample_size"] == 192
     assert len(report["fixed_ensemble_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
     assert report["fixed_logistic_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
@@ -178,3 +182,31 @@ def test_paired_date_clustered_accuracy_interval_respects_pairing():
     assert research._date_clustered_accuracy_difference(labels, correct, correct, dates)["accuracy_difference"] == 0.0
     with pytest.raises(ValueError, match="INVALID_PAIRED_ACCURACY_DATE_CLUSTERS"):
         research._date_clustered_accuracy_difference(labels, correct, incorrect, dates[:-1])
+
+
+def test_elo_rating_features_use_strictly_prior_dates_not_same_day_results(monkeypatch):
+    rows, _ = _small_historical_corpus(monkeypatch)
+    before = research._causal_elo_features(rows)
+    changed = list(rows)
+    changed[0] = replace(changed[0], home_goals=4, away_goals=0, outcome=0)
+    after = research._causal_elo_features(changed)
+    day = rows[0].match_date
+    for i, match in enumerate(rows):
+        if match.match_date <= day:
+            np.testing.assert_allclose(before[i], after[i], atol=0, rtol=0)
+    assert any(not np.array_equal(before[i], after[i]) for i, match in enumerate(rows)
+               if match.match_date > day and match.league == rows[0].league)
+
+
+def test_elo_unplayed_schedule_does_not_update_future_ratings(monkeypatch):
+    rows, _ = _small_historical_corpus(monkeypatch)
+    extra_date = max(r.match_date for r in rows) + timedelta(days=4)
+    future_date = extra_date + timedelta(days=1)
+    fixture = replace(rows[-1], match_date=extra_date, outcome=-1,
+                      home_goals=-1, away_goals=-1)
+    later = replace(rows[-1], match_date=future_date, outcome=-1,
+                    home_goals=-1, away_goals=-1)
+    with_shadow = research._causal_elo_features(rows + [fixture, later])
+    no_shadow = research._causal_elo_features(rows + [later])
+    np.testing.assert_array_equal(with_shadow[-1], no_shadow[-1])
+    np.testing.assert_array_equal(with_shadow[:len(rows)], no_shadow[:len(rows)])
