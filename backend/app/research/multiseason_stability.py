@@ -188,6 +188,10 @@ def evaluate_multiseason_stability(fixtures, receipts):
     hgb_blend_pred = []
     league_elo_logistic_pred = []
     league_elo_blend_pred = []
+    stacked_meta_pred = []
+    prior_oos_meta_features = []
+    prior_oos_meta_labels = []
+    prior_oos_meta_seasons = []
     scored_dates: list[date] = []
     outcomes_seen = set()
     folds = []
@@ -251,6 +255,18 @@ def evaluate_multiseason_stability(fixtures, receipts):
         _accuracy_diagnostics(test_label, league_elo_logistic)
         league_elo_blend = 0.5 * challenger + 0.5 * league_elo_logistic
         _accuracy_diagnostics(test_label, league_elo_blend)
+        # Meta-learner only sees OUT-OF-SAMPLE predictions and final results
+        # from previous completed seasons. Current season stays sealed.
+        current_meta_features = np.column_stack((challenger, elo_logistic, elo_hgb))
+        meta_training_fixtures = sum(len(a) for a in prior_oos_meta_labels)
+        if prior_oos_meta_features:
+            stacked_model = _model("L2_0.1")
+            stacked_model.fit(np.vstack(prior_oos_meta_features), np.concatenate(prior_oos_meta_labels))
+            stacked_meta = _probabilities(stacked_model, current_meta_features)
+        else:
+            # No earlier independent OOS meta-labels are available for first fold.
+            stacked_meta = elo_blend.copy()
+        _accuracy_diagnostics(test_label, stacked_meta)
         if not np.isfinite(challenger).all():
             raise ValueError("NONFINITE_OOS_PROBABILITIES")
 
@@ -265,6 +281,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "training_seasons": sorted(before),
             "training_fixtures": len(train_indices),
             "test_fixtures": len(test_indices),
+            "stacked_meta_training_oos_fixtures": meta_training_fixtures,
+            "stacked_meta_training_seasons": list(prior_oos_meta_seasons),
             "training_latest_date": max_train_date.isoformat(),
             "test_earliest_date": min_test_date.isoformat(),
             "fitted_artifact_fingerprint": model.artifact.artifact_fingerprint,
@@ -288,6 +306,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "fixed_league_elo_logistic_accuracy_diagnostics": _accuracy_diagnostics(test_label, league_elo_logistic),
             "fixed_league_elo_blend_metrics": _metric_summary(test_label, league_elo_blend),
             "fixed_league_elo_blend_accuracy_diagnostics": _accuracy_diagnostics(test_label, league_elo_blend),
+            "stacked_meta_metrics": _metric_summary(test_label, stacked_meta),
+            "stacked_meta_accuracy_diagnostics": _accuracy_diagnostics(test_label, stacked_meta),
             "log_loss_skill": _log_loss(test_label, baseline)
               - _log_loss(test_label, challenger),
             "per_league": {},
@@ -308,6 +328,7 @@ def evaluate_multiseason_stability(fixtures, receipts):
                 "fixed_hgb_blend": _metric_summary(test_label[mask], hgb_blend[mask]),
                 "fixed_league_elo_logistic": _metric_summary(test_label[mask], league_elo_logistic[mask]),
                 "fixed_league_elo_blend": _metric_summary(test_label[mask], league_elo_blend[mask]),
+                "stacked_meta": _metric_summary(test_label[mask], stacked_meta[mask]),
             }
         folds.append(fold)
         observed.extend(test_label.tolist())
@@ -321,6 +342,10 @@ def evaluate_multiseason_stability(fixtures, receipts):
         hgb_blend_pred.extend(hgb_blend.tolist())
         league_elo_logistic_pred.extend(league_elo_logistic.tolist())
         league_elo_blend_pred.extend(league_elo_blend.tolist())
+        stacked_meta_pred.extend(stacked_meta.tolist())
+        prior_oos_meta_features.append(current_meta_features)
+        prior_oos_meta_labels.append(test_label.copy())
+        prior_oos_meta_seasons.append(year)
         scored_dates.extend(fixtures[i].match_date for i in test_indices)
 
     y_all = np.asarray(observed, dtype=int)
@@ -334,6 +359,7 @@ def evaluate_multiseason_stability(fixtures, receipts):
     p_hgb_blend = np.asarray(hgb_blend_pred, dtype=float)
     p_league_elo_logistic = np.asarray(league_elo_logistic_pred, dtype=float)
     p_league_elo_blend = np.asarray(league_elo_blend_pred, dtype=float)
+    p_stacked_meta = np.asarray(stacked_meta_pred, dtype=float)
     if len(y_all) != 4 * sum(LEAGUE_MATCH_COUNTS.values()):
         raise ValueError("ROLLING_TOTAL_HELDOUT_COUNT_MISMATCH")
     intervals = date_clustered_log_loss_skill(
@@ -349,7 +375,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
         ).hexdigest(),
         "strategy": "YEARWISE_EXPANDING_TRAINING_ROLLING_ORIGIN",
         "challenger": STRUCTURAL_CHALLENGER,
-        "fixed_research_comparators": [FIXED_LOGISTIC_CHALLENGER, "M1_LOGISTIC_50_50", "CAUSAL_ELO_L2_1.0", "M1_ELO_L2_50_50", "CAUSAL_ELO_HGB_120", "M1_ELO_HGB_50_50", "LEAGUE_ELO_L2_1.0", "M1_LEAGUE_ELO_L2_50_50"],
+        "fixed_research_comparators": [FIXED_LOGISTIC_CHALLENGER, "M1_LOGISTIC_50_50", "CAUSAL_ELO_L2_1.0", "M1_ELO_L2_50_50", "CAUSAL_ELO_HGB_120", "M1_ELO_HGB_50_50", "LEAGUE_ELO_L2_1.0", "M1_LEAGUE_ELO_L2_50_50", "PRIOR_OOS_STACKED_META_L2_0.1"],
+        "stacked_meta_policy": {"training": "EARLIER_SEASON_OOS_PREDICTIONS_AND_LABELS_ONLY", "base_inputs": ["M1_DECAY_365", "CAUSAL_ELO_L2_1.0", "CAUSAL_ELO_HGB_120"], "learner": "L2_0.1", "warmup_policy": "M1_ELO_L2_50_50"},
         "fixed_elo_policy": {"rating_offset": 65, "k_factor": 24, "initial_rating_centered": 0.0, "extra_features": 4},
         "fixed_ensemble_m1_weight": FIXED_ENSEMBLE_M1_WEIGHT,
         "comparison_selection_policy": "NO_TEST_RESULT_SELECTION_NO_PRODUCTION_PROMOTION",
@@ -374,6 +401,9 @@ def evaluate_multiseason_stability(fixtures, receipts):
         "pooled_fixed_league_elo_logistic_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_league_elo_logistic),
         "pooled_fixed_league_elo_blend_metrics": _metric_summary(y_all, p_league_elo_blend),
         "pooled_fixed_league_elo_blend_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_league_elo_blend),
+        "pooled_stacked_meta_metrics": _metric_summary(y_all, p_stacked_meta),
+        "pooled_stacked_meta_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_stacked_meta),
+        "stacked_meta_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_stacked_meta, p_challenger, scored_dates),
         "fixed_league_elo_blend_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_league_elo_blend, p_challenger, scored_dates),
         "fixed_hgb_blend_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_hgb_blend, p_challenger, scored_dates),
         "fixed_elo_blend_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_elo_blend, p_challenger, scored_dates),
@@ -448,6 +478,7 @@ def main():
         "hgb_blend_accuracy": report["pooled_fixed_hgb_blend_accuracy_diagnostics"]["accuracy"],
         "league_elo_logistic_accuracy": report["pooled_fixed_league_elo_logistic_accuracy_diagnostics"]["accuracy"],
         "league_elo_blend_accuracy": report["pooled_fixed_league_elo_blend_accuracy_diagnostics"]["accuracy"],
+        "stacked_meta_accuracy": report["pooled_stacked_meta_accuracy_diagnostics"]["accuracy"],
         "ensemble_vs_m1_log_loss_skill": report["fixed_ensemble_vs_m1_clustered_log_loss_skill"],
         "report_sha256": report["research_report_sha256"],
     }, indent=2))
