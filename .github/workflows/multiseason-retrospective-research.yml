@@ -59,6 +59,19 @@ jobs:
           assert x["total_oos_fixtures"] == 5784
           assert x["pooled_baseline_metrics"]["sample_size"] == 5784
           assert x["pooled_raw_challenger_metrics"]["sample_size"] == 5784
+          for prefix in ("pooled_baseline", "pooled_challenger"):
+              diag = x[f"{prefix}_accuracy_diagnostics"]
+              assert diag["sample_size"] == 5784
+              assert 0 <= diag["correct"] <= 5784
+              assert abs(diag["accuracy"] - diag["correct"] / 5784) < 1e-12
+              assert [s["minimum_top_class_probability"] for s in diag["confidence_slices"]] == [0.45, 0.5, 0.55, 0.6]
+              for selection in diag["confidence_slices"]:
+                  assert selection["selected"] + selection["abstained"] == 5784
+                  assert 0 <= selection["correct"] <= selection["selected"]
+                  assert abs(selection["coverage"] - selection["selected"] / 5784) < 1e-12
+                  assert (selection["accuracy"] is None) == (selection["selected"] == 0)
+                  if selection["selected"]:
+                      assert abs(selection["accuracy"] - selection["correct"] / selection["selected"]) < 1e-12
           assert len(x["source_manifest"]) == 28
           assert len({(s["league"], s["season"]) for s in x["source_manifest"]}) == 28
           expected = {"E0":380,"SP1":380,"I1":380,"D1":306}
