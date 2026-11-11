@@ -1,0 +1,106 @@
+name: Paired Future 1X2 Accuracy Research (Noncommercial)
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/research/prospective_accuracy_challenger.py'
+      - 'backend/tests/unit/test_prospective_accuracy_challenger.py'
+      - 'backend/app/research/multiseason_stability.py'
+      - '.github/workflows/prospective-accuracy-challenger.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'backend/app/research/prospective_accuracy_challenger.py'
+      - 'backend/tests/unit/test_prospective_accuracy_challenger.py'
+      - 'backend/app/research/multiseason_stability.py'
+      - '.github/workflows/prospective-accuracy-challenger.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-prematch-accuracy-lane:
+    name: Issue an independent paired future 1X2 challenger (no score leakage)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact research commit
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 with dependency cache
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install scientific backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Verify paired immutable forecast and Elo training invariants offline
+        working-directory: backend
+        run: |
+          pytest -q tests/unit/test_prospective_accuracy_challenger.py tests/unit/test_prospective_shadow_research.py
+
+      - name: Download provenance-pinned real history and fresh schedule, then issue new predictions
+        working-directory: backend
+        run: |
+          python -m app.research.prospective_accuracy_challenger \
+            --raw-dir ../data/research_football_data_raw \
+            --output ../research_outputs/paired_prospective_elo_2627.json \
+            --lookahead-days 21
+
+      - name: Fail closed on non-future, incomplete, unpaired, changed-source or mutable ledgers
+        run: |
+          python - <<'PY'
+          from datetime import UTC, datetime
+          from hashlib import sha256
+          import json
+          from pathlib import Path
+
+          p = Path("research_outputs/paired_prospective_elo_2627.json")
+          x = json.loads(p.read_text(encoding="utf-8"))
+          assert x["schema_version"] == "independent_prospective_elo_challenger_1.0.0"
+          assert x["status"] == "RESEARCH_ONLY_AWAITING_AUTHENTIC_POSTMATCH_RESULTS"
+          as_of = datetime.fromisoformat(x["generated_at_utc"]).astimezone(UTC)
+          assert x["model"]["publication_eligible"] is False
+          assert x["model"]["source_research_only"] is True
+          assert x["model"]["probability_status"] == "RAW_UNCALIBRATED"
+          assert x["model"]["training_rows"] == 10122
+          assert x["model"]["input_feature_count"] == 24
+          assert x["model"]["training_label_classes"] == [0, 1, 2]
+          assert len(x["model"]["weights_sha256"]) == 64
+          assert len(x["baseline_ledger_sha256"]) == 64
+          assert len(x["upstream_fixture_commit"]) == 40
+          assert len(x["upstream_source_receipts"]) == 5
+          assert len(x["historical_source_receipts"]) == 28
+          historical_sha = sha256(json.dumps(x["historical_source_receipts"], sort_keys=True).encode()).hexdigest()
+          assert historical_sha == "e1ca1d96f708836f68dd7af66f14e0b7d74a57a9f2e4948cfab56dcaac25b522"
+          forecast_count = x["counts"]["challenger_issued"]
+          assert forecast_count == x["counts"]["baseline_future_qualified"] == len(x["predictions"]) > 0
+          assert len({a["fixture_sha256"] for a in x["predictions"]}) == forecast_count
+          for a in x["predictions"]:
+              assert datetime.fromisoformat(a["expected_calendar_date"]).date() > as_of.date()
+              for prefix in ("baseline", "candidate"):
+                  p3 = [a[f"{prefix}_prob_{cls}"] for cls in ("home", "draw", "away")]
+                  assert all(0 <= v <= 1 for v in p3)
+                  assert abs(sum(p3) - 1) < 1e-4
+              assert a["candidate_model_sha256"] == x["model"]["weights_sha256"]
+              assert len(a["candidate_feature_snapshot_sha256"]) == 64
+              assert a["status"] == "PAIRED_PREMATCH_SHADOW_UNSCORED"
+          unsigned = dict(x)
+          checksum = unsigned.pop("ledger_sha256")
+          assert sha256(json.dumps(unsigned, sort_keys=True, allow_nan=False).encode()).hexdigest() == checksum
+          print("NEW paired prospective research ledger confirmed:", forecast_count, "fixtures; SHA", checksum)
+          print("This is NOT the previously archived 63-fixture M1 shadow ledger.")
+          PY
+
+      - name: Archive NEW independently timestamped paired forecasting evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-prospective-elo-paired-2026-27
+          path: research_outputs/paired_prospective_elo_2627.json
+          retention-days: 90
+          if-no-files-found: error
