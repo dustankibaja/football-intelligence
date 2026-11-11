@@ -79,9 +79,33 @@ jobs:
           assert x["total_original_paired"]==71
           assert x["finished_evaluated"]+x["pending_or_unverified"]==71
           assert x["finished_evaluated"]==len(x["matched_receipts"])
+          gate=x["confidence_selection_research"]
+          assert gate["status"]=="RESEARCH_ONLY_NOT_LIVE_THRESHOLD_CERTIFIED"
+          assert gate["threshold_min_top_class_probability"]==0.5
+          assert gate["total_original_fixtures"]==71
+          assert gate["pre_match_selected"]==32
+          assert gate["pre_match_abstained"]==39
+          assert gate["pre_match_selected"]+gate["pre_match_abstained"]==71
+          assert gate["selected_scored_so_far"]+gate["selected_pending_or_unverified"]==32
+          assert gate["selected_scored_so_far"]+gate["abstained_scored_so_far"]==x["finished_evaluated"]
+          original=json.loads(Path("research_inputs/frozen_2026_11_11/paired_prospective_elo_2627.json").read_text())
+          selected=sorted([
+              p["fixture_sha256"] for p in original["predictions"]
+              if max(p["candidate_prob_home"],p["candidate_prob_draw"],p["candidate_prob_away"])>=0.50
+          ])
+          assert hashlib.sha256(json.dumps(selected,separators=(",",":")).encode()).hexdigest()==gate["selected_fixture_ids_sha256"]
+          if gate["selected_scored_so_far"]==0:
+              assert gate["selected_accuracy"] is None
+          else:
+              assert 0<=gate["selected_accuracy"]<=1
+              assert 0<=gate["same_selected_fixtures_baseline_accuracy"]<=1
+              assert abs(gate["selected_accuracy_difference"] - (gate["selected_accuracy"]-gate["same_selected_fixtures_baseline_accuracy"]))<1e-12
+          assert gate["policy_pre_match_only"] is True
+          assert gate["retrospectively_motivated_not_prospectively_validated"] is True
           if not x["finished_evaluated"]:
               assert "candidate" not in x
           print("REAL results:",x["finished_evaluated"],"pending:",x["pending_or_unverified"],"original pre-match forecasts unchanged")
+          print("Research-only 50% confidence policy: 32/71 preselected; scored so far:",gate["selected_scored_so_far"],"conditional accuracy:",gate["selected_accuracy"])
           PY
 
       - name: Archive independent reconciliation, not mutable prediction history

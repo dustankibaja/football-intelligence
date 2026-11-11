@@ -20,6 +20,11 @@ from app.research.football_data_result_verifier import (
 )
 from app.research.prospective_accuracy_challenger import _digest
 
+# Fixed research policy identified on prior historical folds, not re-tuned on
+# these 71 pre-match fixtures or any of their eventual results.
+# Conditional accuracy NEVER replaces the full-coverage accuracy denominator.
+RESEARCH_CONFIDENCE_CUTOFF = 0.50
+
 
 def _timestamp(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -157,6 +162,55 @@ def evaluate_paired_results(paired: dict, receipts: list[dict], *, evaluated_at_
         })
     scored.sort(key=lambda item: item["fixture_sha256"])
     pending = sorted(set(by_id) - seen)
+    # A reproducible selection is determined using only immutable pre-match
+    # probabilities. Keep abstentions and still-pending results in the audit.
+    selected_ids = {
+        ident for ident, prediction in by_id.items()
+        if max(float(prediction[f"candidate_prob_{label}"])
+               for label in ("home", "draw", "away")) >= RESEARCH_CONFIDENCE_CUTOFF
+    }
+    selected_scored = [row for row in scored if row["fixture_sha256"] in selected_ids]
+    selected_correct = len(selected_scored)
+    confidence_gate = {
+        "status": "RESEARCH_ONLY_NOT_LIVE_THRESHOLD_CERTIFIED",
+        "threshold_min_top_class_probability": RESEARCH_CONFIDENCE_CUTOFF,
+        "policy_pre_match_only": True,
+        "retrospectively_motivated_not_prospectively_validated": True,
+        "total_original_fixtures": len(by_id),
+        "pre_match_selected": len(selected_ids),
+        "pre_match_abstained": len(by_id) - len(selected_ids),
+        "issued_cohort_coverage": len(selected_ids) / len(by_id),
+        "selected_fixture_ids_sha256": sha256(
+            json.dumps(sorted(selected_ids), separators=(",", ":")).encode()
+        ).hexdigest(),
+        "selected_scored_so_far": selected_correct,
+        "selected_pending_or_unverified": len(selected_ids - seen),
+        "abstained_scored_so_far": len(scored) - selected_correct,
+        "selected_accuracy": None,
+        "same_selected_fixtures_baseline_accuracy": None,
+        "selected_accuracy_difference": None,
+        "selected_mean_log_loss": None,
+        "same_selected_fixtures_baseline_mean_log_loss": None,
+        "scored_result_cohort_coverage": (selected_correct / len(scored)) if scored else None,
+    }
+    if selected_scored:
+        confidence_gate["selected_accuracy"] = sum(
+            int(row["candidate"]["correct"]) for row in selected_scored
+        ) / selected_correct
+        confidence_gate["same_selected_fixtures_baseline_accuracy"] = sum(
+            int(row["baseline"]["correct"]) for row in selected_scored
+        ) / selected_correct
+        confidence_gate["selected_accuracy_difference"] = (
+            confidence_gate["selected_accuracy"]
+            - confidence_gate["same_selected_fixtures_baseline_accuracy"]
+        )
+        confidence_gate["selected_mean_log_loss"] = sum(
+            row["candidate"]["log_loss"] for row in selected_scored
+        ) / selected_correct
+        confidence_gate["same_selected_fixtures_baseline_mean_log_loss"] = sum(
+            row["baseline"]["log_loss"] for row in selected_scored
+        ) / selected_correct
+
     summary = {
         "schema_version": "independent_paired_prospective_1x2_assessment_1.0.0",
         "status": "RESEARCH_ONLY_PENDING_SOURCE_INDEPENDENCE_AND_SAMPLE_VALIDATION",
@@ -168,6 +222,7 @@ def evaluate_paired_results(paired: dict, receipts: list[dict], *, evaluated_at_
         "pending_or_unverified": len(pending),
         "pending_fixture_sha256s": pending,
         "matched_receipts": scored,
+        "confidence_selection_research": confidence_gate,
         "limitations": [
             "Not the certified canonical 251-feature C1 champion.",
             "Provider source URL/hash receipts must be authenticated independently of evaluation code.",
@@ -175,6 +230,8 @@ def evaluate_paired_results(paired: dict, receipts: list[dict], *, evaluated_at_
             "Pending, rescheduled, ambiguous, and unavailable fixtures are never silently scored.",
             "No production/publication or betting claim; no model is refitted here.",
             "Prospective accuracy needs sufficiently many independent completed matches.",
+            "Selective confidence accuracy is CONDITIONAL on abstentions; never relabel as all-fixture accuracy.",
+            "The 0.50 cutoff came from earlier historical inspection and requires prospective certification.",
         ],
     }
     if scored:
@@ -218,6 +275,7 @@ def main():
         "status": report["status"], "scored": report["finished_evaluated"],
         "pending": report["pending_or_unverified"],
         "paired_delta": report.get("paired_difference_candidate_minus_baseline"),
+        "research_confidence_selection": report["confidence_selection_research"],
         "original_ledger_sha256": report["original_paired_ledger_sha256"],
         "report_sha256": report["report_sha256"],
         "output": str(out_path),

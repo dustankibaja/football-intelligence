@@ -59,6 +59,16 @@ def test_prospective_paired_accuracy_report_preserves_original_and_counts():
     assert report["baseline"]["correct"] == 0
     assert report["candidate"]["correct"] == 1
     assert report["paired_difference_candidate_minus_baseline"]["accuracy_points"] == 1.0
+    gate = report["confidence_selection_research"]
+    assert gate["threshold_min_top_class_probability"] == 0.5
+    assert gate["total_original_fixtures"] == 1
+    assert gate["pre_match_selected"] == 1
+    assert gate["pre_match_abstained"] == 0
+    assert gate["selected_scored_so_far"] == 1
+    assert gate["selected_pending_or_unverified"] == 0
+    assert gate["selected_accuracy"] == 1.0
+    assert gate["same_selected_fixtures_baseline_accuracy"] == 0.0
+    assert gate["selected_accuracy_difference"] == 1.0
     assert report["report_sha256"] == challenger._digest({
         k: v for k, v in report.items() if k != "report_sha256"
     })
@@ -74,6 +84,14 @@ def test_no_results_reports_pending_not_fake_success():
     assert report["pending_or_unverified"] == 1
     assert "candidate" not in report
     assert "paired_difference_candidate_minus_baseline" not in report
+    gate = report["confidence_selection_research"]
+    assert gate["pre_match_selected"] == 1
+    assert gate["pre_match_abstained"] == 0
+    assert gate["selected_pending_or_unverified"] == 1
+    assert gate["selected_scored_so_far"] == 0
+    assert gate["selected_accuracy"] is None
+    assert gate["same_selected_fixtures_baseline_accuracy"] is None
+    assert gate["scored_result_cohort_coverage"] is None
 
 
 def test_rejects_edited_future_prediction_and_ambiguous_scores():
@@ -111,3 +129,42 @@ def test_collect_receipts_from_independent_current_season_csv_not_predictions():
     assert receipts[0]["source_payload_sha256"] == sha256(finished).hexdigest()
     assert receipts[0]["fixture_sha256"] == ledger["predictions"][0]["fixture_sha256"]
     assert receipts[0]["result_time_precision"] == "DATE_ONLY"
+
+
+def test_confidence_selection_does_not_erase_low_confidence_finished_results():
+    ledger = _ledger()
+    low = ledger["predictions"][0]
+    low.update(candidate_prob_home=0.34, candidate_prob_draw=0.33,
+               candidate_prob_away=0.33)
+    ledger.pop("ledger_sha256")
+    ledger["ledger_sha256"] = challenger._digest(ledger)
+    assessed = evaluator.evaluate_paired_results(
+        ledger, [_receipt(ledger)],
+        evaluated_at_utc=datetime(2026, 11, 23, 9, tzinfo=UTC),
+    )
+    assert assessed["finished_evaluated"] == 1
+    assert assessed["candidate"]["n"] == 1
+    gate = assessed["confidence_selection_research"]
+    assert gate["pre_match_selected"] == 0
+    assert gate["pre_match_abstained"] == 1
+    assert gate["issued_cohort_coverage"] == 0.0
+    assert gate["abstained_scored_so_far"] == 1
+    assert gate["selected_scored_so_far"] == 0
+    assert gate["selected_accuracy"] is None
+    assert gate["same_selected_fixtures_baseline_accuracy"] is None
+    assert gate["selected_pending_or_unverified"] == 0
+
+
+def test_confidence_selection_fingerprint_is_stable_and_does_not_edit_frozen_ledger():
+    ledger = _ledger()
+    frozen = deepcopy(ledger)
+    first = evaluator.evaluate_paired_results(
+        ledger, [], evaluated_at_utc=datetime(2026, 11, 12, tzinfo=UTC),
+    )
+    second = evaluator.evaluate_paired_results(
+        ledger, [], evaluated_at_utc=datetime(2026, 11, 12, tzinfo=UTC),
+    )
+    assert ledger == frozen
+    assert first["confidence_selection_research"] == second["confidence_selection_research"]
+    assert first["confidence_selection_research"]["selected_fixture_ids_sha256"]
+    assert first["report_sha256"] == second["report_sha256"]
