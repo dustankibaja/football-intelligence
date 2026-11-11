@@ -66,6 +66,8 @@ jobs:
           assert x["pooled_fixed_logistic_metrics"]["sample_size"] == 5784
           assert x["pooled_fixed_ensemble_metrics"]["sample_size"] == 5784
           assert x["pooled_fixed_elo_logistic_metrics"]["sample_size"] == 5784
+          assert x["fixed_elo_logistic_vs_m1_clustered_accuracy_difference"]["sample_size"] == 5784
+          assert len(x["fixed_elo_logistic_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
           assert x["pooled_fixed_elo_blend_metrics"]["sample_size"] == 5784
           assert x["pooled_fixed_elo_hgb_metrics"]["sample_size"] == 5784
           assert x["pooled_fixed_hgb_blend_metrics"]["sample_size"] == 5784
@@ -77,7 +79,7 @@ jobs:
           assert x["stacked_meta_policy"]["training"] == "EARLIER_SEASON_OOS_PREDICTIONS_AND_LABELS_ONLY"
           assert len(x["fixed_elo_blend_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
           assert len(x["fixed_ensemble_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
-          for candidate in ("fixed_logistic", "fixed_ensemble", "fixed_elo_blend", "fixed_hgb_blend", "fixed_league_elo_blend"):
+          for candidate in ("fixed_logistic", "fixed_ensemble", "fixed_elo_logistic", "fixed_elo_blend", "fixed_hgb_blend", "fixed_league_elo_blend"):
               comparison = x[f"{candidate}_vs_m1_clustered_accuracy_difference"]
               assert comparison["sample_size"] == 5784
               assert comparison["unique_match_dates"] >= 100
@@ -121,7 +123,7 @@ jobs:
           print("TRUE historical data: 28 source receipts; 5784 OOS matches across 4 seasons")
           print("Yearwise raw M1 skill:", [(f["test_season"], f["log_loss_skill"]) for f in x["folds"]])
           print("Historical research accuracy:", {name: x[f"pooled_{name}_accuracy_diagnostics"]["accuracy"] for name in ("challenger", "fixed_logistic", "fixed_ensemble", "fixed_elo_logistic", "fixed_elo_blend", "fixed_elo_hgb", "fixed_hgb_blend", "fixed_league_elo_logistic", "fixed_league_elo_blend")})
-          print("Paired date-clustered accuracy evidence:", {name: x[f"{name}_vs_m1_clustered_accuracy_difference"] for name in ("fixed_logistic", "fixed_ensemble", "fixed_elo_blend", "fixed_hgb_blend", "fixed_league_elo_blend")})
+          print("Paired date-clustered accuracy evidence:", {name: x[f"{name}_vs_m1_clustered_accuracy_difference"] for name in ("fixed_logistic", "fixed_ensemble", "fixed_elo_logistic", "fixed_elo_blend", "fixed_hgb_blend", "fixed_league_elo_blend")})
           print("Stacked meta accuracy:", x["pooled_stacked_meta_accuracy_diagnostics"]["accuracy"])
           print("No direct C1 comparison / no production promotion.")
           print("Important: retrospective sensitivity only, NOT fresh sealed holdout.")
