@@ -19,6 +19,8 @@ from app.research.historical_oos import (
     SEASONS,
     _log_loss,
     _metric_summary,
+    _model,
+    _probabilities,
     _research_modeling_rows,
     _structural_model,
     _structural_probabilities,
@@ -67,6 +69,8 @@ def _accuracy_diagnostics(labels, probabilities):
 
 TEST_SEASONS = ("2223", "2324", "2425", "2526")
 STRUCTURAL_CHALLENGER = "M1_DECAY_365"
+FIXED_LOGISTIC_CHALLENGER = "L2_1.0"
+FIXED_ENSEMBLE_M1_WEIGHT = 0.5
 
 
 def evaluate_multiseason_stability(fixtures, receipts):
@@ -84,6 +88,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
     observed = []
     baseline_pred = []
     challenger_pred = []
+    logistic_pred = []
+    ensemble_pred = []
     scored_dates: list[date] = []
     outcomes_seen = set()
     folds = []
@@ -114,6 +120,13 @@ def evaluate_multiseason_stability(fixtures, receipts):
         if not model.artifact or not model.artifact.verify_integrity():
             raise ValueError("ROLLED_MODEL_ARTIFACT_NOT_VERIFIED")
         challenger = _structural_probabilities(model, rows, test_indices)
+        # Independently fixed retrospective challengers. No test-season selection.
+        logistic_model = _model(FIXED_LOGISTIC_CHALLENGER)
+        logistic_model.fit(x[train_indices], train_label)
+        logistic = _probabilities(logistic_model, x[test_indices])
+        ensemble = FIXED_ENSEMBLE_M1_WEIGHT * challenger + (1 - FIXED_ENSEMBLE_M1_WEIGHT) * logistic
+        _accuracy_diagnostics(test_label, logistic)
+        _accuracy_diagnostics(test_label, ensemble)
         if not np.isfinite(challenger).all():
             raise ValueError("NONFINITE_OOS_PROBABILITIES")
 
@@ -135,6 +148,10 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "raw_challenger_metrics": _metric_summary(test_label, challenger),
             "baseline_accuracy_diagnostics": _accuracy_diagnostics(test_label, baseline),
             "challenger_accuracy_diagnostics": _accuracy_diagnostics(test_label, challenger),
+            "fixed_logistic_metrics": _metric_summary(test_label, logistic),
+            "fixed_logistic_accuracy_diagnostics": _accuracy_diagnostics(test_label, logistic),
+            "fixed_ensemble_metrics": _metric_summary(test_label, ensemble),
+            "fixed_ensemble_accuracy_diagnostics": _accuracy_diagnostics(test_label, ensemble),
             "log_loss_skill": _log_loss(test_label, baseline)
               - _log_loss(test_label, challenger),
             "per_league": {},
@@ -147,16 +164,22 @@ def evaluate_multiseason_stability(fixtures, receipts):
                 "n": int(mask.sum()),
                 "raw_challenger": _metric_summary(test_label[mask], challenger[mask]),
                 "baseline": _metric_summary(test_label[mask], baseline[mask]),
+                "fixed_logistic": _metric_summary(test_label[mask], logistic[mask]),
+                "fixed_ensemble": _metric_summary(test_label[mask], ensemble[mask]),
             }
         folds.append(fold)
         observed.extend(test_label.tolist())
         baseline_pred.extend(baseline.tolist())
         challenger_pred.extend(challenger.tolist())
+        logistic_pred.extend(logistic.tolist())
+        ensemble_pred.extend(ensemble.tolist())
         scored_dates.extend(fixtures[i].match_date for i in test_indices)
 
     y_all = np.asarray(observed, dtype=int)
     p_baseline = np.asarray(baseline_pred, dtype=float)
     p_challenger = np.asarray(challenger_pred, dtype=float)
+    p_logistic = np.asarray(logistic_pred, dtype=float)
+    p_ensemble = np.asarray(ensemble_pred, dtype=float)
     if len(y_all) != 4 * sum(LEAGUE_MATCH_COUNTS.values()):
         raise ValueError("ROLLING_TOTAL_HELDOUT_COUNT_MISMATCH")
     intervals = date_clustered_log_loss_skill(
@@ -172,6 +195,9 @@ def evaluate_multiseason_stability(fixtures, receipts):
         ).hexdigest(),
         "strategy": "YEARWISE_EXPANDING_TRAINING_ROLLING_ORIGIN",
         "challenger": STRUCTURAL_CHALLENGER,
+        "fixed_research_comparators": [FIXED_LOGISTIC_CHALLENGER, "M1_LOGISTIC_50_50"],
+        "fixed_ensemble_m1_weight": FIXED_ENSEMBLE_M1_WEIGHT,
+        "comparison_selection_policy": "NO_TEST_RESULT_SELECTION_NO_PRODUCTION_PROMOTION",
         "years": list(TEST_SEASONS),
         "folds": folds,
         "total_oos_fixtures": len(y_all),
@@ -179,6 +205,19 @@ def evaluate_multiseason_stability(fixtures, receipts):
         "pooled_baseline_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_baseline),
         "pooled_challenger_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_challenger),
         "pooled_raw_challenger_metrics": _metric_summary(y_all, p_challenger),
+        "pooled_fixed_logistic_metrics": _metric_summary(y_all, p_logistic),
+        "pooled_fixed_logistic_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_logistic),
+        "pooled_fixed_ensemble_metrics": _metric_summary(y_all, p_ensemble),
+        "pooled_fixed_ensemble_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_ensemble),
+        "fixed_ensemble_vs_m1_clustered_log_loss_skill": {
+            "improvement_log_loss": (ensemble_skill := date_clustered_log_loss_skill(
+                y_all, p_ensemble, p_challenger, scored_dates,
+                n_bootstrap=2000, seed=20261109,
+            )).improvement_log_loss,
+            "confidence_interval_95": list(ensemble_skill.confidence_interval_95),
+            "unique_match_dates": ensemble_skill.unique_match_dates,
+            "bootstrap_iterations": ensemble_skill.bootstrap_iterations,
+        },
         "match_date_clustered_log_loss_skill": {
             "improvement_log_loss": intervals.improvement_log_loss,
             "confidence_interval_95": list(intervals.confidence_interval_95),
@@ -189,6 +228,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "Retrospective seasonal sensitivity after 2025-26 research; not independent pre-registration.",
             "Model refitted at each season boundary only; previously completed in-season results may enter date-only features.",
             "Original Phase 4 frozen C1 champion is untouched and not compared directly across this dataset.",
+            "The 20-feature logistic comparator is NOT the certified 251-feature C1 champion.",
+            "Fixed logistic and ensemble results are post hoc comparisons, not a fresh sealed holdout or model selection basis.",
             "Actual scores are taken from authenticated source URLs with hashes, not reconstructed.",
             "Confidence/coverage slices are post hoc descriptive only; thresholds were not validated prospectively.",
             "These research results cannot authorize production/publication or gambling claims.",
@@ -216,6 +257,10 @@ def main():
         "baseline_log_loss": report["pooled_baseline_metrics"]["log_loss"],
         "challenger_log_loss": report["pooled_raw_challenger_metrics"]["log_loss"],
         "per_year_skill": {f["test_season"]: f["log_loss_skill"] for f in report["folds"]},
+        "m1_accuracy": report["pooled_challenger_accuracy_diagnostics"]["accuracy"],
+        "logistic_accuracy": report["pooled_fixed_logistic_accuracy_diagnostics"]["accuracy"],
+        "ensemble_accuracy": report["pooled_fixed_ensemble_accuracy_diagnostics"]["accuracy"],
+        "ensemble_vs_m1_log_loss_skill": report["fixed_ensemble_vs_m1_clustered_log_loss_skill"],
         "report_sha256": report["research_report_sha256"],
     }, indent=2))
 
