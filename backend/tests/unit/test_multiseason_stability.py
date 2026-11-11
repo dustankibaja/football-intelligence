@@ -78,6 +78,10 @@ def test_four_season_rolling_origin_scoring_never_trains_on_test_year(monkeypatc
     assert all(f["training_latest_date"] < f["test_earliest_date"] for f in report["folds"])
     assert len(report["match_date_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
     assert len(report["research_report_sha256"]) == 64
+    assert report["pooled_challenger_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["pooled_baseline_accuracy_diagnostics"]["sample_size"] == 192
+    assert len(report["pooled_challenger_accuracy_diagnostics"]["confidence_slices"]) == 4
+    assert all("challenger_accuracy_diagnostics" in fold for fold in report["folds"])
 
 
 def test_incomplete_and_duplicated_historical_provenance_rejected(monkeypatch):
@@ -106,3 +110,28 @@ def test_current_season_results_cannot_leak_into_prior_season_model(monkeypatch)
     )
     research.evaluate_multiseason_stability(rows, receipts)
     assert trained_max_years == [2021, 2022, 2023, 2024]
+
+
+def test_accuracy_diagnostics_coverage_and_abstention_are_consistent():
+    labels = np.array([0, 1, 2, 1])
+    probs = np.array([
+        [0.80, 0.10, 0.10],
+        [0.20, 0.60, 0.20],
+        [0.40, 0.35, 0.25],
+        [0.45, 0.40, 0.15],
+    ])
+    result = research._accuracy_diagnostics(labels, probs)
+    assert result["sample_size"] == 4
+    assert result["correct"] == 2
+    assert result["accuracy"] == 0.5
+    assert [x["selected"] for x in result["confidence_slices"]] == [3, 2, 2, 2]
+    assert result["confidence_slices"][0]["correct"] == 2
+    assert result["confidence_slices"][1]["accuracy"] == 1.0
+    assert all(x["selected"] + x["abstained"] == 4 for x in result["confidence_slices"])
+
+
+def test_accuracy_diagnostics_rejects_invalid_probability_vectors():
+    with pytest.raises(ValueError, match="INVALID_ACCURACY_DIAGNOSTIC_INPUT"):
+        research._accuracy_diagnostics(np.array([0]), np.array([[0.9, 0.9, -0.8]]))
+    with pytest.raises(ValueError, match="INVALID_ACCURACY_DIAGNOSTIC_INPUT"):
+        research._accuracy_diagnostics(np.array([3]), np.array([[0.2, 0.3, 0.5]]))
