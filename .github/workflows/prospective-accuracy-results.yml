@@ -1,0 +1,93 @@
+name: Independently Score Sealed Paired 2026-27 Accuracy Forecasts
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 8 * * *'
+  pull_request:
+    paths:
+      - 'backend/app/research/prospective_accuracy_evaluator.py'
+      - 'backend/tests/unit/test_prospective_accuracy_evaluator.py'
+      - '.github/workflows/prospective-accuracy-results.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  evaluate-sealed-pair:
+    name: Independently score archived 71 pre-match M1/Elo predictions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download ORIGINAL pre-match paired ledger, not a regenerated one
+        uses: actions/download-artifact@v4
+        with:
+          name: football-prospective-elo-paired-2026-27
+          run-id: 42990766670
+          repository: dustankibaja/football-intelligence
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: research_inputs/frozen_2026_11_11
+
+      - name: Check immutable source-ledger fingerprint
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          x=json.loads(Path("research_inputs/frozen_2026_11_11/paired_prospective_elo_2627.json").read_text())
+          known=x.pop("ledger_sha256")
+          assert known=="a7648cbb5af7f647bf8b677fec1e67266356bc9868e051166d96b7d81e1144ff"
+          assert known==hashlib.sha256(json.dumps(x,sort_keys=True,allow_nan=False).encode()).hexdigest()
+          assert x["generated_at_utc"]=="2026-11-11T08:55:04.755832+00:00"
+          assert x["baseline_ledger_sha256"]=="a5f2836dee513c788240900b6b5bd2c7fc28cf0f86c1a56ca978dfb971783989"
+          assert len(x["predictions"])==x["counts"]["challenger_issued"]==71
+          print("SEALED original 71 immutable predictions validated")
+          PY
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install backend science package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Confirm source parser and evaluator regression tests
+        working-directory: backend
+        run: pytest -q tests/unit/test_prospective_accuracy_evaluator.py tests/unit/test_independent_result_verifier.py
+
+      - name: Independently retrieve genuine current-season final scores and assess
+        working-directory: backend
+        run: |
+          python -m app.research.prospective_accuracy_evaluator \
+            --paired-ledger ../research_inputs/frozen_2026_11_11/paired_prospective_elo_2627.json \
+            --output ../research_outputs/verified_paired_prospective_1x2.json
+
+      - name: Check full original denominator and reconciled report checksum
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          x=json.loads(Path("research_outputs/verified_paired_prospective_1x2.json").read_text())
+          h=x.pop("report_sha256")
+          assert h==hashlib.sha256(json.dumps(x,sort_keys=True,allow_nan=False).encode()).hexdigest()
+          assert x["original_paired_ledger_sha256"]=="a7648cbb5af7f647bf8b677fec1e67266356bc9868e051166d96b7d81e1144ff"
+          assert x["total_original_paired"]==71
+          assert x["finished_evaluated"]+x["pending_or_unverified"]==71
+          assert x["finished_evaluated"]==len(x["matched_receipts"])
+          if not x["finished_evaluated"]:
+              assert "candidate" not in x
+          print("REAL results:",x["finished_evaluated"],"pending:",x["pending_or_unverified"],"original pre-match forecasts unchanged")
+          PY
+
+      - name: Archive independent reconciliation, not mutable prediction history
+        uses: actions/upload-artifact@v4
+        with:
+          name: sealed-paired-2026-11-11-postmatch-assessment
+          path: research_outputs/verified_paired_prospective_1x2.json
+          retention-days: 90
+          if-no-files-found: error
