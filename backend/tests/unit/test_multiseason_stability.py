@@ -82,6 +82,8 @@ def test_four_season_rolling_origin_scoring_never_trains_on_test_year(monkeypatc
     assert report["pooled_fixed_ensemble_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_fixed_ensemble_metrics"]["sample_size"] == 192
     assert len(report["fixed_ensemble_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
+    assert report["fixed_logistic_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
+    assert report["fixed_ensemble_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
     assert report["comparison_selection_policy"] == "NO_TEST_RESULT_SELECTION_NO_PRODUCTION_PROMOTION"
     assert all(f["fixed_logistic_metrics"]["sample_size"] == 48 for f in report["folds"])
     assert all(f["fixed_ensemble_metrics"]["sample_size"] == 48 for f in report["folds"])
@@ -161,3 +163,18 @@ def test_fixed_logistic_and_blend_fits_never_see_test_season(monkeypatch):
     assert fitted_epochs == [(144, 144), (192, 192), (240, 240), (288, 288)]
     assert report["pooled_fixed_ensemble_accuracy_diagnostics"]["sample_size"] == 192
     assert report["fixed_ensemble_m1_weight"] == 0.5
+
+
+def test_paired_date_clustered_accuracy_interval_respects_pairing():
+    dates = [date(2026, 1, 1) + timedelta(days=i) for i in range(24)]
+    labels = np.zeros(24, dtype=int)
+    correct = np.tile([0.9, 0.05, 0.05], (24, 1))
+    incorrect = np.tile([0.05, 0.9, 0.05], (24, 1))
+    report = research._date_clustered_accuracy_difference(labels, correct, incorrect, dates)
+    assert report["sample_size"] == 24
+    assert report["unique_match_dates"] == 24
+    assert report["accuracy_difference"] == 1.0
+    assert report["confidence_interval_95"] == [1.0, 1.0]
+    assert research._date_clustered_accuracy_difference(labels, correct, correct, dates)["accuracy_difference"] == 0.0
+    with pytest.raises(ValueError, match="INVALID_PAIRED_ACCURACY_DATE_CLUSTERS"):
+        research._date_clustered_accuracy_difference(labels, correct, incorrect, dates[:-1])
