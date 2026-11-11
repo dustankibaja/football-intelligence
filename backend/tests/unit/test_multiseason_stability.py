@@ -78,6 +78,13 @@ def test_four_season_rolling_origin_scoring_never_trains_on_test_year(monkeypatc
     assert all(f["training_latest_date"] < f["test_earliest_date"] for f in report["folds"])
     assert len(report["match_date_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
     assert len(report["research_report_sha256"]) == 64
+    assert report["pooled_fixed_logistic_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["pooled_fixed_ensemble_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["pooled_fixed_ensemble_metrics"]["sample_size"] == 192
+    assert len(report["fixed_ensemble_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
+    assert report["comparison_selection_policy"] == "NO_TEST_RESULT_SELECTION_NO_PRODUCTION_PROMOTION"
+    assert all(f["fixed_logistic_metrics"]["sample_size"] == 48 for f in report["folds"])
+    assert all(f["fixed_ensemble_metrics"]["sample_size"] == 48 for f in report["folds"])
     assert report["pooled_challenger_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_baseline_accuracy_diagnostics"]["sample_size"] == 192
     assert len(report["pooled_challenger_accuracy_diagnostics"]["confidence_slices"]) == 4
@@ -135,3 +142,22 @@ def test_accuracy_diagnostics_rejects_invalid_probability_vectors():
         research._accuracy_diagnostics(np.array([0]), np.array([[0.9, 0.9, -0.8]]))
     with pytest.raises(ValueError, match="INVALID_ACCURACY_DIAGNOSTIC_INPUT"):
         research._accuracy_diagnostics(np.array([3]), np.array([[0.2, 0.3, 0.5]]))
+
+
+def test_fixed_logistic_and_blend_fits_never_see_test_season(monkeypatch):
+    rows, receipts = _small_historical_corpus(monkeypatch)
+    fitted_epochs = []
+
+    class SpyLogistic:
+        def fit(self, features, labels):
+            fitted_epochs.append((len(features), len(labels)))
+
+    monkeypatch.setattr(research, "_model", lambda name: SpyLogistic())
+    monkeypatch.setattr(research, "_probabilities", lambda model, features: np.tile([0.30, 0.30, 0.40], (len(features), 1)))
+    monkeypatch.setattr(research, "_structural_model", lambda name: _FakeFittedModel())
+    monkeypatch.setattr(research, "_structural_probabilities",
+                        lambda model, all_rows, idx: np.tile([0.46, 0.30, 0.24], (len(idx), 1)))
+    report = research.evaluate_multiseason_stability(rows, receipts)
+    assert fitted_epochs == [(144, 144), (192, 192), (240, 240), (288, 288)]
+    assert report["pooled_fixed_ensemble_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["fixed_ensemble_m1_weight"] == 0.5
