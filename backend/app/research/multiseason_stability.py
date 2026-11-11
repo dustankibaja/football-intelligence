@@ -67,6 +67,41 @@ def _accuracy_diagnostics(labels, probabilities):
     }
 
 
+def _date_clustered_accuracy_difference(labels, challenger, baseline, dates, *, seed=20261111, n_bootstrap=2000):
+    """Paired full-coverage top-class accuracy delta, resampling whole match dates.
+
+    A descriptive retrospective interval, not a sealed or prospective claim.
+    """
+    _accuracy_diagnostics(labels, challenger)
+    _accuracy_diagnostics(labels, baseline)
+    labels = np.asarray(labels, dtype=int)
+    challenger = np.asarray(challenger, dtype=float)
+    baseline = np.asarray(baseline, dtype=float)
+    if len(labels) == 0 or len(dates) != len(labels) or n_bootstrap < 200:
+        raise ValueError("INVALID_PAIRED_ACCURACY_DATE_CLUSTERS")
+    unique_dates = sorted(set(dates))
+    if len(unique_dates) < 20:
+        raise ValueError("INSUFFICIENT_PAIRED_ACCURACY_DATE_CLUSTERS")
+    diff = (np.argmax(challenger, axis=1) == labels).astype(float) - (np.argmax(baseline, axis=1) == labels).astype(float)
+    indices_by_day = {day: [] for day in unique_dates}
+    for i, day in enumerate(dates):
+        indices_by_day[day].append(i)
+    sums = np.asarray([diff[indices_by_day[day]].sum() for day in unique_dates])
+    counts = np.asarray([len(indices_by_day[day]) for day in unique_dates])
+    rng = np.random.default_rng(seed)
+    draws = rng.integers(0, len(unique_dates), size=(n_bootstrap, len(unique_dates)))
+    sampled = sums[draws].sum(axis=1) / counts[draws].sum(axis=1)
+    ci = np.quantile(sampled, [0.025, 0.975])
+    return {
+        "accuracy_difference": float(diff.mean()),
+        "confidence_interval_95": [float(ci[0]), float(ci[1])],
+        "bootstrap_probability_positive": float(np.mean(sampled > 0)),
+        "unique_match_dates": len(unique_dates),
+        "bootstrap_iterations": n_bootstrap,
+        "sample_size": len(labels),
+    }
+
+
 TEST_SEASONS = ("2223", "2324", "2425", "2526")
 STRUCTURAL_CHALLENGER = "M1_DECAY_365"
 FIXED_LOGISTIC_CHALLENGER = "L2_1.0"
@@ -209,6 +244,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
         "pooled_fixed_logistic_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_logistic),
         "pooled_fixed_ensemble_metrics": _metric_summary(y_all, p_ensemble),
         "pooled_fixed_ensemble_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_ensemble),
+        "fixed_logistic_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_logistic, p_challenger, scored_dates),
+        "fixed_ensemble_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_ensemble, p_challenger, scored_dates),
         "fixed_ensemble_vs_m1_clustered_log_loss_skill": {
             "improvement_log_loss": (ensemble_skill := date_clustered_log_loss_skill(
                 y_all, p_ensemble, p_challenger, scored_dates,
