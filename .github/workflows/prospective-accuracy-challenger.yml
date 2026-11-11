@@ -5,6 +5,8 @@ on:
     paths:
       - 'backend/app/research/prospective_accuracy_challenger.py'
       - 'backend/tests/unit/test_prospective_accuracy_challenger.py'
+      - 'backend/app/research/prospective_accuracy_evaluator.py'
+      - 'backend/tests/unit/test_prospective_accuracy_evaluator.py'
       - 'backend/app/research/multiseason_stability.py'
       - '.github/workflows/prospective-accuracy-challenger.yml'
   push:
@@ -12,6 +14,8 @@ on:
     paths:
       - 'backend/app/research/prospective_accuracy_challenger.py'
       - 'backend/tests/unit/test_prospective_accuracy_challenger.py'
+      - 'backend/app/research/prospective_accuracy_evaluator.py'
+      - 'backend/tests/unit/test_prospective_accuracy_evaluator.py'
       - 'backend/app/research/multiseason_stability.py'
       - '.github/workflows/prospective-accuracy-challenger.yml'
   workflow_dispatch:
@@ -42,7 +46,7 @@ jobs:
       - name: Verify paired immutable forecast and Elo training invariants offline
         working-directory: backend
         run: |
-          pytest -q tests/unit/test_prospective_accuracy_challenger.py tests/unit/test_prospective_shadow_research.py
+          pytest -q tests/unit/test_prospective_accuracy_challenger.py tests/unit/test_prospective_accuracy_evaluator.py tests/unit/test_prospective_shadow_research.py
 
       - name: Download provenance-pinned real history and fresh schedule, then issue new predictions
         working-directory: backend
@@ -97,10 +101,30 @@ jobs:
           print("This is NOT the previously archived 63-fixture M1 shadow ledger.")
           PY
 
+      - name: Independently check real-results lane has zero pre-event scores
+        working-directory: backend
+        run: |
+          python -m app.research.prospective_accuracy_evaluator \
+            --paired-ledger ../research_outputs/paired_prospective_elo_2627.json \
+            --output ../research_outputs/paired_prospective_elo_initial_assessment.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path("../research_outputs/paired_prospective_elo_initial_assessment.json").read_text(encoding="utf-8"))
+          original = json.loads(Path("../research_outputs/paired_prospective_elo_2627.json").read_text(encoding="utf-8"))
+          assert result["finished_evaluated"] == 0
+          assert result["pending_or_unverified"] == original["counts"]["challenger_issued"]
+          assert result["original_paired_ledger_sha256"] == original["ledger_sha256"]
+          assert "candidate" not in result and "paired_difference_candidate_minus_baseline" not in result
+          print("All newly issued future pairs remain PENDING; no invented match results.")
+          PY
+
       - name: Archive NEW independently timestamped paired forecasting evidence
         uses: actions/upload-artifact@v4
         with:
           name: football-prospective-elo-paired-2026-27
-          path: research_outputs/paired_prospective_elo_2627.json
+          path: |
+            research_outputs/paired_prospective_elo_2627.json
+            research_outputs/paired_prospective_elo_initial_assessment.json
           retention-days: 90
           if-no-files-found: error
