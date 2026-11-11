@@ -28,6 +28,43 @@ from app.research.historical_oos import (
 from app.research.uncertainty import date_clustered_log_loss_skill
 
 
+def _accuracy_diagnostics(labels, probabilities):
+    """Descriptive 1X2 accuracy and fixed confidence/coverage slices.
+
+    Thresholds are NOT tuned here and must not be promoted from retrospective
+    research into a production abstention policy without fresh validation.
+    """
+    labels = np.asarray(labels, dtype=int)
+    probabilities = np.asarray(probabilities, dtype=float)
+    if (labels.ndim != 1 or probabilities.shape != (len(labels), 3)
+            or not np.isin(labels, [0, 1, 2]).all()
+            or not np.isfinite(probabilities).all()
+            or (probabilities < 0).any()
+            or not np.allclose(probabilities.sum(axis=1), 1.0, atol=1e-6)):
+        raise ValueError("INVALID_ACCURACY_DIAGNOSTIC_INPUT")
+    predictions = np.argmax(probabilities, axis=1)
+    correct = predictions == labels
+    n = len(labels)
+    slices = []
+    for threshold in (0.45, 0.50, 0.55, 0.60):
+        selected = probabilities.max(axis=1) >= threshold
+        count = int(selected.sum())
+        slices.append({
+            "minimum_top_class_probability": threshold,
+            "selected": count,
+            "abstained": n - count,
+            "coverage": count / n if n else 0.0,
+            "accuracy": float(correct[selected].mean()) if count else None,
+            "correct": int(correct[selected].sum()),
+        })
+    return {
+        "sample_size": n,
+        "correct": int(correct.sum()),
+        "accuracy": float(correct.mean()) if n else None,
+        "confidence_slices": slices,
+    }
+
+
 TEST_SEASONS = ("2223", "2324", "2425", "2526")
 STRUCTURAL_CHALLENGER = "M1_DECAY_365"
 
@@ -96,6 +133,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "fitted_artifact_fingerprint": model.artifact.artifact_fingerprint,
             "baseline_metrics": _metric_summary(test_label, baseline),
             "raw_challenger_metrics": _metric_summary(test_label, challenger),
+            "baseline_accuracy_diagnostics": _accuracy_diagnostics(test_label, baseline),
+            "challenger_accuracy_diagnostics": _accuracy_diagnostics(test_label, challenger),
             "log_loss_skill": _log_loss(test_label, baseline)
               - _log_loss(test_label, challenger),
             "per_league": {},
@@ -137,6 +176,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
         "folds": folds,
         "total_oos_fixtures": len(y_all),
         "pooled_baseline_metrics": _metric_summary(y_all, p_baseline),
+        "pooled_baseline_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_baseline),
+        "pooled_challenger_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_challenger),
         "pooled_raw_challenger_metrics": _metric_summary(y_all, p_challenger),
         "match_date_clustered_log_loss_skill": {
             "improvement_log_loss": intervals.improvement_log_loss,
@@ -149,6 +190,7 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "Model refitted at each season boundary only; previously completed in-season results may enter date-only features.",
             "Original Phase 4 frozen C1 champion is untouched and not compared directly across this dataset.",
             "Actual scores are taken from authenticated source URLs with hashes, not reconstructed.",
+            "Confidence/coverage slices are post hoc descriptive only; thresholds were not validated prospectively.",
             "These research results cannot authorize production/publication or gambling claims.",
         ],
     }
