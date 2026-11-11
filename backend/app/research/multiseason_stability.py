@@ -67,6 +67,61 @@ def _accuracy_diagnostics(labels, probabilities):
     }
 
 
+def _causal_elo_features(fixtures):
+    """Fixed-form team-rating features from results on STRICTLY earlier dates.
+
+    Research-only identities are (league, source team name). A 65-point home
+    offset and K=24 are fixed hypotheses, not test-season tuned parameters.
+    A scheduled, unplayed fixture does not modify any rating.
+    """
+    ratings = {}
+    played = {}
+    matrix = np.zeros((len(fixtures), 4), dtype=float)
+    ordered = sorted(
+        enumerate(fixtures),
+        key=lambda pair: (pair[1].match_date, pair[1].league, pair[1].home, pair[1].away),
+    )
+    cursor = 0
+    while cursor < len(ordered):
+        match_day = ordered[cursor][1].match_date
+        end = cursor
+        while end < len(ordered) and ordered[end][1].match_date == match_day:
+            end += 1
+        daily = ordered[cursor:end]
+        for i, match in daily:
+            hk = (match.league, match.home)
+            ak = (match.league, match.away)
+            matrix[i] = [
+                ratings.get(hk, 0.0) / 400.0,
+                ratings.get(ak, 0.0) / 400.0,
+                np.log1p(played.get(hk, 0)),
+                np.log1p(played.get(ak, 0)),
+            ]
+        used = set()
+        for _, match in daily:
+            if (match.outcome, match.home_goals, match.away_goals) == (-1, -1, -1):
+                continue
+            if match.outcome not in (0, 1, 2):
+                raise ValueError("ELO_INVALID_MATCH_OUTCOME")
+            hk = (match.league, match.home)
+            ak = (match.league, match.away)
+            if hk in used or ak in used or hk == ak:
+                raise ValueError("ELO_DUPLICATE_TEAM_SAME_DATE")
+            used.update((hk, ak))
+            hr, ar = ratings.get(hk, 0.0), ratings.get(ak, 0.0)
+            expectation = 1.0 / (1.0 + 10.0 ** (-(hr + 65.0 - ar) / 400.0))
+            observed = (1.0, 0.5, 0.0)[match.outcome]
+            delta = 24.0 * (observed - expectation)
+            ratings[hk] = hr + delta
+            ratings[ak] = ar - delta
+            played[hk] = played.get(hk, 0) + 1
+            played[ak] = played.get(ak, 0) + 1
+        cursor = end
+    if not np.isfinite(matrix).all():
+        raise ValueError("NONFINITE_ELO_RESEARCH_FEATURE")
+    return matrix
+
+
 def _date_clustered_accuracy_difference(labels, challenger, baseline, dates, *, seed=20261111, n_bootstrap=2000):
     """Paired full-coverage top-class accuracy delta, resampling whole match dates.
 
@@ -117,6 +172,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
         raise ValueError("RESEARCH_SOURCE_PROVENANCE_DUPLICATED")
 
     x, y = build_pre_match_features(fixtures)
+    elo_x = _causal_elo_features(fixtures)
+    elo_augmented = np.column_stack((x, elo_x))
     rows = _research_modeling_rows(fixtures, x, receipts)
     if len(rows) != len(fixtures) or x.shape != (len(rows), 20):
         raise ValueError("RESEARCH_FEATURE_ALIGNMENT_MISMATCH")
@@ -125,6 +182,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
     challenger_pred = []
     logistic_pred = []
     ensemble_pred = []
+    elo_logistic_pred = []
+    elo_blend_pred = []
     scored_dates: list[date] = []
     outcomes_seen = set()
     folds = []
@@ -162,6 +221,12 @@ def evaluate_multiseason_stability(fixtures, receipts):
         ensemble = FIXED_ENSEMBLE_M1_WEIGHT * challenger + (1 - FIXED_ENSEMBLE_M1_WEIGHT) * logistic
         _accuracy_diagnostics(test_label, logistic)
         _accuracy_diagnostics(test_label, ensemble)
+        elo_model = _model(FIXED_LOGISTIC_CHALLENGER)
+        elo_model.fit(elo_augmented[train_indices], train_label)
+        elo_logistic = _probabilities(elo_model, elo_augmented[test_indices])
+        elo_blend = 0.5 * challenger + 0.5 * elo_logistic
+        _accuracy_diagnostics(test_label, elo_logistic)
+        _accuracy_diagnostics(test_label, elo_blend)
         if not np.isfinite(challenger).all():
             raise ValueError("NONFINITE_OOS_PROBABILITIES")
 
@@ -187,6 +252,10 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "fixed_logistic_accuracy_diagnostics": _accuracy_diagnostics(test_label, logistic),
             "fixed_ensemble_metrics": _metric_summary(test_label, ensemble),
             "fixed_ensemble_accuracy_diagnostics": _accuracy_diagnostics(test_label, ensemble),
+            "fixed_elo_logistic_metrics": _metric_summary(test_label, elo_logistic),
+            "fixed_elo_logistic_accuracy_diagnostics": _accuracy_diagnostics(test_label, elo_logistic),
+            "fixed_elo_blend_metrics": _metric_summary(test_label, elo_blend),
+            "fixed_elo_blend_accuracy_diagnostics": _accuracy_diagnostics(test_label, elo_blend),
             "log_loss_skill": _log_loss(test_label, baseline)
               - _log_loss(test_label, challenger),
             "per_league": {},
@@ -201,6 +270,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
                 "baseline": _metric_summary(test_label[mask], baseline[mask]),
                 "fixed_logistic": _metric_summary(test_label[mask], logistic[mask]),
                 "fixed_ensemble": _metric_summary(test_label[mask], ensemble[mask]),
+                "fixed_elo_logistic": _metric_summary(test_label[mask], elo_logistic[mask]),
+                "fixed_elo_blend": _metric_summary(test_label[mask], elo_blend[mask]),
             }
         folds.append(fold)
         observed.extend(test_label.tolist())
@@ -208,6 +279,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
         challenger_pred.extend(challenger.tolist())
         logistic_pred.extend(logistic.tolist())
         ensemble_pred.extend(ensemble.tolist())
+        elo_logistic_pred.extend(elo_logistic.tolist())
+        elo_blend_pred.extend(elo_blend.tolist())
         scored_dates.extend(fixtures[i].match_date for i in test_indices)
 
     y_all = np.asarray(observed, dtype=int)
@@ -215,6 +288,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
     p_challenger = np.asarray(challenger_pred, dtype=float)
     p_logistic = np.asarray(logistic_pred, dtype=float)
     p_ensemble = np.asarray(ensemble_pred, dtype=float)
+    p_elo_logistic = np.asarray(elo_logistic_pred, dtype=float)
+    p_elo_blend = np.asarray(elo_blend_pred, dtype=float)
     if len(y_all) != 4 * sum(LEAGUE_MATCH_COUNTS.values()):
         raise ValueError("ROLLING_TOTAL_HELDOUT_COUNT_MISMATCH")
     intervals = date_clustered_log_loss_skill(
@@ -230,7 +305,8 @@ def evaluate_multiseason_stability(fixtures, receipts):
         ).hexdigest(),
         "strategy": "YEARWISE_EXPANDING_TRAINING_ROLLING_ORIGIN",
         "challenger": STRUCTURAL_CHALLENGER,
-        "fixed_research_comparators": [FIXED_LOGISTIC_CHALLENGER, "M1_LOGISTIC_50_50"],
+        "fixed_research_comparators": [FIXED_LOGISTIC_CHALLENGER, "M1_LOGISTIC_50_50", "CAUSAL_ELO_L2_1.0", "M1_ELO_L2_50_50"],
+        "fixed_elo_policy": {"rating_offset": 65, "k_factor": 24, "initial_rating_centered": 0.0, "extra_features": 4},
         "fixed_ensemble_m1_weight": FIXED_ENSEMBLE_M1_WEIGHT,
         "comparison_selection_policy": "NO_TEST_RESULT_SELECTION_NO_PRODUCTION_PROMOTION",
         "years": list(TEST_SEASONS),
@@ -242,6 +318,20 @@ def evaluate_multiseason_stability(fixtures, receipts):
         "pooled_raw_challenger_metrics": _metric_summary(y_all, p_challenger),
         "pooled_fixed_logistic_metrics": _metric_summary(y_all, p_logistic),
         "pooled_fixed_logistic_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_logistic),
+        "pooled_fixed_elo_logistic_metrics": _metric_summary(y_all, p_elo_logistic),
+        "pooled_fixed_elo_logistic_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_elo_logistic),
+        "pooled_fixed_elo_blend_metrics": _metric_summary(y_all, p_elo_blend),
+        "pooled_fixed_elo_blend_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_elo_blend),
+        "fixed_elo_blend_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_elo_blend, p_challenger, scored_dates),
+        "fixed_elo_blend_vs_m1_clustered_log_loss_skill": {
+            "improvement_log_loss": (elo_skill := date_clustered_log_loss_skill(
+                y_all, p_elo_blend, p_challenger, scored_dates,
+                n_bootstrap=2000, seed=20261109,
+            )).improvement_log_loss,
+            "confidence_interval_95": list(elo_skill.confidence_interval_95),
+            "unique_match_dates": elo_skill.unique_match_dates,
+            "bootstrap_iterations": elo_skill.bootstrap_iterations,
+        },
         "pooled_fixed_ensemble_metrics": _metric_summary(y_all, p_ensemble),
         "pooled_fixed_ensemble_accuracy_diagnostics": _accuracy_diagnostics(y_all, p_ensemble),
         "fixed_logistic_vs_m1_clustered_accuracy_difference": _date_clustered_accuracy_difference(y_all, p_logistic, p_challenger, scored_dates),
@@ -266,6 +356,7 @@ def evaluate_multiseason_stability(fixtures, receipts):
             "Model refitted at each season boundary only; previously completed in-season results may enter date-only features.",
             "Original Phase 4 frozen C1 champion is untouched and not compared directly across this dataset.",
             "The 20-feature logistic comparator is NOT the certified 251-feature C1 champion.",
+            "Research Elo features are computed only from earlier calendar dates and source aliases, not verified canonical team IDs.",
             "Fixed logistic and ensemble results are post hoc comparisons, not a fresh sealed holdout or model selection basis.",
             "Actual scores are taken from authenticated source URLs with hashes, not reconstructed.",
             "Confidence/coverage slices are post hoc descriptive only; thresholds were not validated prospectively.",
@@ -297,6 +388,8 @@ def main():
         "m1_accuracy": report["pooled_challenger_accuracy_diagnostics"]["accuracy"],
         "logistic_accuracy": report["pooled_fixed_logistic_accuracy_diagnostics"]["accuracy"],
         "ensemble_accuracy": report["pooled_fixed_ensemble_accuracy_diagnostics"]["accuracy"],
+        "elo_logistic_accuracy": report["pooled_fixed_elo_logistic_accuracy_diagnostics"]["accuracy"],
+        "elo_blend_accuracy": report["pooled_fixed_elo_blend_accuracy_diagnostics"]["accuracy"],
         "ensemble_vs_m1_log_loss_skill": report["fixed_ensemble_vs_m1_clustered_log_loss_skill"],
         "report_sha256": report["research_report_sha256"],
     }, indent=2))
