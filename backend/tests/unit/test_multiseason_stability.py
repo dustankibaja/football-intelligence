@@ -82,6 +82,8 @@ def test_four_season_rolling_origin_scoring_never_trains_on_test_year(monkeypatc
     assert report["pooled_fixed_logistic_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_fixed_ensemble_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_fixed_elo_logistic_accuracy_diagnostics"]["sample_size"] == 192
+    assert report["fixed_elo_logistic_vs_m1_clustered_accuracy_difference"]["sample_size"] == 192
+    assert len(report["fixed_elo_logistic_vs_m1_clustered_log_loss_skill"]["confidence_interval_95"]) == 2
     assert report["pooled_fixed_elo_blend_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_fixed_elo_hgb_accuracy_diagnostics"]["sample_size"] == 192
     assert report["pooled_fixed_hgb_blend_accuracy_diagnostics"]["sample_size"] == 192
