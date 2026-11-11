@@ -1,0 +1,100 @@
+name: Advanced Causal Form Accuracy Research (Retrospective)
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/research/advanced_accuracy.py'
+      - 'backend/tests/unit/test_advanced_accuracy.py'
+      - '.github/workflows/advanced-causal-form-research.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'backend/app/research/advanced_accuracy.py'
+      - 'backend/tests/unit/test_advanced_accuracy.py'
+      - '.github/workflows/advanced-causal-form-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-rolling-origin:
+    name: Compare fixed form challengers against causal Elo on 5784 real historical matches
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact commit
+        uses: actions/checkout@v4
+
+      - name: Configure Python and dependency cache
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install scientific backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Reject leakage, fake scores and feature alignment defects
+        working-directory: backend
+        run: |
+          pytest -q tests/unit/test_advanced_accuracy.py
+
+      - name: Download historical source files and fit independent rolling-season comparisons
+        working-directory: backend
+        run: |
+          python -m app.research.advanced_accuracy \
+            --raw-dir ../data/research_football_data_raw \
+            --output ../research_outputs/advanced_form_5784_historical.json
+
+      - name: Verify same-fixture empirical evidence and preserved historical disclosure
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, math
+          f=Path("research_outputs/advanced_form_5784_historical.json")
+          report=json.loads(f.read_text(encoding="utf-8"))
+          checksum=report.pop("research_report_sha256")
+          assert hashlib.sha256(json.dumps(report,sort_keys=True,allow_nan=False).encode()).hexdigest()==checksum
+          assert report["status"]=="EXPLORATORY_RETROSPECTIVE_NO_MODEL_PROMOTION"
+          assert report["reference_corpus"]["test_fixtures"]==5784
+          assert report["reference_corpus"]["test_seasons"]==["2223","2324","2425","2526"]
+          assert report["reference_corpus"]["source_manifest_sha256"]=="e1ca1d96f708836f68dd7af66f14e0b7d74a57a9f2e4948cfab56dcaac25b522"
+          assert len(report["reference_corpus"]["source_manifest"])==28
+          assert report["feature_contract"]["new_input_count"]==50
+          assert report["feature_contract"]["old_input_count"]==24
+          assert report["feature_contract"]["strict_previous_calendar_date"] is True
+          assert report["feature_contract"]["no_2026_27_fixtures_or_scores"] is True
+          assert report["feature_contract"]["no_odds"] is True
+          assert [f["training_fixtures"] for f in report["folds"]]==[4338,5784,7230,8676]
+          assert [f["test_fixtures"] for f in report["folds"]]==[1446]*4
+          assert all(f["training_latest_date"] < f["test_earliest_date"] for f in report["folds"])
+          expected=("old_elo","extended_elo_logistic","extended_form_hgb","extended_fixed_blend")
+          for name in expected:
+              acc=report["pooled"][name]["accuracy"]
+              assert acc["sample_size"]==5784
+              assert acc["correct"]>=0 and acc["correct"]<=5784
+              assert math.isclose(acc["accuracy"],acc["correct"]/5784,abs_tol=1e-12)
+              assert report["pooled"][name]["metrics"]["sample_size"]==5784
+          for name in expected[1:]:
+              point=report["pooled"][name]["accuracy"]["accuracy"]-report["pooled"]["old_elo"]["accuracy"]["accuracy"]
+              observed=report["paired_vs_old_elo"][name]["accuracy_difference"]
+              assert math.isclose(observed["accuracy_difference"],point,abs_tol=1e-12)
+              assert observed["sample_size"]==5784
+              assert observed["unique_match_dates"]>=100
+          print("RETROSPECTIVE full-coverage results:")
+          for name in expected:
+              r=report["pooled"][name]
+              print(name, r["accuracy"]["correct"],r["accuracy"]["accuracy"], r["metrics"]["log_loss"])
+          print("Research only; no release of an observed best model or guarantee of >53.85%.")
+          PY
+
+      - name: Archive research report without redistributing source CSVs
+        uses: actions/upload-artifact@v4
+        with:
+          name: advanced-form-accuracy-retrospective-2026
+          path: research_outputs/advanced_form_5784_historical.json
+          retention-days: 90
+          if-no-files-found: error
