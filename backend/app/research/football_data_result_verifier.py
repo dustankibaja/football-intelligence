@@ -188,6 +188,7 @@ def collect_result_receipts(
                 "retrieved_at_utc": retrieved_at_utc.isoformat(),
                 "source_url": url,
                 "source_payload_sha256": raw_hash,
+                "source_collection_mode": "PROVIDER_NETWORK_RETRIEVAL" if fetch_bytes is None else "LOCAL_OR_INJECTED_BYTES_ORIGIN_UNVERIFIED",
             })
     return sorted(receipts, key=lambda r: r["fixture_sha256"])
 
