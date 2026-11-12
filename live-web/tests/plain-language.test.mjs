@@ -8,7 +8,7 @@ test("page explains football in everyday English without visible developer termi
   for(const word of ["Poisson","λ","BTTS","1X2","C1","M1","Elo","SHA-256","JSON","ledger","schema","cohort","fixture","canonical","prospective","artifact","calibration","pipeline","GitHub","API","release gates"]){
     assert.ok(!new RegExp("(^|[^a-zA-Z])"+word+"([^a-zA-Z]|$)","i").test(visible),"Visible technical term: "+word);
   }
-  for(const phrase of ["Try a match","Who might win?","Goals for the home team","Goals for the visiting team","A draw means both teams finish with the same number of goals","How did our predictions do?","Live predictions for upcoming games are not available yet","not real team information","Your files stay on your device"]){
+  for(const phrase of ["Which games are coming up?","Find a team","See upcoming matches","Try a match","Who might win?","Goals for the home team","Goals for the visiting team","A draw means both teams finish with the same number of goals","How did our predictions do?","Upcoming games now have early predictions","not real team information","Your files stay on your device"]){
     assert.ok(visible.includes(phrase),"Missing plain-English text: "+phrase);
   }
 });

@@ -8,12 +8,13 @@
   <title>Football Intelligence | Understand the game</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.mjs"></script>
+  <script type="module" src="./upcoming-ui.mjs"></script>
 </head>
 <body>
   <header class="site-header">
     <div class="shell topbar">
       <a class="brand" href="#overview"><span class="brand-mark">FI</span><span>Football Intelligence<small>Football, made simple</small></span></a>
-      <nav aria-label="Main menu"><a href="#overview">Home</a><a href="#scenario">Try a match</a><a href="#evidence">Saved predictions</a></nav>
+      <nav aria-label="Main menu"><a href="#upcoming">Upcoming matches</a><a href="#scenario">Try a match</a><a href="#evidence">Saved predictions</a></nav>
       <span class="pill">Preview</span>
     </div>
   </header>
@@ -21,15 +22,31 @@
     <section class="hero" id="overview">
       <div class="eyebrow"><span class="dot"></span> FOOTBALL, MADE SIMPLE</div>
       <h1>What could happen<br><span>in the next match?</span></h1>
-      <p>See how likely a team is to win, how many goals there might be, and how earlier predictions turned out. No football knowledge needed.</p>
-      <div class="hero-links"><a class="primary" href="#scenario">Try a match</a><a class="secondary" href="#evidence">See saved predictions</a></div>
+      <p>Find upcoming games, see which team might win and explore possible final scores. No football knowledge needed.</p>
+      <div class="hero-links"><a class="primary" href="#upcoming">See upcoming matches</a><a class="secondary" href="#scenario">Try your own match</a></div>
     </section>
     <section class="notice" aria-label="What's available">
-      <div><strong>You're trying an early version</strong><p>You can explore match possibilities and open saved predictions. Live predictions for upcoming games are not available yet. Nothing here guarantees a match result.</p></div>
-      <span class="status-label">LIVE MATCHES COMING LATER</span>
+      <div><strong>You're trying an early version</strong><p>Upcoming games now have early predictions based on the past scores we have. We are still checking how well these predictions work. Nothing here guarantees a match result.</p></div>
+      <span class="status-label">EARLY PREDICTIONS</span>
+    </section>
+    <section class="section" id="upcoming">
+      <div class="section-heading"><div><div class="eyebrow">01 / UPCOMING MATCHES</div><h2>Which games are coming up?</h2><p>Find a team or choose a league to see our early predictions for real scheduled games. Dates may change, so check the official match schedule before the game.</p></div></div>
+      <div class="panel upcoming-panel">
+        <p id="upcoming-status" role="status" class="small">Finding upcoming matches…</p>
+        <p id="upcoming-warning" class="match-warning" hidden></p>
+        <div class="filters" id="upcoming-controls" hidden>
+          <label for="upcoming-league">League<select id="upcoming-league"><option value="">All leagues</option><option value="en">Premier League</option><option value="es">La Liga</option><option value="it">Serie A</option><option value="de">Bundesliga</option></select></label>
+          <label for="upcoming-search">Find a team<input id="upcoming-search" type="search" placeholder="Type a team name"></label>
+        </div>
+        <p class="small" id="upcoming-count" aria-live="polite"></p>
+        <div class="upcoming-grid" id="upcoming-cards"></div>
+        <button type="button" class="secondary" id="upcoming-more" hidden>Show more matches</button>
+        <button type="button" class="secondary" id="upcoming-retry" hidden>Try again</button>
+        <p class="small">Match information: <a href="https://github.com/openfootball/football.json">OpenFootball</a>. We use past scores to estimate possible results; we do not use live scores or team news.</p>
+      </div>
     </section>
     <section class="section" id="scenario">
-      <div class="section-heading"><div><div class="eyebrow">01 / TRY A MATCH</div><h2>What if these teams played?</h2><p>Tell us how many goals you think each team would score on average. We'll show the chances of different results based on your guesses, not real team information.</p></div></div>
+      <div class="section-heading"><div><div class="eyebrow">02 / TRY A MATCH</div><h2>What if these teams played?</h2><p>Tell us how many goals you think each team would score on average. We'll show the chances of different results based on your guesses, not real team information.</p></div></div>
       <div class="lab">
         <form id="scenario-form" class="panel" novalidate>
           <h3>Your guesses</h3>
@@ -56,7 +73,7 @@
       </div>
     </section>
     <section class="section" id="evidence">
-      <div class="section-heading"><div><div class="eyebrow">02 / SAVED PREDICTIONS</div><h2>How did our predictions do?</h2><p>Open saved match predictions and their results to see what we got right and what we got wrong. Your files stay on your device.</p></div></div>
+      <div class="section-heading"><div><div class="eyebrow">03 / SAVED PREDICTIONS</div><h2>How did our predictions do?</h2><p>Open saved match predictions and their results to see what we got right and what we got wrong. Your files stay on your device.</p></div></div>
       <div class="panel">
         <div class="import-row">
           <div><label for="ledger-file">1. Choose a saved predictions file</label><input id="ledger-file" type="file" accept=".json,application/json"><p class="small">Already have a file? Choose it here. Otherwise, use the link below to find our saved predictions.</p></div>
@@ -78,8 +95,8 @@
       <p class="small">These links open our saved project records. You may need to sign in to download a file. Open the downloaded folder and choose the predictions or results file inside.</p>
     </section>
     <section class="section last-section">
-      <div class="section-heading"><div><div class="eyebrow">03 / WHAT'S AVAILABLE</div><h2>What can you do today?</h2></div></div>
-      <div class="gate-grid"><article class="panel"><span class="tag">Ready</span><h3>Explore a match</h3><p>Try different goal guesses to see what results are more or less likely.</p></article><article class="panel"><span class="tag">In progress</span><h3>Check how well we predict</h3><p>We're comparing our predictions with real match results to see which way works best.</p></article><article class="panel"><span class="tag blocked">Not available yet</span><h3>See upcoming matches</h3><p>We're still getting reliable match information and checking our predictions before offering this feature.</p></article></div>
+      <div class="section-heading"><div><div class="eyebrow">04 / WHAT'S AVAILABLE</div><h2>What can you do today?</h2></div></div>
+      <div class="gate-grid"><article class="panel"><span class="tag">Ready</span><h3>Explore a match</h3><p>Try different goal guesses to see what results are more or less likely.</p></article><article class="panel"><span class="tag">In progress</span><h3>Check how well we predict</h3><p>We're comparing our predictions with real match results to see which way works best.</p></article><article class="panel"><span class="tag">Early version</span><h3>See upcoming matches</h3><p>Explore predictions for scheduled games using the past scores available to us.</p></article></div>
     </section>
   </main>
   <footer class="shell">Football Intelligence · Early version · Predictions are possibilities, not promises.</footer>
