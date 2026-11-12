@@ -1,4 +1,4 @@
-name: Football Intelligence Web Build and Tests
+name: Footmo Original Prediction Engine and Website Tests
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  static-research-workspace:
+  original-engine:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -26,32 +26,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check probability conservation, ledger and assessment structure
+      - name: Install dependencies without production bootstrap
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Test original forecasting, forecast history, provider and website
         run: npm test
-      - name: Build the deployable static application
-        run: npm run build
-      - name: Check browser module syntax and static HTTP assets
+      - name: Verify original app and API entry points
         run: |
-          node --check dist/app.mjs
-          node --check dist/analysis.mjs
-          node --check dist/upcoming.mjs
-          node --check dist/upcoming-ui.mjs
-          python -m http.server 8765 --directory dist > /tmp/football-web.log 2>&1 &
-          server=$!
-          trap 'kill "$server" || true' EXIT
-          for n in $(seq 1 20); do
-            curl --fail --silent http://localhost:8765/index.html > /tmp/football-index.html && break
-            sleep 0.5
-          done
-          grep -q "Football Intelligence" /tmp/football-index.html
-          curl --fail --silent http://localhost:8765/app.mjs >/dev/null
-          curl --fail --silent http://localhost:8765/analysis.mjs >/dev/null
-          curl --fail --silent http://localhost:8765/styles.css >/dev/null
-          curl --fail --silent http://localhost:8765/upcoming-data.json >/tmp/football-upcoming.json
-          node --input-type=module -e 'import fs from "node:fs"; const f=JSON.parse(fs.readFileSync("/tmp/football-upcoming.json")); if(f.source!=="openfootball/football.json"||f.leagues.length!==4||!f.matches.every(m=>m.date>f.generatedOn)) process.exit(1); console.log("Verified real upcoming match feed, "+f.matches.length+" future dates");'
-      - name: Archive exact static build
-        uses: actions/upload-artifact@v4
-        with:
-          name: football-intelligence-research-web
-          path: live-web/dist
-          retention-days: 30
+          test -f index.html
+          test -f analysis.html
+          test -f lib/model.js
+          test -f api/state.js
+          node --check picks.js
+          node --check app.js
+          node --check api/state.js
+          node --check api/refresh.js
+          node --check lib/state.js
