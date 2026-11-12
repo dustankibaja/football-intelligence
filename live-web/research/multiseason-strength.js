@@ -38,11 +38,12 @@ function recent(t){
     (r.reduce((s,x)=>s+x[2],0)+3*1.35)/(n+3)];
 }
 function providerShape(m){return {id:m.id,utcDate:m.date+'T12:00:00Z',status:'FINISHED',homeTeam:{id:m.home,name:m.home},awayTeam:{id:m.away,name:m.away},competition:{code:m.league,name:m.league},score:{fullTime:{home:m.hg,away:m.ag}}};}
-export function causalRows(matches){
-  const rows=[];
+export function causalRows(matches,{seed=null,includeSeed=false,cutoff=null}={}){
+  const rows=[],finalSeed={};
   for(const league of LEAGUES){
     const ordered=matches.filter(m=>m.league===league).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
-    const teams=new Map(),history=new Map();let lastSeason=null,seasonHistory=[];
+    const teams=new Map(Object.entries(seed?.[league]?.teams||{}).map(([name,t])=>[name,structuredClone(t)]));
+    let lastSeason=seed?.[league]?.lastSeason??null,seasonHistory=[];
     const team=name=>{if(!teams.has(name))teams.set(name,blank());return teams.get(name);};
     for(let i=0;i<ordered.length;){
       const date=ordered[i].date, group=[];while(i<ordered.length&&ordered[i].date===date)group.push(ordered[i++]);
@@ -56,7 +57,7 @@ export function causalRows(matches){
       const updates=[];
       for(const m of group){
         const h=team(m.home),a=team(m.away),hr=recent(h),ar=recent(a);
-        const f=providerShape(m),asOf=new Date(date+'T00:00:00Z');
+        const f=providerShape(m),asOf=new Date((m.upcoming&&cutoff?cutoff:date)+'T00:00:00Z');
         const base=predictFixture({...f,status:'SCHEDULED'},seasonHistory,asOf);
         const leagueN=seasonHistory.length;
         const hm=(seasonHistory.reduce((s,x)=>s+x.score.fullTime.home,0)+30*1.5)/(leagueN+30);
@@ -71,8 +72,9 @@ export function causalRows(matches){
           hm,am,rest(h)-rest(a),Math.log1p(h.n),Math.log1p(a.n),
           base?.p1x2[0]??.45,base?.p1x2[1]??.26,base?.p1x2[2]??.29,
           base?1:0,...LEAGUES.map(l=>+(league===l))];
-        const y=result(m.hg,m.ag);
-        rows.push({id:m.id,date,season,league,y,features,baseline:base?.p1x2??null});
+        const y=m.upcoming?null:result(m.hg,m.ag);
+        rows.push({id:m.id,date,season,league,y,features,baseline:base?.p1x2??null,upcoming:!!m.upcoming});
+        if(m.upcoming)continue;
         const delta=24*((y===0?1:y===1?.5:0)-e);
         updates.push({m,h,a,delta});
       }
@@ -80,14 +82,16 @@ export function causalRows(matches){
         h.rating+=delta;a.rating-=delta;
         h.n++;a.n++;h.homeN++;a.awayN++;
         h.gf+=m.hg;h.ga+=m.ag;a.gf+=m.ag;a.ga+=m.hg;
-        h.recent.push([m.hg,m.ag,m.hg>m.ag?3:m.hg===m.ag?1:0]);
-        a.recent.push([m.ag,m.hg,m.ag>m.hg?3:m.hg===m.ag?1:0]);
+        h.recent.push([m.hg,m.ag,m.hg>m.ag?3:m.hg===m.ag?1:0]);h.recent=h.recent.slice(-10);
+        a.recent.push([m.ag,m.hg,m.ag>m.hg?3:m.hg===m.ag?1:0]);a.recent=a.recent.slice(-10);
         h.last=date;a.last=date;
         seasonHistory.push(providerShape(m));
       }
     }
+    finalSeed[league]={lastSeason,teams:Object.fromEntries(teams)};
   }
-  return rows.sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+  rows.sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+  return includeSeed?{rows,seed:finalSeed}:rows;
 }
 function softmax(z){const max=Math.max(...z),e=z.map(v=>Math.exp(v-max)),s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s);}
 export function fit(rows){
@@ -131,11 +135,12 @@ export function compare(rows,model){
     leagues:LEAGUES.map(league=>({league,baseline:metrics(paired.filter(r=>r.league===league),'baseline'),candidate:metrics(paired.filter(r=>r.league===league),'candidate')}))};
 }
 export function run(matches){
-  const rows=causalRows(matches);
+  const {rows,seed}=causalRows(matches,{includeSeed:true});
   const training=rows.filter(r=>r.season<'2024-25');
   const development=rows.filter(r=>r.season==='2024-25');
   const test=rows.filter(r=>r.season==='2025-26');
   const model=fit(training);
   return {model:MODEL,status:'RETROSPECTIVE_RESEARCH_ONLY',training:training.length,
-    development:compare(development,model),test:compare(test,model),promotionEligible:false};
+    development:compare(development,model),test:compare(test,model),promotionEligible:false,
+    artifact:{version:1,model:MODEL,trainedThrough:'2023-24',historyThrough:'2025-26',classifier:model,seed}};
 }
