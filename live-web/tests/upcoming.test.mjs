@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {createUpcomingFeed,filterUpcoming,makeGoalModel,validateSource,normalizeSource} from "../src/upcoming.mjs";
 const docs=await Promise.all(["en","es","it","de"].map(async l=>JSON.parse(await readFile(new URL("../data/"+l+".json",import.meta.url),"utf8"))));
-const asOf="2026-11-12";
+const year=Number(docs[0].season.slice(0,4));
+const asOf=year+"-11-12";
 test("open-data fixture and past-score receipts are complete and consistently pinned",()=>{
   for(const d of docs)assert.equal(validateSource(d,d.league),d);
   assert.equal(new Set(docs.map(d=>d.source_commit)).size,1);
@@ -21,7 +22,7 @@ test("real upcoming match feed covers all four leagues with dated, normalized es
   }
   assert.ok(next.length>0);
   assert.equal(new Set(next.map(m=>m.league)).size,4);
-  assert.ok(next.every(m=>m.date>asOf&&m.date<="2026-12-03"));
+  assert.ok(next.every(m=>m.date>asOf&&m.date<=year+"-12-03"));
   const predicted=next.filter(m=>m.prediction);
   assert.ok(predicted.length>=next.length*.8);
   for(const m of predicted){
@@ -33,12 +34,11 @@ test("real upcoming match feed covers all four leagues with dated, normalized es
   }
   const found=next[0];
   assert.ok(filterUpcoming(feed,asOf,{league:found.league,search:found.home}).some(m=>m.home===found.home&&m.away===found.away));
-  assert.equal(filterUpcoming(feed,"2027-06-01").length,0);
+  assert.equal(filterUpcoming(feed,(year+1)+"-06-15").length,0);
 });
 test("same-day and future scores never change the goal rates",()=>{
   const rows=docs[0].matches;
   const model=makeGoalModel(rows,asOf);
-  const [,,,,]=rows[0];
   const next=rows.find(m=>m[0]==="2026-27"&&m[1]>asOf);
   const changed=rows.map(m=>m[1]>=asOf?[...m.slice(0,4),[20,0]]:m);
   changed.push(["2026-27",asOf,next[2],next[3],[0,20]]);
