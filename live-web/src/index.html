@@ -13,7 +13,7 @@
   <header class="site-header">
     <div class="shell topbar">
       <a class="brand" href="#overview"><span class="brand-mark">FI</span><span>Football Intelligence<small>Football, made simple</small></span></a>
-      <nav aria-label="Main menu"><a href="#overview">Home</a><a href="#scenario">Try a match</a><a href="#evidence">Past predictions</a></nav>
+      <nav aria-label="Main menu"><a href="#overview">Home</a><a href="#scenario">Try a match</a><a href="#evidence">Saved predictions</a></nav>
       <span class="pill">Preview</span>
     </div>
   </header>
@@ -22,7 +22,7 @@
       <div class="eyebrow"><span class="dot"></span> FOOTBALL, MADE SIMPLE</div>
       <h1>What could happen<br><span>in the next match?</span></h1>
       <p>See how likely a team is to win, how many goals there might be, and how earlier predictions turned out. No football knowledge needed.</p>
-      <div class="hero-links"><a class="primary" href="#scenario">Try a match</a><a class="secondary" href="#evidence">See past predictions</a></div>
+      <div class="hero-links"><a class="primary" href="#scenario">Try a match</a><a class="secondary" href="#evidence">See saved predictions</a></div>
     </section>
     <section class="notice" aria-label="What's available">
       <div><strong>You're trying an early version</strong><p>You can explore match possibilities and open saved predictions. Live predictions for upcoming games are not available yet. Nothing here guarantees a match result.</p></div>
@@ -56,7 +56,7 @@
       </div>
     </section>
     <section class="section" id="evidence">
-      <div class="section-heading"><div><div class="eyebrow">02 / PAST PREDICTIONS</div><h2>How did our predictions do?</h2><p>Open saved match predictions and their results to see what we got right and what we got wrong. Your files stay on your device.</p></div></div>
+      <div class="section-heading"><div><div class="eyebrow">02 / SAVED PREDICTIONS</div><h2>How did our predictions do?</h2><p>Open saved match predictions and their results to see what we got right and what we got wrong. Your files stay on your device.</p></div></div>
       <div class="panel">
         <div class="import-row">
           <div><label for="ledger-file">1. Choose a saved predictions file</label><input id="ledger-file" type="file" accept=".json,application/json"><p class="small">Already have a file? Choose it here. Otherwise, use the link below to find our saved predictions.</p></div>
@@ -65,7 +65,7 @@
         <p id="import-status" role="status" class="small">No predictions opened yet. Your files will not be sent anywhere.</p><p id="import-error" role="alert" class="error"></p>
         <div id="evidence-details" hidden>
           <div id="evidence-summary" class="metric-grid"></div>
-          <p class="small">A stronger pick means we gave the most likely result at least a 50% chance. It can still be wrong. The success rate for stronger picks includes only those picks with known results.</p>
+          <p class="small">A stronger pick means our second prediction gave the most likely result at least a 50% chance. It can still be wrong. We count only stronger picks with known results when showing how often they were right.</p>
           <div class="filters"><label for="league-filter">League<select id="league-filter"><option value="">All leagues</option></select></label><label for="search-filter">Find a team<input id="search-filter" placeholder="Type a team name"></label><label class="checkbox"><input id="confidence-filter" type="checkbox">Show stronger picks only</label></div>
           <p id="filter-count" class="small" aria-live="polite"></p>
           <p class="small">We tried two different ways to predict each game. The three numbers in each prediction show the chance of a home win, a draw and a visiting win, in that order.</p>
