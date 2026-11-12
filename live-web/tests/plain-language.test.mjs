@@ -49,7 +49,7 @@ test("interactive copy explains chances, correct-pick counts, errors and empty r
   get("ledger-file").files=[file(ledger)];await get("ledger-file").fire("change");
   assert.equal(get("evidence-details").hidden,false);
   assert.match(get("forecast-rows").textContent,/21 Nov 2026.*No result added yet/);
-  assert.match(get("evidence-summary").textContent,/Stronger picks rightNot yet/);
+  assert.match(get("evidence-summary").textContent,/Stronger picks right\s*Not yet/);
   assert.match(get("filter-count").textContent,/No match results have been added yet/);
   assert.match(get("ledger-fingerprint").textContent,/can't confirm where the file came from/);
   get("assessment-file").files=[file({...assessment,original_paired_ledger_sha256:"d".repeat(64)})];await get("assessment-file").fire("change");
