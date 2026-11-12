@@ -19,7 +19,7 @@ function drawScenario(){
     replace(byId("outcomes"),[["Home team wins",s.home],["Draw (a tie)",s.draw],["Visiting team wins",s.away]].map(([k,v])=>metric(k,percent(v))));
     replace(byId("markets"),[["3 or more goals in total",s.over],["0 to 2 goals in total",s.under],["Both teams score",s.bttsYes],["At least one team scores no goals",s.bttsNo]].map(([k,v])=>{const m=element("div",null,"market");m.append(element("small",k),element("strong",percent(v)));return m;}));
     replace(byId("scorelines"),s.scorelines.map(x=>{const m=element("div",null,"score");m.append(element("strong",x.home+" – "+x.away),element("span",percent(x.probability)));return m;}));
-    byId("scenario-summary").textContent="These chances are based only on the goals you entered: "+h+" for the home team and "+a+" for the visiting team. Team form and news are not included.";
+    byId("scenario-summary").textContent="These chances are based only on the goals you entered: "+h+" for the home team and "+a+" for the visiting team. These numbers do not include how the teams have played recently, injuries or other team news.";
   }catch(e){
     byId("scenario-error").textContent="Please enter a number from 0 to 8 for both teams, then try again.";
     for(const id of ["outcomes","markets","scorelines"])byId(id).replaceChildren();
@@ -29,7 +29,7 @@ function drawScenario(){
 byId("scenario-form").addEventListener("submit",e=>{e.preventDefault();drawScenario();});drawScenario();
 async function readJson(file){
   if(!file)throw new Error("Please choose a file first.");
-  if(file.size>5000000)throw new Error("This file is too large. Please choose one smaller than 5 MB.");
+  if(file.size>5000000)throw new Error("This file is too large. Please choose a smaller file (under 5 MB).");
   try{return JSON.parse(await file.text());}catch{throw new Error("We couldn't open this file. Please choose a saved file from Football Intelligence.");}
 }
 function drawEvidence(){
