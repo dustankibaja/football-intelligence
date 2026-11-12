@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Football Intelligence research workspace for probability analysis and local evidence review.">
+  <meta name="theme-color" content="#101c2a">
+  <title>Football Intelligence | Research workspace</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell topbar">
+      <a class="brand" href="#overview"><span class="brand-mark">FI</span><span>Football Intelligence<small>Probability research workspace</small></span></a>
+      <nav aria-label="Main navigation"><a href="#overview">Overview</a><a href="#scenario">Scenario lab</a><a href="#evidence">Evidence</a></nav>
+      <span class="pill">Research preview</span>
+    </div>
+  </header>
+  <main class="shell">
+    <section class="hero" id="overview">
+      <div class="eyebrow"><span class="dot"></span> SCIENTIFIC PROBABILITY ANALYSIS</div>
+      <h1>Understand the match.<br><span>Measure the uncertainty.</span></h1>
+      <p>Explore football outcome probabilities, inspect the original forecast evidence, and keep research separate from production claims.</p>
+      <div class="hero-links"><a class="primary" href="#scenario">Open scenario lab</a><a class="secondary" href="#evidence">Inspect a forecast ledger</a></div>
+    </section>
+    <section class="notice" aria-label="Release status">
+      <div><strong>Research-only environment</strong><p>Live fixtures and certified model forecasts are not published here. The scenario lab uses your own assumptions; imported research records stay on your device. No betting or profitability guarantee.</p></div>
+      <span class="status-label">LIVE RELEASE BLOCKED</span>
+    </section>
+    <section class="section" id="scenario">
+      <div class="section-heading"><div><div class="eyebrow">01 / PROBABILITY LAB</div><h2>Explore a scoring scenario</h2><p>Enter expected goals for both teams to calculate an independent-Poisson scenario. These are user-supplied rates, not fitted C1 or M1 predictions.</p></div></div>
+      <div class="lab">
+        <form id="scenario-form" class="panel" novalidate>
+          <h3>Assumptions</h3>
+          <label for="home-lambda">Home expected goals (λ)</label><input id="home-lambda" type="number" min="0" max="8" step="0.05" value="1.55" required>
+          <label for="away-lambda">Away expected goals (λ)</label><input id="away-lambda" type="number" min="0" max="8" step="0.05" value="1.15" required>
+          <button type="submit" class="primary">Calculate probabilities</button>
+          <p class="small">The two goal counts are assumed independent. Valid inputs: 0–8. Model uncertainty and team news are not incorporated.</p>
+          <p id="scenario-error" class="error" role="alert"></p>
+        </form>
+        <div class="panel">
+          <h3>Outcome probabilities</h3>
+          <div class="prob-grid" id="outcomes"></div>
+          <div class="market-grid" id="markets"></div>
+          <h3 class="score-heading">Most likely scorelines</h3>
+          <div id="scorelines" class="scorelines"></div>
+          <p id="scenario-summary" class="small" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="evidence">
+      <div class="section-heading"><div><div class="eyebrow">02 / IMMUTABLE EVIDENCE</div><h2>Review a paired forecast ledger</h2><p>Import an original research JSON file from a verified GitHub Actions artifact. The browser validates its structure; it does not authenticate its source or publish anything.</p></div></div>
+      <div class="panel">
+        <div class="import-row">
+          <div><label for="ledger-file">Original paired ledger (.json)</label><input id="ledger-file" type="file" accept=".json,application/json"><p class="small">Choose <code>paired_prospective_elo_2627.json</code> extracted from the original artifact.</p></div>
+          <div><label for="assessment-file">Optional result assessment (.json)</label><input id="assessment-file" type="file" accept=".json,application/json" disabled><p class="small">Choose the matching assessment from the independent evaluation workflow.</p></div>
+        </div>
+        <p id="import-status" role="status" class="small">No evidence loaded. Nothing is uploaded to a server.</p><p id="import-error" role="alert" class="error"></p>
+        <div id="evidence-details" hidden>
+          <div id="evidence-summary" class="metric-grid"></div>
+          <div class="filters"><label for="league-filter">Competition<select id="league-filter"><option value="">All leagues</option></select></label><label for="search-filter">Team search<input id="search-filter" placeholder="Search team names"></label><label class="checkbox"><input id="confidence-filter" type="checkbox">Only 50%+ candidate confidence</label></div>
+          <p id="filter-count" class="small" aria-live="polite"></p>
+          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Fixture</th><th>M1 H / D / A</th><th>Elo H / D / A</th><th>Result</th></tr></thead><tbody id="forecast-rows"></tbody></table></div>
+          <p class="small" id="ledger-fingerprint"></p>
+          <button id="clear-ledger" type="button" class="secondary">Clear local evidence</button>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/dustankibaja/football-intelligence/actions/runs/42990766670">Original paired forecast artifact ↗</a><a href="https://github.com/dustankibaja/football-intelligence/actions">Independent result workflows ↗</a><a href="https://github.com/dustankibaja/football-intelligence">Source repository ↗</a></div>
+    </section>
+    <section class="section last-section">
+      <div class="section-heading"><div><div class="eyebrow">03 / RELEASE GATES</div><h2>From research to a trusted tool</h2></div></div>
+      <div class="gate-grid"><article class="panel"><span class="tag">Implemented</span><h3>Scientific engine</h3><p>Versioned models, chronological features, immutable predictions and independent result verification.</p></article><article class="panel"><span class="tag">In validation</span><h3>Challenger evaluation</h3><p>Full-coverage and selective accuracy are distinct. The production champion is unchanged.</p></article><article class="panel"><span class="tag blocked">Blocked</span><h3>Live publication</h3><p>Requires licensed football data, a verified production backend, and approved prospective validation.</p></article></div>
+    </section>
+  </main>
+  <footer class="shell">Football Intelligence · Research preview · No commercial source data shipped with this interface.</footer>
+</body>
+</html>
