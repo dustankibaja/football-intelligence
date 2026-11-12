@@ -39,7 +39,14 @@ jobs:
         working-directory: backend
         run: pytest -q tests/unit/test_multiseason_stability.py
 
+      - name: Report provider permission gate
+        if: github.event_name != 'workflow_dispatch' || vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE == ''
+        run: echo 'Offline regression only. External source fetch is disabled until documented permission is configured.'
+
       - name: Download real source CSV and execute 4 independent OOS season fits
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
+        env:
+          FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE: ${{ vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE }}
         working-directory: backend
         run: |
           python -m app.research.multiseason_stability \
@@ -47,6 +54,7 @@ jobs:
             --output ../research_outputs/four_season_retrospective_oos.json
 
       - name: Validate 5,784 distinct historical OOS results and preserved disclosure
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         run: |
           python - <<'PY'
           import hashlib, json
@@ -133,6 +141,7 @@ jobs:
           PY
 
       - name: Archive scientific results with provenance but not raw source files
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         uses: actions/upload-artifact@v4
         with:
           name: football-multiseason-genuine-oos-research
