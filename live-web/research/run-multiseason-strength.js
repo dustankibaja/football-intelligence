@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { run, validateSeason, SEASONS, LEAGUES } from './multiseason-strength.js';
 const source='openfootball/football.json';
 const ref='e6744429ee395bc86f247348c6184bb08d4eb361';
@@ -24,6 +24,10 @@ const {artifact,...results}=run(matches);
 const payload={...artifact,source,sourceCommit:ref,license:'CC0-1.0',files};
 const frozen={...payload,artifactSha256:createHash('sha256').update(JSON.stringify(payload)).digest('hex')};
 const report={source,sourceCommit:ref,license:'CC0-1.0',files,generatedAt:new Date().toISOString(),artifactSha256:frozen.artifactSha256,...results};
+try {
+  const retained=JSON.parse(await readFile('research/artifacts/multiseason-strength-v1.json','utf8'));
+  if(JSON.stringify(retained)!==JSON.stringify(frozen))throw Error('FROZEN_ARTIFACT_REPRODUCTION_MISMATCH');
+} catch(error) {if(error.code!=='ENOENT')throw error;}
 await mkdir('research-output',{recursive:true});
 await writeFile('research-output/multiseason-strength-report.json',JSON.stringify(report,null,2)+'\n');
 await writeFile('research-output/multiseason-strength-v1.json',JSON.stringify(frozen)+'\n');
