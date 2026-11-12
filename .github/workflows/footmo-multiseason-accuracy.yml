@@ -1,0 +1,31 @@
+name: Footmo Multiseason Accuracy Research
+on:
+  pull_request:
+    paths:
+      - 'live-web/research/**'
+      - 'live-web/tests/multiseason-strength.test.js'
+      - '.github/workflows/footmo-multiseason-accuracy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: live-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify causal feature and model contracts
+        run: node --test tests/multiseason-strength.test.js
+      - name: Evaluate pinned public-domain historical scores
+        run: node research/run-multiseason-strength.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: footmo-multiseason-strength-report
+          path: live-web/research-output/multiseason-strength-report.json
+          retention-days: 90
