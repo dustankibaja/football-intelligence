@@ -71,7 +71,9 @@ export function evaluateAccuracyPair(p,finished,now=new Date()){
       p.pairedBaseline?.model!==MODEL_ID||
       p.pairedBaseline.generatedAt!==p.generatedAt||
       canonicalFixtureKey(p)!==canonicalFixtureKey(p.pairedBaseline)||
-      !p.forecastKey||Date.parse(finished?.utcDate||'')!==Date.parse(p.kickoffUtc)||
+      !p.forecastKey||!Number.isInteger(finished?.score?.fullTime?.home)||finished.score.fullTime.home<0||
+      !Number.isInteger(finished?.score?.fullTime?.away)||finished.score.fullTime.away<0||
+      Date.parse(finished?.utcDate||'')!==Date.parse(p.kickoffUtc)||
       now.getTime()<Date.parse(p.kickoffUtc)+FOUR_HOURS)return null;
   const candidate=evaluateForecast(p,finished,now);
   const baseline=evaluateForecast(p.pairedBaseline,finished,now);
@@ -109,6 +111,7 @@ export function prospectiveAccuracyComparison(predictions=[],evaluations=[]){
     const p=latest.get(canonicalFixtureKey(e));
     return p&&e.forecastKey===p.forecastKey&&e.researchOnly===true&&
       e.candidatePick===top(p.p1x2)&&e.baselinePick===top(p.pairedBaseline.p1x2)&&
+      Number.isInteger(e.home)&&e.home>=0&&Number.isInteger(e.away)&&e.away>=0&&
       e.outcome===outcome(e.home,e.away)&&Number.isFinite(e.baselineLogLoss)&&Number.isFinite(e.logLoss1x2)&&
       Date.parse(e.observedAt)>=Date.parse(p.kickoffUtc)+FOUR_HOURS;
   });
