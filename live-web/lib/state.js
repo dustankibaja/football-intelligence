@@ -4,6 +4,8 @@ import { predictFixture, evaluateForecast, summarizeEvaluations,
 import { fetchRealFixtures } from './provider.js';
 import { predictShadowFixture, evaluateShadowForecast,
   shadowComparison } from './shadow.js';
+import { predictAccuracyPair, evaluateAccuracyPair,
+  prospectiveAccuracyComparison, historicalAccuracyComparison } from './accuracy-research.js';
 import { normalizeFinished, buildHistory, auditSummary, inRollingWindow } from './history.js';
 import { canonicalFixtureKey, latestForecastsByMatch,
   latestUpcomingForecasts, needsForecastRevision,
@@ -15,6 +17,7 @@ const emptyState = () => ({
   schema: 1, source: 'football-data.org/v4', model: MODEL_ID,
   lastRefreshAt: null, predictions: [], evaluations: [],
   shadowPredictions: [], shadowEvaluations: [],
+  accuracyPredictions: [], accuracyEvaluations: [], accuracyBacktest: null,
   providerErrors: [], leagueCounts: [], backtest: null,
   finishedMatches: [], resultCorrections: []
 });
@@ -37,13 +40,16 @@ export async function readState() {
   return { data };
 }
 
-function applyProviderData(previous, feed, now) {
+export function applyProviderData(previous, feed, now) {
   const data = structuredClone(previous);
   // Existing v1 snapshots predate shadow mode. Never rewrite old snapshots.
   data.shadowPredictions ||= [];
   data.shadowEvaluations ||= [];
+  data.accuracyPredictions ||= [];
+  data.accuracyEvaluations ||= [];
   const latestForecastByMatch = latestForecastsByMatch(data.predictions);
   const shadowLatestByMatch = latestForecastsByMatch(data.shadowPredictions);
+  const accuracyLatestByMatch = latestForecastsByMatch(data.accuracyPredictions);
   const correctedLeagues = new Set();
   const completed = new Map((data.finishedMatches || []).map(m => [m.fixtureId, m]));
   const corrections = data.resultCorrections || [];
@@ -90,6 +96,23 @@ function applyProviderData(previous, feed, now) {
         if (prior) revised++;
         else created++;
       }
+      // One independent improvement lane, paired at the same cutoff with
+      // an original-engine estimate. Old forecasts and shadow forecasts stay intact.
+      if (process.env.ACCURACY_RESEARCH_ENABLED !== 'false') {
+        const accuracyPrior = accuracyLatestByMatch.get(key);
+        const pair = predictAccuracyPair(fixture, league.finished, now);
+        if (needsForecastRevision(accuracyPrior, pair, {
+          scoreCorrected: correctedLeagues.has(league.code)
+        })) {
+          const version = accuracyPrior ? (accuracyPrior.forecastVersion || 1) + 1 : 1;
+          pair.forecastKey = `accuracy:${fixture.id}:${fixture.utcDate}:revision-${version}:${now.toISOString()}`;
+          pair.forecastVersion = version;
+          pair.competition = league.name;
+          pair.competitionCode = league.code;
+          data.accuracyPredictions.push(pair);
+          accuracyLatestByMatch.set(key, pair);
+        }
+      }
       if (process.env.SHADOW_MODE_ENABLED === 'false') continue;
       const shadowPrior = shadowLatestByMatch.get(key);
       const candidate = predictShadowFixture(fixture, league.finished, now);
@@ -130,6 +153,17 @@ function applyProviderData(previous, feed, now) {
         version: (latest?.version || 0) + 1
       });
       evaluated++;
+    }
+    for (const pair of data.accuracyPredictions) {
+      if (pair.competitionCode !== league.code) continue;
+      const final = finals.get(pair.fixtureId);
+      if (!final) continue;
+      const score = evaluateAccuracyPair(pair, final, now);
+      if (!score) continue;
+      const versions = data.accuracyEvaluations.filter(e => e.forecastKey === pair.forecastKey);
+      const latest = versions.at(-1);
+      if (latest?.scoreFingerprint === score.scoreFingerprint) continue;
+      data.accuracyEvaluations.push({...score, version:(latest?.version || 0)+1});
     }
     // Shadow outcomes are evaluated only if an actual pre-kickoff challenger
     // forecast was persisted. Never backfill older fixtures retrospectively.
@@ -177,6 +211,7 @@ function applyProviderData(previous, feed, now) {
     top1ScoreHitRate: weighted('top1ScoreHitRate'),
     perLeague: byLeague
   };
+  data.accuracyBacktest = historicalAccuracyComparison(feed.leagues);
   return { data, created, revised, evaluated,
     shadowCreated, shadowRevised, shadowEvaluated };
 }
@@ -189,6 +224,9 @@ export function viewState(data, now = new Date()) {
   const upcoming = latestUpcomingForecasts(data.predictions, now);
   const shadowUpcoming = latestUpcomingForecasts(data.shadowPredictions || [], now);
   const shadowWatch = shadowUpcoming.filter(p => p.selection?.status === 'WATCH_ONLY').length;
+  const accuracyResearch = prospectiveAccuracyComparison(
+    data.accuracyPredictions || [], data.accuracyEvaluations || []);
+  const accuracyUpcoming = latestUpcomingForecasts(data.accuracyPredictions || [], now);
   const shadow = shadowComparison(data.predictions, data.evaluations,
     data.shadowPredictions || [], data.shadowEvaluations || []);
   return {
@@ -207,6 +245,8 @@ export function viewState(data, now = new Date()) {
     resultCorrections: (data.resultCorrections || []).length,
     performance: summarizeEvaluations(evaluations),
     backtest: data.backtest || null,
+    accuracyResearch: {...accuracyResearch, pendingUpcoming:accuracyUpcoming.length,
+      historical: data.accuracyBacktest || null, publicPredictions:false},
     shadow: {
       ...shadow, enabled: process.env.SHADOW_MODE_ENABLED !== 'false',
       pendingUpcoming: shadowUpcoming.length, watchOnlyUpcoming: shadowWatch,
