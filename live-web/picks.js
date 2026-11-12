@@ -2,8 +2,8 @@ import { isFresh, landingMatches } from './picks-core.js';
 
 const $ = id => document.getElementById(id);
 let state = null;
-let days = 7;
-let view = 'green';
+let days = 14;
+let view = 'all';
 let visible = 12;
 let pendingRequest = false;
 
@@ -36,11 +36,11 @@ function cardFor({ forecast: p, candidate, green }) {
   const title = element('div', 'match-title');
   const teams = element('div', 'match-teams');
   teams.append(element('div', 'pick-caption',
-    green ? 'GREEN LIGHT · TEAM TO CONSIDER' : 'HIGHEST TEAM WIN CHANCE'));
+    green ? 'STRONGER PICK' : 'TEAM MORE LIKELY TO WIN'));
   teams.append(element('h3', '', candidate.team));
   const opponent = candidate.side === 'HOME' ? p.awayTeam : p.homeTeam;
   teams.append(element('div', 'match-opponent',
-    `vs ${opponent} · ${candidate.side === 'HOME' ? 'Home' : 'Away'} win`));
+    `vs ${opponent} · ${candidate.side === 'HOME' ? 'Home team' : 'Visiting team'}`));
 
   const chance = element('div', 'match-percent');
   chance.append(element('strong', '', pct(candidate.probability)),
@@ -56,16 +56,16 @@ function cardFor({ forecast: p, candidate, green }) {
   const footer = element('div', 'match-footer');
   if (green) {
     const badge = element('span', 'signal-badge');
-    badge.append(element('span', 'green-dot'), element('span', '', 'GREEN LIGHT'));
+    badge.append(element('span', 'green-dot'), element('span', '', 'STRONGER PICK'));
     footer.append(badge);
   } else {
-    footer.append(element('span', 'neutral-badge', 'No green signal'));
+    footer.append(element('span', 'neutral-badge', 'No stronger pick'));
   }
   const odds = element('span', 'outcomes');
   odds.append(
-    element('span', '', '1 '), element('b', '', pct(p.p1x2[0])),
-    element('span', '', ' · X '), element('b', '', pct(p.p1x2[1])),
-    element('span', '', ' · 2 '), element('b', '', pct(p.p1x2[2]))
+    element('span', '', 'Home ' ), element('b', '', pct(p.p1x2[0])),
+    element('span', '', ' · Draw ' ), element('b', '', pct(p.p1x2[1])),
+    element('span', '', ' · Visiting ' ), element('b', '', pct(p.p1x2[2]))
   );
   odds.setAttribute('aria-label',
     `Home ${pct(p.p1x2[0])}, draw ${pct(p.p1x2[1])}, away ${pct(p.p1x2[2])}`);
@@ -91,20 +91,20 @@ function render() {
   $('green-count').textContent = String(green.length);
   $('last-update').textContent = state.lastRefreshAt
     ? 'Checked ' + dateTime(state.lastRefreshAt)
-    : 'No verified update yet';
+    : 'No recent update yet';
   $('data-status').textContent = !navigator.onLine ? 'Offline'
-    : fresh ? 'Provider connected' : 'Updates delayed';
+    : fresh ? 'Match data ready' : 'Updates delayed';
   $('data-status').classList.toggle('error', !fresh);
   $('offline-banner').hidden = navigator.onLine;
 
   const errors = [
-    state.refreshError ? 'Provider refresh delayed' : null,
+    state.refreshError ? 'Match update delayed' : null,
     ...(state.providerErrors || []).map(x => x.competition
-      ? x.competition + ' update delayed' : 'Provider update delayed')
+      ? x.competition + ' update delayed' : 'Match update delayed')
   ].filter(Boolean);
   const notice = !navigator.onLine
-    ? 'Live picks are paused while offline.'
-    : !fresh ? 'Green signals are paused until a verified provider refresh succeeds.'
+    ? 'Reconnect to see the latest matches.'
+    : !fresh ? 'Stronger picks are hidden until we receive a fresh match update.'
       : '';
   $('error-message').hidden = !notice && !errors.length;
   $('error-message').textContent = [notice, ...errors].join(' · ');
@@ -113,14 +113,14 @@ function render() {
   if (rows.length) {
     children = rows.slice(0, visible).map(cardFor);
   } else if (!fresh && view === 'green') {
-    children = [showEmpty('Green signals temporarily paused',
-      'Footmo needs a recent, successful data update before highlighting a team. You can still browse all fixtures without green recommendations.')];
+    children = [showEmpty('Stronger picks are paused',
+      'We need a fresh match update. You can still browse all matches.')];
   } else if (!all.length) {
-    children = [showEmpty('No upcoming fixtures in this period',
-      'There are no eligible verified-source forecasts for these dates. Try a longer time period or check back after the next update.')];
+    children = [showEmpty('No upcoming matches in this period',
+      'Try a longer time period or check again after our next update.')];
   } else {
-    children = [showEmpty('No team clears 60% right now',
-      'None of the eligible teams has a strictly greater than 60% model-estimated win chance in this period. No pick is forced. Switch to All matches to explore.')];
+    children = [showEmpty('No stronger picks right now',
+      'No team has a win chance above 60% in this period. Choose All matches to see the other games.')];
   }
   $('picks-list').replaceChildren(...children);
   $('load-more').hidden = rows.length <= visible;
@@ -183,11 +183,11 @@ async function refresh(manual = false) {
       $('green-count').textContent = '0';
       $('data-status').textContent = 'Connection error';
       $('data-status').classList.add('error');
-      $('last-update').textContent = 'Unable to verify fixtures';
+      $('last-update').textContent = 'Unable to update matches';
       $('error-message').hidden = false;
-      $('error-message').textContent = String(error.message);
-      $('picks-list').replaceChildren(showEmpty('Unable to load verified matches',
-        'Please check your connection and try refreshing. Footmo never invents match forecasts.'));
+      $('error-message').textContent = 'We could not load matches right now. Please try again.';
+      $('picks-list').replaceChildren(showEmpty('Unable to load matches',
+        'Please check your connection and try refreshing.'));
       $('load-more').hidden = true;
     }
   } finally {
