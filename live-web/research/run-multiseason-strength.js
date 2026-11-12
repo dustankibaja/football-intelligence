@@ -12,11 +12,14 @@ for(const season of SEASONS){
     if(!response.ok)throw Error('Source request failed '+path+' '+response.status);
     const bytes=Buffer.from(await response.arrayBuffer());
     if(!bytes.length||bytes.length>2e6)throw Error('Unexpected file size '+path);
-    const rows=validateSeason(JSON.parse(bytes),season,league);
+    const raw=JSON.parse(bytes);
+    const rows=validateSeason(raw,season,league);
+    const excluded=raw.matches.filter(m=>!Array.isArray(m.score?.ft??m.score)).map(m=>({date:m.date,home:m.team1,away:m.team2,reason:'MISSING_FINAL_SCORE'}));
     matches.push(...rows);
-    files.push({path,sha256:createHash('sha256').update(bytes).digest('hex'),rows:rows.length});
+    files.push({path,sha256:createHash('sha256').update(bytes).digest('hex'),rows:rows.length,sourceRows:raw.matches.length,excluded});
   }
 }
+if(files.reduce((n,f)=>n+f.excluded.length,0)!==20)throw Error('Unexpected pinned-source missing score count');
 const report={source,sourceCommit:ref,license:'CC0-1.0',files,generatedAt:new Date().toISOString(),
   ...run(matches)};
 await mkdir('research-output',{recursive:true});
