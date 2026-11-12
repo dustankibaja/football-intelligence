@@ -48,7 +48,14 @@ jobs:
         run: |
           pytest -q tests/unit/test_prospective_accuracy_challenger.py tests/unit/test_prospective_accuracy_evaluator.py tests/unit/test_prospective_shadow_research.py
 
+      - name: Report provider permission gate
+        if: github.event_name != 'workflow_dispatch' || vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE == ''
+        run: echo 'Offline regression only. External source fetch is disabled until documented permission is configured.'
+
       - name: Download provenance-pinned real history and fresh schedule, then issue new predictions
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
+        env:
+          FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE: ${{ vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE }}
         working-directory: backend
         run: |
           python -m app.research.prospective_accuracy_challenger \
@@ -57,6 +64,7 @@ jobs:
             --lookahead-days 21
 
       - name: Fail closed on non-future, incomplete, unpaired, changed-source or mutable ledgers
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         run: |
           python - <<'PY'
           from datetime import UTC, datetime
@@ -102,6 +110,7 @@ jobs:
           PY
 
       - name: Independently check real-results lane has zero pre-event scores
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         working-directory: backend
         run: |
           python -m app.research.prospective_accuracy_evaluator \
@@ -120,6 +129,7 @@ jobs:
           PY
 
       - name: Archive NEW independently timestamped paired forecasting evidence
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         uses: actions/upload-artifact@v4
         with:
           name: football-prospective-elo-paired-2026-27
