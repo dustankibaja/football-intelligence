@@ -6,6 +6,8 @@ import { predictShadowFixture, evaluateShadowForecast,
   shadowComparison } from './shadow.js';
 import { predictAccuracyPair, evaluateAccuracyPair,
   prospectiveAccuracyComparison, historicalAccuracyComparison } from './accuracy-research.js';
+import frozenMultiseason from '../research/artifacts/multiseason-strength-v1.json' with { type: 'json' };
+import { makeLivePairs, evaluateLivePair, summarizeLivePairs } from '../research/live-multiseason.js';
 import { normalizeFinished, buildHistory, auditSummary, inRollingWindow } from './history.js';
 import { canonicalFixtureKey, latestForecastsByMatch,
   latestUpcomingForecasts, needsForecastRevision,
@@ -18,6 +20,7 @@ const emptyState = () => ({
   lastRefreshAt: null, predictions: [], evaluations: [],
   shadowPredictions: [], shadowEvaluations: [],
   accuracyPredictions: [], accuracyEvaluations: [], accuracyBacktest: null,
+  multiseasonPredictions: [], multiseasonEvaluations: [], multiseasonResearchErrors: [],
   providerErrors: [], leagueCounts: [], backtest: null,
   finishedMatches: [], resultCorrections: []
 });
@@ -47,9 +50,13 @@ export function applyProviderData(previous, feed, now) {
   data.shadowEvaluations ||= [];
   data.accuracyPredictions ||= [];
   data.accuracyEvaluations ||= [];
+  data.multiseasonPredictions ||= [];
+  data.multiseasonEvaluations ||= [];
+  data.multiseasonResearchErrors = [];
   const latestForecastByMatch = latestForecastsByMatch(data.predictions);
   const shadowLatestByMatch = latestForecastsByMatch(data.shadowPredictions);
   const accuracyLatestByMatch = latestForecastsByMatch(data.accuracyPredictions);
+  const multiseasonLatestByMatch = latestForecastsByMatch(data.multiseasonPredictions);
   const correctedLeagues = new Set();
   const completed = new Map((data.finishedMatches || []).map(m => [m.fixtureId, m]));
   const corrections = data.resultCorrections || [];
@@ -71,6 +78,28 @@ export function applyProviderData(previous, feed, now) {
           observedAt: now.toISOString(), version: record.resultVersion });
       }
       completed.set(id, record);
+    }
+    // Independent multi-season candidate. Any research failure is isolated:
+    // the original model, existing forecasts and live match updates continue.
+    if (process.env.MULTISEASON_RESEARCH_ENABLED !== 'false') {
+      try {
+        const batch = makeLivePairs(league, frozenMultiseason, now);
+        for (const pair of batch.pairs) {
+          const key = canonicalFixtureKey(pair);
+          const prior = multiseasonLatestByMatch.get(key);
+          if (!needsForecastRevision(prior, pair, {
+            scoreCorrected: correctedLeagues.has(league.code)
+          })) continue;
+          const version = prior ? (prior.forecastVersion || 1) + 1 : 1;
+          pair.forecastKey = `multiseason:${pair.fixtureId}:${pair.kickoffUtc}:revision-${version}:${now.toISOString()}`;
+          pair.forecastVersion = version;
+          data.multiseasonPredictions.push(pair);
+          multiseasonLatestByMatch.set(key, pair);
+        }
+        if(batch.reason) data.multiseasonResearchErrors.push({competition:league.code,reason:batch.reason});
+      } catch (error) {
+        data.multiseasonResearchErrors.push({competition:league.code,reason:String(error.message).slice(0,120)});
+      }
     }
     for (const fixture of league.upcoming) {
       const key = canonicalFixtureKey({
@@ -154,6 +183,17 @@ export function applyProviderData(previous, feed, now) {
       });
       evaluated++;
     }
+    for (const pair of data.multiseasonPredictions) {
+      if (pair.competitionCode !== league.code) continue;
+      const final = finals.get(pair.fixtureId);
+      if (!final) continue;
+      const score = evaluateLivePair(pair, final, now);
+      if (!score) continue;
+      const versions = data.multiseasonEvaluations.filter(e => e.forecastKey === pair.forecastKey);
+      const latest = versions.at(-1);
+      if (latest?.scoreFingerprint === score.scoreFingerprint) continue;
+      data.multiseasonEvaluations.push({...score, version:(latest?.version || 0)+1});
+    }
     for (const pair of data.accuracyPredictions) {
       if (pair.competitionCode !== league.code) continue;
       const final = finals.get(pair.fixtureId);
@@ -227,6 +267,8 @@ export function viewState(data, now = new Date()) {
   const accuracyResearch = prospectiveAccuracyComparison(
     data.accuracyPredictions || [], data.accuracyEvaluations || []);
   const accuracyUpcoming = latestUpcomingForecasts(data.accuracyPredictions || [], now);
+  const multiseasonResearch = summarizeLivePairs(data.multiseasonPredictions || [], data.multiseasonEvaluations || []);
+  const multiseasonUpcoming = latestUpcomingForecasts(data.multiseasonPredictions || [], now);
   const shadow = shadowComparison(data.predictions, data.evaluations,
     data.shadowPredictions || [], data.shadowEvaluations || []);
   return {
@@ -247,6 +289,11 @@ export function viewState(data, now = new Date()) {
     backtest: data.backtest || null,
     accuracyResearch: {...accuracyResearch, pendingUpcoming:accuracyUpcoming.length,
       historical: data.accuracyBacktest || null, publicPredictions:false},
+    multiseasonResearch: {...multiseasonResearch, pendingUpcoming:multiseasonUpcoming.length,
+      knownHistoricalTeamPairs:multiseasonUpcoming.filter(p=>p.historicalNameCoverage).length,
+      unknownHistoricalTeams:[...new Set(multiseasonUpcoming.flatMap(p=>p.unknownHistoricalTeams||[]))].sort(),
+      artifactSha256:frozenMultiseason.artifactSha256,
+      errors:data.multiseasonResearchErrors || [],publicPredictions:false},
     shadow: {
       ...shadow, enabled: process.env.SHADOW_MODE_ENABLED !== 'false',
       pendingUpcoming: shadowUpcoming.length, watchOnlyUpcoming: shadowWatch,

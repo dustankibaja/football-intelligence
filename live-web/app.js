@@ -66,14 +66,14 @@ function renderMetrics(performance) {
   }));
   const b = data?.accuracyResearch?.historical;
   $('backtest-summary').textContent = b?.sampleSize
-    ? 'Earlier-match test: our original method got ' + b.baselineCorrect + ' of ' + b.sampleSize + ' right (' + pct(b.baselineAccuracy) + '). The new method got ' + b.candidateCorrect + ' right (' + pct(b.candidateAccuracy) + '). This is a test on past matches, not our live success rate.'
+    ? 'Earlier test of a different improvement: our original method got ' + b.baselineCorrect + ' of ' + b.sampleSize + ' right (' + pct(b.baselineAccuracy) + '). That test method got ' + b.candidateCorrect + ' right (' + pct(b.candidateAccuracy) + '). This is a test on past matches, not our live success rate.'
     : 'We are checking how new ideas would have performed on earlier matches.';
   $('sample-label').textContent = performance.sampleSize === 0
     ? 'Waiting for results'
     : performance.sampleSize < 50
       ? 'Only ' + performance.sampleSize + ' matches so far'
       : performance.sampleSize + ' matches checked';
-  renderShadow(data?.accuracyResearch);
+  renderShadow(data?.multiseasonResearch || data?.accuracyResearch);
 }
 function fixtureCard(p) {
   const card = node('article', 'fixture');
