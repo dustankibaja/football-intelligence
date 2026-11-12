@@ -1,13 +1,13 @@
 {
-  "name": "football-intelligence-web",
+  "name": "footmo-private-trial",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.js",
+    "postinstall": "node scripts/bootstrap.js"
   },
-  "engines": {
-    "node": ">=20"
+  "dependencies": {
+    "@vercel/blob": "^2.3.0"
   }
 }
