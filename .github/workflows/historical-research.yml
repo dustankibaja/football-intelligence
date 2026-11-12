@@ -43,7 +43,14 @@ jobs:
         run: |
           pytest -q tests/unit/test_real_historical_oos_research.py
 
+      - name: Report provider permission gate
+        if: github.event_name != 'workflow_dispatch' || vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE == ''
+        run: echo 'Offline regression only. External source fetch is disabled until documented permission is configured.'
+
       - name: Download authentic completed seasons and measure OOS quality
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
+        env:
+          FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE: ${{ vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE }}
         working-directory: backend
         run: |
           python -m app.research.historical_oos \
@@ -51,6 +58,7 @@ jobs:
             --output ../research_outputs/sealed_2025_26_oos.json
 
       - name: Assert complete provenance and no fabricated outcomes
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         run: |
           python - <<'PY'
           import json
@@ -76,6 +84,7 @@ jobs:
           PY
 
       - name: Upload reproducible aggregated scientific evidence (no raw provider redistribution)
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         uses: actions/upload-artifact@v4
         with:
           name: football-research-sealed-2025-26-oos
