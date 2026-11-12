@@ -109,22 +109,8 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
-      - name: Issue separate exact-score extension BEFORE fixture date
-        if: github.event_name == 'push' && steps.window.outputs.active == 'false'
-        working-directory: backend
-        run: |
-          python -m app.research.exact_score_extension \
-            --original-ledger ../research_outputs/original/prospective_shadow_2026_27.json \
-            --output ../research_outputs/locked_63_score_extension.json
-
-      - name: Archive pre-match exact-score extension as new immutable artifact
-        if: github.event_name == 'push' && steps.window.outputs.active == 'false'
-        uses: actions/upload-artifact@v4
-        with:
-          name: football-prospective-63-score-extension-locked
-          path: research_outputs/locked_63_score_extension.json
-          retention-days: 90
-          if-no-files-found: error
+      # The original pre-match extension is already archived. Never reissue
+      # it on a later code push; only retrieve the previously sealed artifact.
 
       - name: Retrieve original pre-match score extension (never regenerate after kickoff)
         if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
