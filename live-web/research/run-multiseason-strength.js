@@ -20,8 +20,12 @@ for(const season of SEASONS){
   }
 }
 if(files.reduce((n,f)=>n+f.excluded.length,0)!==20)throw Error('Unexpected pinned-source missing score count');
-const report={source,sourceCommit:ref,license:'CC0-1.0',files,generatedAt:new Date().toISOString(),
-  ...run(matches)};
+const {artifact,...results}=run(matches);
+const payload={...artifact,source,sourceCommit:ref,license:'CC0-1.0',files};
+const frozen={...payload,artifactSha256:createHash('sha256').update(JSON.stringify(payload)).digest('hex')};
+const report={source,sourceCommit:ref,license:'CC0-1.0',files,generatedAt:new Date().toISOString(),artifactSha256:frozen.artifactSha256,...results};
 await mkdir('research-output',{recursive:true});
 await writeFile('research-output/multiseason-strength-report.json',JSON.stringify(report,null,2)+'\n');
+await writeFile('research-output/multiseason-strength-v1.json',JSON.stringify(frozen)+'\n');
+console.log('FROZEN_MODEL_ARTIFACT='+JSON.stringify(frozen));
 console.log(JSON.stringify({training:report.training,development:report.development,test:report.test,promotionEligible:false},null,2));
