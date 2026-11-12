@@ -29,6 +29,7 @@ from sklearn.preprocessing import StandardScaler
 from app.models.evaluation import ModelEvaluator
 from app.models.baselines.attack_defense_poisson import AttackDefensePoissonModel
 from app.models.dataset_dto import ModelingRowDTO
+from app.research.source_policy import require_football_data_network_permission
 from app.research.uncertainty import (
     date_clustered_log_loss_skill,
     draw_probability_audit,
@@ -135,6 +136,8 @@ def download_completed_seasons(raw_dir: Path) -> tuple[list[Fixture], list[dict]
             if path.exists():
                 raw = path.read_bytes()
             else:
+                # Existing rights-reviewed local snapshots work without any network access.
+                require_football_data_network_permission()
                 last_error = None
                 for attempt in range(3):
                     try:
