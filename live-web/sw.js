@@ -1,6 +1,6 @@
 // Footmo private-trial app shell only. Scientific data and authenticated API
 // responses are ALWAYS network-only: never store match predictions or results.
-const SHELL_CACHE = 'footmo-shell-v2';
+const SHELL_CACHE = 'footmo-shell-v3';
 const OFFLINE_PAGE = '/offline.html';
 const SHELL_ASSETS = [
   OFFLINE_PAGE, '/picks.css', '/picks.js', '/picks-core.js',
@@ -39,7 +39,7 @@ self.addEventListener('fetch', event => {
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(async () =>
       (await caches.match(OFFLINE_PAGE)) || new Response(
-        'Footmo is offline. Connect to the internet to see verified predictions.',
+        'Footmo is offline. Connect to the internet to see the latest matches.',
         { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
       )));
     return;
