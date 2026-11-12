@@ -1,7 +1,7 @@
 const $ = id => document.getElementById(id);
 let data = null, activeLeague = 'ALL', activeWindow = 14;
 let fixtureVisible = 20;
-let historyDays = 2, historyVerdict = 'ALL', historyLeague = 'ALL';
+let historyDays = 'ALL', historyVerdict = 'ALL', historyLeague = 'ALL';
 let historyVisible = 24;
 const DAY_MS = 24 * 60 * 60 * 1000;
 function withinWindow(iso, days, direction = 'future') {
@@ -14,7 +14,7 @@ function withinWindow(iso, days, direction = 'future') {
     ? when <= now && when >= now - duration
     : when > now && when <= now + duration;
 }
-const pct = p => Number.isFinite(Number(p)) ? `${(Number(p) * 100).toFixed(1)}%` : '—';
+const pct = p => p !== null && p !== undefined && Number.isFinite(Number(p)) ? `${(Number(p) * 100).toFixed(1)}%` : '—';
 const metric = x => x === null || x === undefined ? '—' : Number(x).toFixed(3);
 const time = iso => iso ? new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium', timeStyle: 'short'
@@ -27,24 +27,21 @@ function node(tag, className, value) {
   return el;
 }
 function empty(message) { return node('div', 'empty', message); }
-function renderShadow(shadow) {
-  if (!shadow) {
-    $('shadow-summary').textContent = 'Shadow evaluation has not started. No candidate has been promoted.';
-    $('shadow-stats').replaceChildren();
-    return;
-  }
-  $('shadow-summary').textContent = shadow.enabled
-    ? `Candidate: ${shadow.candidateModel} · ${shadow.status.replaceAll('_', ' ')} · no automatic promotion.`
-    : 'Shadow model disabled. Production forecasts remain unchanged.';
+function renderShadow(shadow, research) {
+  const paired = research?.sampleSize || 0;
+  const pending = research?.pendingUpcoming || 0;
+  $('shadow-summary').textContent = paired
+    ? 'We compared two ways of predicting the same ' + paired + ' completed matches. Our original method still powers the website.'
+    : pending
+      ? 'We have made test predictions for ' + pending + ' upcoming matches. We will compare them when the games finish.'
+      : 'We are preparing new test predictions. Our original method still powers the website.';
   const rows = [
-    ['Upcoming shadow forecasts', shadow.pendingUpcoming || 0],
-    ['Watch-only candidates', shadow.watchOnlyUpcoming || 0],
-    ['Shadow evaluations', shadow.shadowEvaluated || 0],
-    ['Paired evaluations', shadow.pairedEvaluated || 0],
-    ['Paired 1X2 log-loss difference', shadow.pairedLogLossDelta == null
-      ? '—' : Number(shadow.pairedLogLossDelta).toFixed(3)],
-    ['Paired Brier difference', shadow.pairedBrierDelta == null
-      ? '—' : Number(shadow.pairedBrierDelta).toFixed(3)]
+    ['Matches waiting for results', pending],
+    ['Matches compared', paired],
+    ['Original method right', paired ? research.baselineCorrect + ' of ' + paired : 'Not yet'],
+    ['New method right', paired ? research.candidateCorrect + ' of ' + paired : 'Not yet'],
+    ['Original success rate', paired ? pct(research.baselineAccuracy) : 'Not yet'],
+    ['New success rate', paired ? pct(research.candidateAccuracy) : 'Not yet']
   ];
   $('shadow-stats').replaceChildren(...rows.map(([label, value]) => {
     const box = node('div', 'history-stat');
@@ -53,29 +50,30 @@ function renderShadow(shadow) {
   }));
 }
 function renderMetrics(performance) {
+  const a = data?.historyAudit || {};
   const values = [
-    ['Evaluated fixtures', String(performance.sampleSize ?? 0)],
-    ['1X2 log loss ↓', metric(performance.meanLogLoss1x2)],
-    ['1X2 Brier ↓', metric(performance.meanBrier1x2)],
-    ['BTTS log loss ↓', metric(performance.meanBttsLogLoss)],
-    ['Over/Under log loss ↓', metric(performance.meanOu25LogLoss)],
-    ['Exact-score hit rate', pct(performance.top1ScoreHitRate)]
+    ['Predictions checked', String(a.evaluated ?? 0)],
+    ['Correct predictions', String(a.correct ?? 0)],
+    ['Incorrect predictions', String(a.incorrect ?? 0)],
+    ['Overall success rate', pct(a.accuracy)],
+    ['Stronger picks right', a.greenEvaluated ? a.greenCorrect + ' of ' + a.greenEvaluated : 'Not yet'],
+    ['Exact final score right', pct(performance.top1ScoreHitRate)]
   ];
   $('metrics').replaceChildren(...values.map(([label, value]) => {
     const box = node('div', 'metric');
     box.append(node('span', '', label), node('strong', '', value));
     return box;
   }));
-  const b = data?.backtest;
+  const b = data?.accuracyResearch?.historical;
   $('backtest-summary').textContent = b?.sampleSize
-    ? `RETROSPECTIVE WALK-FORWARD BENCHMARK (not live certification): ${b.sampleSize} earlier fixtures · 1X2 log loss ${metric(b.meanLogLoss1x2)} · Brier ${metric(b.meanBrier1x2)}. Each test match was predicted using only earlier results.`
-    : 'Historical walk-forward benchmark not yet available.';
+    ? 'Earlier-match test: our original method got ' + b.baselineCorrect + ' of ' + b.sampleSize + ' right (' + pct(b.baselineAccuracy) + '). The new method got ' + b.candidateCorrect + ' right (' + pct(b.candidateAccuracy) + '). This is a test on past matches, not our live success rate.'
+    : 'We are checking how new ideas would have performed on earlier matches.';
   $('sample-label').textContent = performance.sampleSize === 0
-    ? 'No observed evaluations yet'
+    ? 'Waiting for results'
     : performance.sampleSize < 50
-      ? `Small sample · ${performance.sampleSize} matches`
-      : `Observed · ${performance.sampleSize} matches`;
-  renderShadow(data?.shadow);
+      ? 'Only ' + performance.sampleSize + ' matches so far'
+      : performance.sampleSize + ' matches checked';
+  renderShadow(data?.shadow, data?.accuracyResearch);
 }
 function fixtureCard(p) {
   const card = node('article', 'fixture');
@@ -87,7 +85,7 @@ function fixtureCard(p) {
     node('span', '', p.awayTeam));
   const odds = node('div', 'probabilities');
   const best = Math.max(...p.p1x2);
-  [['HOME', p.p1x2[0]], ['DRAW', p.p1x2[1]], ['AWAY', p.p1x2[2]]]
+  [['Home team wins', p.p1x2[0]], ['Draw (same score)', p.p1x2[1]], ['Visiting team wins', p.p1x2[2]]]
     .forEach(([label, value]) => {
       const box = node('div', 'prob' + (value === best ? ' high' : ''));
       box.append(node('strong', '', pct(value)), node('small', '', label));
@@ -95,10 +93,10 @@ function fixtureCard(p) {
     });
   const bottom = node('div', 'fixture-bottom');
   const items = [
-    ['BTTS', pct(p.pBtts)],
-    ['Over 2.5', pct(p.pOver25)],
-    ['Top score', p.topScores[0]?.score || '—'],
-    ['History', `${p.trainingMatches} matches`]
+    ['Both teams score', pct(p.pBtts)],
+    ['3 or more goals', pct(p.pOver25)],
+    ['Most likely score', p.topScores[0]?.score || '—'],
+    ['Past matches used', `${p.trainingMatches} matches`]
   ];
   for (const [label, value] of items) {
     const item = node('span', '', label + ' ');
@@ -112,14 +110,14 @@ function renderFixtures() {
   const filtered = (data.upcoming || []).filter(p =>
     (activeLeague === 'ALL' || p.competitionCode === activeLeague) &&
     withinWindow(p.kickoffUtc, activeWindow));
-  $('fixture-count').textContent = `${filtered.length} verified-source forecasts`;
+  $('fixture-count').textContent = `${filtered.length} matches`;
   $('fixtures').replaceChildren(...(filtered.length
     ? filtered.slice(0, fixtureVisible).map(fixtureCard)
-    : [empty('No eligible pre-match forecasts for this filter yet. The system never invents upcoming fixtures or probabilities. Check back after the next provider update.')]));
+    : [empty('No upcoming matches found. Try a different league or a longer time period.')]));
   const more = $('fixtures-more');
   more.hidden = filtered.length <= fixtureVisible;
   if (!more.hidden) more.textContent =
-    `Load more predictions (${filtered.length - fixtureVisible} remaining)`;
+    `Show more matches (${filtered.length - fixtureVisible} remaining)`;
 }
 function resultCard(ev) {
   const row = node('article', 'result');
@@ -127,25 +125,24 @@ function resultCard(ev) {
   label.append(node('small', '', `${ev.competition} · ${time(ev.kickoffUtc)}`));
   const score = node('div', 'score', `${ev.home} – ${ev.away}`);
   const stats = node('div', 'result-stats');
-  const line = node('span', '', '1X2 log loss ');
-  line.append(node('b', '', metric(ev.logLoss1x2)));
-  stats.append(line, node('div', '', `Brier ${metric(ev.brier1x2)} · Score hit: ${ev.top1ScoreHit ? 'Yes' : 'No'} · Version ${ev.version}`));
+  const match = (data?.history || []).find(m => m.fixtureId === ev.fixtureId && m.kickoffUtc === ev.kickoffUtc);
+  stats.append(node('span', '', match?.forecastStatus === 'CORRECT' ? 'Prediction was right' : match?.forecastStatus === 'INCORRECT' ? 'Prediction was wrong' : 'Result checked'), node('div', '', ev.top1ScoreHit ? 'Exact final score was right' : 'Exact final score was different'));
   row.append(label, score, stats);
   return row;
 }
 function renderResults() {
   if (!data) return;
-  $('result-count').textContent = `${data.results.length} verified outcomes`;
+  $('result-count').textContent = `${data.results.length} matches checked`;
   $('results').replaceChildren(...(data.results.length
     ? data.results.map(resultCard)
-    : [empty('No completed predicted fixtures have been verified yet. As real matches finish, final scores and scientific scoring will appear here automatically.')]));
+    : [empty('No results for our predictions yet. Final scores will appear here when matches finish.')]));
 }
 const OUTCOME_NAMES = { H: 'Home win', D: 'Draw', A: 'Away win' };
 const VERDICTS = {
-  CORRECT: ['Correct top outcome', 'correct'],
-  INCORRECT: ['Incorrect top outcome', 'incorrect'],
+  CORRECT: ['Prediction right', 'correct'],
+  INCORRECT: ['Prediction wrong', 'incorrect'],
   NO_FORECAST: ['Not predicted', 'unpredicted'],
-  PENDING_EVALUATION: ['Awaiting evaluation', 'pending']
+  PENDING_EVALUATION: ['Waiting for results', 'pending']
 };
 function historyCard(match) {
   const card = node('article', 'history-card');
@@ -164,24 +161,23 @@ function historyCard(match) {
   main.append(teams, winner, verdict);
   const detail = node('div', 'history-detail');
   if (match.forecastStatus === 'NO_FORECAST') {
-    detail.textContent = 'No pre-kickoff Footmo forecast exists for this match.';
+    detail.textContent = 'We did not make a prediction before this match.';
   } else {
     const pick = match.predictedOutcome === 'D' ? 'Draw'
       : match.predictedOutcome === 'H' ? match.homeTeam : match.awayTeam;
     const isGreen = match.predictedOutcome !== 'D' &&
       match.predictedConfidence > 0.60;
-    detail.textContent = `Top outcome: ${pick} (${pct(match.predictedConfidence)}) · ` +
-      (isGreen ? 'Qualifies >60% · ' : 'No green signal · ') +
-      `Actual: ${match.outcome === 'D' ? 'Draw' : match.winner}` +
-      (match.logLoss1x2 == null ? '' : ` · 1X2 log loss: ${metric(match.logLoss1x2)}`);
+    detail.textContent = `We thought: ${pick} (${pct(match.predictedConfidence)}) · ` +
+      (isGreen ? 'Stronger pick · ' : 'Not a stronger pick · ') +
+      `Result: ${match.outcome === 'D' ? 'Draw' : match.winner}`;
   }
   if (match.forecastVersion > 1) {
     detail.append(node('span', 'history-correction',
-      ` · Pre-kickoff forecast revision v${match.forecastVersion}`));
+      ` · Prediction updated before the match`));
   }
   if (match.resultVersion > 1) {
     detail.append(node('span', 'history-correction',
-      ` · Provider score revision v${match.resultVersion}`));
+      ` · Final score corrected`));
   }
   card.append(top, main, detail);
   return card;
@@ -209,16 +205,16 @@ function renderHistory() {
     sum + (m.predictedConfidence || 0), 0);
   const stats = [
     ['Finished matches', period.length],
-    ['All evaluated top outcomes', evaluated],
-    ['Correct top outcomes', correct],
-    ['Incorrect top outcomes', incorrect],
-    ['All-outcome accuracy', accuracy],
-    ['Qualified >60% forecasts', green.length],
-    ['Qualified correct', greenCorrect],
-    ['Qualified accuracy', green.length ? pct(greenCorrect / green.length) : '—'],
-    ['Incorrect outcomes: draws', drawMisses],
-    ['Incorrect outcomes: non-draws', incorrect - drawMisses],
-    ['Expected correct (probability sum)', evaluated ? expectedCorrect.toFixed(1) : '—'],
+    ['Predictions checked', evaluated],
+    ['Prediction rights', correct],
+    ['Prediction wrongs', incorrect],
+    ['Success rate', accuracy],
+    ['Stronger picks checked', green.length],
+    ['Stronger picks right', greenCorrect],
+    ['Stronger picks success rate', green.length ? pct(greenCorrect / green.length) : '—'],
+    ['Missed draws', drawMisses],
+    ['Other missed results', incorrect - drawMisses],
+    
     ['Not predicted', notPredicted]
   ];
   $('history-stats').replaceChildren(...stats.map(([label, value]) => {
@@ -232,10 +228,10 @@ function renderHistory() {
     return historyVerdict === 'ALL' || m.forecastStatus === historyVerdict;
   });
   $('history-count').textContent = `${filtered.length} results` +
-    (pending ? ` · ${pending} pending evaluation` : '');
+    (pending ? ` · ${pending} waiting for results` : '');
   $('history-list').replaceChildren(...(filtered.length
     ? filtered.slice(0, historyVisible).map(historyCard)
-    : [empty('No verified full-time matches match these filters. Try a longer period, another league, or All results.')]));
+    : [empty('No results found. Try a longer period, another league or All results.')]));
   const more = $('history-more');
   more.hidden = filtered.length <= historyVisible;
   if (!more.hidden) more.textContent =
@@ -255,29 +251,28 @@ function bindFilter(groupId, attribute, onSelect) {
 }
 function render() {
   $('last-update').textContent = data.lastRefreshAt
-    ? `Provider last checked: ${time(data.lastRefreshAt)}`
-    : 'Waiting for the first verified provider update';
+    ? `Last updated: ${time(data.lastRefreshAt)}`
+    : 'Waiting for match information';
   const offline = !navigator.onLine;
   $('connection-banner').hidden = !offline;
   $('status').className = 'status' + (data.refreshError || offline ? ' error' : '');
   $('status').textContent = offline ? 'Offline · reconnect to update'
-    : data.refreshError ? 'Provider update delayed'
-      : data.automated ? 'Automatic daily updates enabled' : 'Automation paused';
+    : data.refreshError ? 'Match update delayed'
+      : data.automated ? 'Daily updates on' : 'Updates paused';
   renderMetrics(data.performance);
   renderFixtures();
   renderResults();
   renderHistory();
   const errors = data.providerErrors || [];
   $('provider-errors').hidden = !errors.length && !data.refreshError;
-  $('provider-errors').textContent = [data.refreshError,
-    ...errors.map(x => `${x.competition}: ${x.code}`)].filter(Boolean).join(' · ');
+  $('provider-errors').textContent = [data.refreshError ? 'Match update delayed.' : null, ...errors.map(x => x.competition ? x.competition + ': match update delayed' : 'Match update delayed')].filter(Boolean).join(' · ');
 }
 async function refresh(manual = false) {
   const button = $('refresh');
   button.disabled = true;
   button.setAttribute('aria-busy', 'true');
   button.setAttribute('aria-label', 'Checking football data');
-  button.querySelector('.refresh-label').textContent = 'Checking provider…';
+  button.querySelector('.refresh-label').textContent = 'Checking matches…';
   try {
     if (!navigator.onLine) throw new Error('Offline — reconnect to update match data');
     const response = await fetch(manual ? '/api/state?force=1' : '/api/state', { cache: 'no-store' });
@@ -290,11 +285,11 @@ async function refresh(manual = false) {
   } catch (err) {
     $('status').textContent = 'Connection error';
     $('status').className = 'status error';
-    $('last-update').textContent = String(err.message);
+    $('last-update').textContent = 'We could not update matches. Please try again.';
     if (!data) {
-      $('fixtures').replaceChildren(empty('Real fixture data is temporarily unavailable. No synthetic predictions will be shown.'));
-      $('results').replaceChildren(empty('Awaiting the verified data service.'));
-      $('history-list').replaceChildren(empty('Match history requires a connection to verified football data.'));
+      $('fixtures').replaceChildren(empty('Match information is temporarily unavailable. Please try again.'));
+      $('results').replaceChildren(empty('Waiting for match results.'));
+      $('history-list').replaceChildren(empty('Connect to the internet to see match history.'));
     }
     $('connection-banner').hidden = navigator.onLine;
   } finally {
