@@ -15,11 +15,19 @@ export function validateSeason(raw,season,league){
   const year=+season.slice(0,4), expected=league==='de'?306:380;
   if(!Array.isArray(raw?.matches)||raw.matches.length!==expected)throw Error('Incomplete season '+season+'/'+league);
   const seen=new Set();
-  return raw.matches.map(m=>{
+  return raw.matches.flatMap(m=>{
     const d=m.date,h=m.team1,a=m.team2,s=m.score?.ft??(Array.isArray(m.score)?m.score:null);
-    if(!validDate(d)||d<year+'-07-01'||d>=(year+1)+'-08-01'||typeof h!=='string'||!h.trim()||typeof a!=='string'||!a.trim()||h===a||!Array.isArray(s)||s.length!==2||s.some(x=>!Number.isInteger(x)||x<0||x>20))throw Error('Invalid match/date '+season+'/'+league+'/'+d);
+    if(!validDate(d)||d<year+'-07-01'||d>=(year+1)+'-08-01'||typeof h!=='string'||!h.trim()||typeof a!=='string'||!a.trim()||h===a)throw Error('Invalid match/date '+season+'/'+league+'/'+d);
     const key=h+'|'+a;if(seen.has(key))throw Error('Duplicate pairing '+season+'/'+league);seen.add(key);
-    return {season,league,date:d,home:h,away:a,hg:s[0],ag:s[1],id:season+'/'+league+'/'+key};
+    if(s===null||s===undefined){
+      // The pinned source omits the final ten Spanish and final ten Italian
+      // results in 2024/25. Keep the fixture identity validated; never invent
+      // the scores or treat them as observations. No other missing scores allowed.
+      if(season==='2024-25'&&['es','it'].includes(league)&&d>='2025-05-23'&&d<='2025-05-25'&&m.round==='Matchday 38')return [];
+      throw Error('Missing score '+season+'/'+league+'/'+d);
+    }
+    if(!Array.isArray(s)||s.length!==2||s.some(x=>!Number.isInteger(x)||x<0||x>20))throw Error('Invalid score '+season+'/'+league+'/'+d);
+    return [{season,league,date:d,home:h,away:a,hg:s[0],ag:s[1],id:season+'/'+league+'/'+key}];
   });
 }
 function blank(){return {rating:1500,n:0,homeN:0,awayN:0,last:null,recent:[],gf:0,ga:0};}
