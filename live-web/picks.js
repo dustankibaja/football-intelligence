@@ -82,6 +82,8 @@ function healthy() {
 
 function render() {
   if (!state) return;
+  const a = state.historyAudit;
+  $('trial-result').textContent = a?.evaluated ? 'So far, we got ' + a.correct + ' of ' + a.evaluated + ' predictions right (' + pct(a.accuracy) + ').' : 'We are still checking our earlier predictions.';
   const current = Date.now();
   const fresh = healthy();
   const options = { days, fresh, now: current };
