@@ -42,7 +42,14 @@ jobs:
         run: |
           pytest -q tests/unit/test_advanced_accuracy.py
 
+      - name: Report provider permission gate
+        if: github.event_name != 'workflow_dispatch' || vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE == ''
+        run: echo 'Offline regression only. External source fetch is disabled until documented permission is configured.'
+
       - name: Download historical source files and fit independent rolling-season comparisons
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
+        env:
+          FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE: ${{ vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE }}
         working-directory: backend
         run: |
           python -m app.research.advanced_accuracy \
@@ -50,6 +57,7 @@ jobs:
             --output ../research_outputs/advanced_form_5784_historical.json
 
       - name: Verify same-fixture empirical evidence and preserved historical disclosure
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -92,6 +100,7 @@ jobs:
           PY
 
       - name: Archive research report without redistributing source CSVs
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         uses: actions/upload-artifact@v4
         with:
           name: advanced-form-accuracy-retrospective-2026
