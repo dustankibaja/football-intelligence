@@ -17,6 +17,7 @@ import numpy as np
 from app.research.football_data_result_verifier import (
     SOURCE_BASE,
     collect_result_receipts,
+    local_result_reader,
 )
 from app.research.prospective_accuracy_challenger import _digest
 
@@ -260,6 +261,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--paired-ledger", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--results-dir", type=Path, help="Use approved local source CSV snapshots instead of network downloads.")
     args = parser.parse_args()
     original_path = Path(args.paired_ledger)
     out_path = Path(args.output)
@@ -267,7 +269,10 @@ def main():
         raise ValueError("PAIRED_IMMUTABLE_LEDGER_CANNOT_BE_OVERWRITTEN")
     paired = json.loads(original_path.read_text(encoding="utf-8"))
     retrieved = datetime.now(UTC)
-    receipts = collect_paired_result_receipts(paired, retrieved_at_utc=retrieved)
+    receipts = collect_paired_result_receipts(
+        paired, retrieved_at_utc=retrieved,
+        fetch_bytes=local_result_reader(args.results_dir) if args.results_dir else None,
+    )
     report = evaluate_paired_results(paired, receipts, evaluated_at_utc=datetime.now(UTC))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
