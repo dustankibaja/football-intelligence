@@ -1,8 +1,9 @@
 name: Recover original Footmo source tree
 
 on:
-  push:
-    branches: [restore/original-footmo-20261112]
+  pull_request:
+    paths:
+      - '.github/workflows/recover-original-footmo.yml'
 
 permissions:
   contents: read
@@ -22,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin 46701ad356d3c811b1172f6c668696ce1a809c39
-          echo "RECOVERY_BASE_TREE=$(git rev-parse HEAD^{tree})"
+          echo "RECOVERY_BASE_TREE=$(git rev-parse ${{ github.event.pull_request.head.sha }}^{tree})"
           echo "ORIGINAL_LIVE_WEB_TREE=$(git rev-parse 46701ad356d3c811b1172f6c668696ce1a809c39:live-web)"
           git restore --source=46701ad356d3c811b1172f6c668696ce1a809c39 --staged --worktree -- live-web
           git diff --cached --stat
