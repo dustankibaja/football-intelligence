@@ -3,76 +3,85 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Football Intelligence research workspace for probability analysis and local evidence review.">
+  <meta name="description" content="Explore what could happen in a football match and see how earlier predictions turned out.">
   <meta name="theme-color" content="#101c2a">
-  <title>Football Intelligence | Research workspace</title>
+  <title>Football Intelligence | Understand the game</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.mjs"></script>
 </head>
 <body>
   <header class="site-header">
     <div class="shell topbar">
-      <a class="brand" href="#overview"><span class="brand-mark">FI</span><span>Football Intelligence<small>Probability research workspace</small></span></a>
-      <nav aria-label="Main navigation"><a href="#overview">Overview</a><a href="#scenario">Scenario lab</a><a href="#evidence">Evidence</a></nav>
-      <span class="pill">Research preview</span>
+      <a class="brand" href="#overview"><span class="brand-mark">FI</span><span>Football Intelligence<small>Football, made simple</small></span></a>
+      <nav aria-label="Main menu"><a href="#overview">Home</a><a href="#scenario">Try a match</a><a href="#evidence">Saved predictions</a></nav>
+      <span class="pill">Preview</span>
     </div>
   </header>
   <main class="shell">
     <section class="hero" id="overview">
-      <div class="eyebrow"><span class="dot"></span> SCIENTIFIC PROBABILITY ANALYSIS</div>
-      <h1>Understand the match.<br><span>Measure the uncertainty.</span></h1>
-      <p>Explore football outcome probabilities, inspect the original forecast evidence, and keep research separate from production claims.</p>
-      <div class="hero-links"><a class="primary" href="#scenario">Open scenario lab</a><a class="secondary" href="#evidence">Inspect a forecast ledger</a></div>
+      <div class="eyebrow"><span class="dot"></span> FOOTBALL, MADE SIMPLE</div>
+      <h1>What could happen<br><span>in the next match?</span></h1>
+      <p>See how likely a team is to win, how many goals there might be, and how earlier predictions turned out. No football knowledge needed.</p>
+      <div class="hero-links"><a class="primary" href="#scenario">Try a match</a><a class="secondary" href="#evidence">See saved predictions</a></div>
     </section>
-    <section class="notice" aria-label="Release status">
-      <div><strong>Research-only environment</strong><p>Live fixtures and certified model forecasts are not published here. The scenario lab uses your own assumptions; imported research records stay on your device. No betting or profitability guarantee.</p></div>
-      <span class="status-label">LIVE RELEASE BLOCKED</span>
+    <section class="notice" aria-label="What's available">
+      <div><strong>You're trying an early version</strong><p>You can explore match possibilities and open saved predictions. Live predictions for upcoming games are not available yet. Nothing here guarantees a match result.</p></div>
+      <span class="status-label">LIVE MATCHES COMING LATER</span>
     </section>
     <section class="section" id="scenario">
-      <div class="section-heading"><div><div class="eyebrow">01 / PROBABILITY LAB</div><h2>Explore a scoring scenario</h2><p>Enter expected goals for both teams to calculate an independent-Poisson scenario. These are user-supplied rates, not fitted C1 or M1 predictions.</p></div></div>
+      <div class="section-heading"><div><div class="eyebrow">01 / TRY A MATCH</div><h2>What if these teams played?</h2><p>Tell us how many goals you think each team would score on average. We'll show the chances of different results based on your guesses, not real team information.</p></div></div>
       <div class="lab">
         <form id="scenario-form" class="panel" novalidate>
-          <h3>Assumptions</h3>
-          <label for="home-lambda">Home expected goals (λ)</label><input id="home-lambda" type="number" min="0" max="8" step="0.05" value="1.55" required>
-          <label for="away-lambda">Away expected goals (λ)</label><input id="away-lambda" type="number" min="0" max="8" step="0.05" value="1.15" required>
-          <button type="submit" class="primary">Calculate probabilities</button>
-          <p class="small">The two goal counts are assumed independent. Valid inputs: 0–8. Model uncertainty and team news are not incorporated.</p>
+          <h3>Your guesses</h3>
+          <label for="home-lambda">Goals for the home team</label><input id="home-lambda" type="number" min="0" max="8" step="any" value="1.55" required aria-describedby="home-help">
+          <p class="small" id="home-help">The team playing at its own ground.</p>
+          <label for="away-lambda">Goals for the visiting team</label><input id="away-lambda" type="number" min="0" max="8" step="any" value="1.15" required aria-describedby="away-help">
+          <p class="small" id="away-help">The team playing away from home.</p>
+          <button type="submit" class="primary">See the chances</button>
+          <p class="small">Choose any number from 0 to 8. You can use a number like 1.5 if you think a team would usually score between one and two goals.</p>
           <p id="scenario-error" class="error" role="alert"></p>
         </form>
         <div class="panel">
-          <h3>Outcome probabilities</h3>
+          <h3>Who might win?</h3>
+          <p class="small">A draw means both teams finish with the same number of goals.</p>
           <div class="prob-grid" id="outcomes"></div>
+          <h3 class="score-heading">How many goals might there be?</h3>
           <div class="market-grid" id="markets"></div>
-          <h3 class="score-heading">Most likely scorelines</h3>
+          <h3 class="score-heading">Most likely final scores</h3>
+          <p class="small">The home team's score comes first.</p>
           <div id="scorelines" class="scorelines"></div>
           <p id="scenario-summary" class="small" aria-live="polite"></p>
+          <p class="small">How to read the numbers: a 60% chance means something could happen about 6 times out of 10 in similar games. It does not mean it will definitely happen.</p>
         </div>
       </div>
     </section>
     <section class="section" id="evidence">
-      <div class="section-heading"><div><div class="eyebrow">02 / IMMUTABLE EVIDENCE</div><h2>Review a paired forecast ledger</h2><p>Import an original research JSON file from a verified GitHub Actions artifact. The browser validates its structure; it does not authenticate its source or publish anything.</p></div></div>
+      <div class="section-heading"><div><div class="eyebrow">02 / SAVED PREDICTIONS</div><h2>How did our predictions do?</h2><p>Open saved match predictions and their results to see what we got right and what we got wrong. Your files stay on your device.</p></div></div>
       <div class="panel">
         <div class="import-row">
-          <div><label for="ledger-file">Original paired ledger (.json)</label><input id="ledger-file" type="file" accept=".json,application/json"><p class="small">Choose <code>paired_prospective_elo_2627.json</code> extracted from the original artifact.</p></div>
-          <div><label for="assessment-file">Optional result assessment (.json)</label><input id="assessment-file" type="file" accept=".json,application/json" disabled><p class="small">Choose the matching assessment from the independent evaluation workflow.</p></div>
+          <div><label for="ledger-file">1. Choose a saved predictions file</label><input id="ledger-file" type="file" accept=".json,application/json"><p class="small">Already have a file? Choose it here. Otherwise, use the link below to find our saved predictions.</p></div>
+          <div><label for="assessment-file">2. Choose the matching results file (optional)</label><input id="assessment-file" type="file" accept=".json,application/json" disabled><p class="small">You can see how the predictions did once you add their match results.</p></div>
         </div>
-        <p id="import-status" role="status" class="small">No evidence loaded. Nothing is uploaded to a server.</p><p id="import-error" role="alert" class="error"></p>
+        <p id="import-status" role="status" class="small">No predictions opened yet. Your files will not be sent anywhere.</p><p id="import-error" role="alert" class="error"></p>
         <div id="evidence-details" hidden>
           <div id="evidence-summary" class="metric-grid"></div>
-          <div class="filters"><label for="league-filter">Competition<select id="league-filter"><option value="">All leagues</option></select></label><label for="search-filter">Team search<input id="search-filter" placeholder="Search team names"></label><label class="checkbox"><input id="confidence-filter" type="checkbox">Only 50%+ candidate confidence</label></div>
+          <p class="small">A stronger pick means our second prediction gave the most likely result at least a 50% chance. It can still be wrong. We count only stronger picks with known results when showing how often they were right.</p>
+          <div class="filters"><label for="league-filter">League<select id="league-filter"><option value="">All leagues</option></select></label><label for="search-filter">Find a team<input id="search-filter" placeholder="Type a team name"></label><label class="checkbox"><input id="confidence-filter" type="checkbox">Show stronger picks only</label></div>
           <p id="filter-count" class="small" aria-live="polite"></p>
-          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Fixture</th><th>M1 H / D / A</th><th>Elo H / D / A</th><th>Result</th></tr></thead><tbody id="forecast-rows"></tbody></table></div>
+          <p class="small">We tried two different ways to predict each game. The three numbers in each prediction show the chance of a home win, a draw and a visiting win, in that order.</p>
+          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Match</th><th>First prediction<br>Home / Draw / Visiting</th><th>Second prediction<br>Home / Draw / Visiting</th><th>Final score</th></tr></thead><tbody id="forecast-rows"></tbody></table></div>
           <p class="small" id="ledger-fingerprint"></p>
-          <button id="clear-ledger" type="button" class="secondary">Clear local evidence</button>
+          <button id="clear-ledger" type="button" class="secondary">Clear predictions</button>
         </div>
       </div>
-      <div class="links"><a href="https://github.com/dustankibaja/football-intelligence/actions/runs/42990766670">Original paired forecast artifact ↗</a><a href="https://github.com/dustankibaja/football-intelligence/actions">Independent result workflows ↗</a><a href="https://github.com/dustankibaja/football-intelligence">Source repository ↗</a></div>
+      <div class="links"><a href="https://github.com/dustankibaja/football-intelligence/actions/runs/42990766670">Find saved predictions ↗</a><a href="https://github.com/dustankibaja/football-intelligence/actions">Find saved match results ↗</a></div>
+      <p class="small">These links open our saved project records. You may need to sign in to download a file. Open the downloaded folder and choose the predictions or results file inside.</p>
     </section>
     <section class="section last-section">
-      <div class="section-heading"><div><div class="eyebrow">03 / RELEASE GATES</div><h2>From research to a trusted tool</h2></div></div>
-      <div class="gate-grid"><article class="panel"><span class="tag">Implemented</span><h3>Scientific engine</h3><p>Versioned models, chronological features, immutable predictions and independent result verification.</p></article><article class="panel"><span class="tag">In validation</span><h3>Challenger evaluation</h3><p>Full-coverage and selective accuracy are distinct. The production champion is unchanged.</p></article><article class="panel"><span class="tag blocked">Blocked</span><h3>Live publication</h3><p>Requires licensed football data, a verified production backend, and approved prospective validation.</p></article></div>
+      <div class="section-heading"><div><div class="eyebrow">03 / WHAT'S AVAILABLE</div><h2>What can you do today?</h2></div></div>
+      <div class="gate-grid"><article class="panel"><span class="tag">Ready</span><h3>Explore a match</h3><p>Try different goal guesses to see what results are more or less likely.</p></article><article class="panel"><span class="tag">In progress</span><h3>Check how well we predict</h3><p>We're comparing our predictions with real match results to see which way works best.</p></article><article class="panel"><span class="tag blocked">Not available yet</span><h3>See upcoming matches</h3><p>We're still getting reliable match information and checking our predictions before offering this feature.</p></article></div>
     </section>
   </main>
-  <footer class="shell">Football Intelligence · Research preview · No commercial source data shipped with this interface.</footer>
+  <footer class="shell">Football Intelligence · Early version · Predictions are possibilities, not promises.</footer>
 </body>
 </html>
