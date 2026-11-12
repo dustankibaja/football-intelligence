@@ -111,6 +111,8 @@ jobs:
 
       - name: Independently check real-results lane has zero pre-event scores
         if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
+        env:
+          FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE: ${{ vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE }}
         working-directory: backend
         run: |
           python -m app.research.prospective_accuracy_evaluator \
