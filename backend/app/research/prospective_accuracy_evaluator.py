@@ -156,6 +156,7 @@ def evaluate_paired_results(paired: dict, receipts: list[dict], *, evaluated_at_
             "receipt": {
                 "source_url": source,
                 "source_payload_sha256": raw_hash,
+                "source_collection_mode": receipt.get("source_collection_mode", "ORIGIN_UNVERIFIED"),
                 "retrieved_at_utc": received.isoformat(),
                 "result_time_precision": "DATE_ONLY",
             },
