@@ -34,6 +34,8 @@ jobs:
         run: |
           node --check dist/app.mjs
           node --check dist/analysis.mjs
+          node --check dist/upcoming.mjs
+          node --check dist/upcoming-ui.mjs
           python -m http.server 8765 --directory dist > /tmp/football-web.log 2>&1 &
           server=$!
           trap 'kill "$server" || true' EXIT
@@ -45,6 +47,8 @@ jobs:
           curl --fail --silent http://localhost:8765/app.mjs >/dev/null
           curl --fail --silent http://localhost:8765/analysis.mjs >/dev/null
           curl --fail --silent http://localhost:8765/styles.css >/dev/null
+          curl --fail --silent http://localhost:8765/upcoming-data.json >/tmp/football-upcoming.json
+          node --input-type=module -e 'import fs from "node:fs"; const f=JSON.parse(fs.readFileSync("/tmp/football-upcoming.json")); if(f.source!=="openfootball/football.json"||f.leagues.length!==4||!f.matches.every(m=>m.date>f.generatedOn)) process.exit(1); console.log("Verified real upcoming match feed, "+f.matches.length+" future dates");'
       - name: Archive exact static build
         uses: actions/upload-artifact@v4
         with:
