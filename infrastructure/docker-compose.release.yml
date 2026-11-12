@@ -1,0 +1,56 @@
+# Private research API release bundle. This does not publish any model forecast.
+# Use an independently provisioned host and strong, server-side credentials.
+x-backend-env: &backend-env
+  APP_ENV: production
+  DEBUG: "False"
+  POSTGRES_SERVER: db
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: football
+  POSTGRES_DB: football_intelligence
+  POSTGRES_PASSWORD: ${FI_POSTGRES_PASSWORD:?Set a strong database password}
+  LOG_LEVEL: INFO
+
+x-backend-image: &backend-image
+  image: football-intelligence-backend:local
+  build:
+    context: ../backend
+    dockerfile: Dockerfile
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: football
+      POSTGRES_DB: football_intelligence
+      POSTGRES_PASSWORD: ${FI_POSTGRES_PASSWORD:?Set a strong database password}
+    volumes:
+      - release_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football -d football_intelligence"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *backend-image
+    restart: "no"
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+  api:
+    <<: *backend-image
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      INTERNAL_RESEARCH_READ_TOKEN: ${FI_RESEARCH_READ_TOKEN:?Set a private research bearer token}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # No external API or PostgreSQL port is opened by default.
+    ports:
+      - "127.0.0.1:${FI_API_PORT:-8000}:8000"
+
+volumes:
+  release_postgres:

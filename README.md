@@ -1,120 +1,66 @@
 # Football Intelligence & Probability Analysis System
 
-A scientific data-analysis and probability-estimation platform for European football matches.
+A scientific football probability research and evaluation system for European football.
 
-> **Disclaimer:** This platform is designed strictly for scientific evaluation, statistical research, and probabilistic modeling. It does **not** guarantee match outcomes or provide financial/betting advice.
+> Research workspace, not a certified live commercial forecast service. Probabilities are not guarantees; no betting or financial advice.
 
----
+## Current status
 
-## Current Status: Phase 1 — Development Foundation (Sprint 1.1 Complete)
+- Versioned prediction engine: 1X2, Over/Under 2.5, BTTS and score distributions.
+- Frozen C1 and M1 artifacts, canonical temporal feature contracts and immutable shadow forecasts.
+- Retrospective and prospective comparisons, including independent outcome reconciliation, confidence/coverage tracking and research-only challenger models.
+- Static research workspace in `live-web/`: interactive user-supplied Poisson scenarios, local paired-ledger/assessment inspection, no live fixture feed or publication.
+- Private read-only REST API and reproducible PostgreSQL container deployment.
+- Live commercial data, canonical production database provisioning, independent prospective challenger validation, and model promotion remain gated.
 
-- **Sprint 0.1:** Product Requirements Document (PRD v0.1.2) Signed Off.
-- **Sprint 0.2:** Technical Architecture Specification (v0.2.0) Signed Off.
-- **Sprint 1.1:** Monorepo & Backend Foundational Bootstrap Complete.
-
----
-
-## Architectural Principles
-
-1. **Probability, Not Certainty:** Every match outcome is expressed as a calibrated probability distribution ($P_{\text{Home}}, P_{\text{Draw}}, P_{\text{Away}}$).
-2. **Zero Dependency on Bookmaker Odds:** Core prediction engine operates strictly independently from commercial betting markets.
-3. **Data Leakage Prevention:** Temporal isolation rules (DL-01 to DL-07) prevent post-kickoff information from entering pre-match features.
-4. **Distinct Data Quality & Prediction Uncertainty:** Input data completeness is measured separately from outcome distribution spread.
-5. **Immutable Snapshot Ledger:** Pre-match prediction snapshots ($T-24\text{h}, T-6\text{h}, T-90\text{min}$) are append-only.
-6. **Comparative Model Evaluation:** Models are evaluated comparatively against Baseline A (Historical Base Rates), Baseline B (Elo-Only), and Baseline C (Basic Poisson).
-
----
-
-## Monorepo Layout
+## Repository layout
 
 ```text
-football-intelligence-system/
-├── backend/            # FastAPI, SQLAlchemy 2.0, Alembic, Pytest backend core
-├── frontend/           # Next.js 14+ TypeScript dashboard placeholder (MVP-C)
-├── data/               # Raw, interim, and processed data directories
-├── docs/               # System architecture specs, PRDs, and ADRs
-├── infrastructure/     # Docker Compose PostgreSQL local setup
-├── scripts/            # Cross-platform development helper scripts
-└── .github/            # GitHub Actions CI workflow
+backend/           FastAPI, SQLAlchemy, Alembic, scientific models and tests
+live-web/          Dependency-free research web workspace (Vercel root)
+frontend/          Legacy frontend planning placeholder; not the deployment root
+data/              Local data storage; do not commit licensed raw source files
+docs/              Architecture, research evidence and operating procedures
+infrastructure/    Local PostgreSQL and private release container configuration
+.github/           Test, research and deployment workflows
 ```
 
----
-
-## Quick Start (Local Setup)
-
-### Prerequisites
-
-- Python 3.11+
-- PostgreSQL 16 (Native or Docker)
-- Git
-
-### 1. Clone & Set Up Virtual Environment
+## Run the research workspace locally
 
 ```bash
-git clone https://github.com/your-org/football-intelligence-system.git
-cd football-intelligence-system
-
-python -m venv .venv
-# Activate virtual environment:
-# Windows (PowerShell): .venv\Scripts\Activate.ps1
-# Linux/macOS: source .venv/bin/activate
+cd live-web
+npm test
+npm run build
+python -m http.server 8080 --directory dist
 ```
 
-### 2. Install Dependencies
+Open `http://localhost:8080`. The scenario lab uses manually supplied expected-goal assumptions, not the trained models. Import your own approved research artifacts locally; nothing is transmitted by the browser.
+
+## Run the private API
+
+Use Python 3.11+ and PostgreSQL 16. For a disposable local/private release:
 
 ```bash
-pip install -e "./backend[dev]"
+# Supply FI_POSTGRES_PASSWORD and FI_RESEARCH_READ_TOKEN securely in the environment.
+# Generate unique strong credentials; never commit them.
+docker compose -f infrastructure/docker-compose.release.yml up --build -d
+curl http://127.0.0.1:8000/api/v1/health
 ```
 
-### 3. Environment Configuration
+The composition creates an initially empty PostgreSQL database, applies the canonical migration chain and binds the API to localhost. It does not import the approved historical corpus, ingest live fixtures or publish model forecasts. Private matches, predictions, models and evaluations require a server-side bearer token of at least 32 characters. For a real deployment, provision a secured server, approved data and backups, TLS, secret management and operational monitoring.
 
-```bash
-copy .env.example .env
-```
+Alternative development setup: `pip install -e "./backend[dev]"`, configure a local PostgreSQL database using `.env.example`, run `alembic upgrade head` from `backend/`, then `uvicorn app.main:app --reload --port 8000`. Production refuses SQLite fallback.
 
-### 4. Start Local PostgreSQL Database
+## Data rights and scientific gates
 
-Using Docker Compose:
-```bash
-docker-compose -f infrastructure/docker-compose.yml up -d
-```
+Football-Data.co.uk's free data is not a commercial or automated heavy-training license. Do not enable source network workflows without documented permission for the exact use. Existing authorized local source snapshots can be evaluated offline. See [provider policy](https://football-data.co.uk/contact.php).
 
-### 5. Run Database Schema Migrations
+Our archived noncommercial fixture research uses [open-matchday](https://github.com/oladeeayo/open-matchday) with source attribution; that compilation does not grant commercial rights or override upstream terms. No raw provider data is shipped with the research web application.
 
-```bash
-cd backend
-alembic upgrade head
-```
+The licensed-signal import contract validates source permission assertions, canonical identities, prior-match xG/xGA, as-of availability and confirmed lineup data, and explicit missingness. It does not independently grant rights, fetch a licensed feed, or change the frozen C1 feature schema.
 
-### 6. Run System Health Endpoint & Tests
-
-```bash
-# Start local API server
-uvicorn app.main:app --reload --port 8000
-
-# Execute Pytest test suite (in another terminal window)
-cd backend
-pytest
-
-# Execute Linter
-ruff check app tests
-```
-
-Access health check: `http://localhost:8000/api/v1/health`
-
----
-
-## Technology Stack
-
-- **Backend:** Python 3.11+, FastAPI 0.110+
-- **Database:** PostgreSQL 16
-- **ORM & Migrations:** SQLAlchemy 2.0+, Alembic 1.13+
-- **Schemas & Parsing:** Pydantic v2
-- **Testing & Quality:** Pytest 8.0+, Ruff
-- **Frontend (MVP-C):** Next.js 14+, TypeScript, Tailwind CSS
-
----
+See [the research workspace release and remaining production gates](docs/operations/research_workspace_release_2026_11_12.md).
 
 ## License
 
-Internal Working Repository — All Rights Reserved.
+Repository software: MIT, as stated in [LICENSE](LICENSE). This license does **not** grant rights to third-party football data, provider feeds or separately licensed artifacts.

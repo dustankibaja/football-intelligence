@@ -31,7 +31,7 @@ def create_application() -> FastAPI:
         title=settings.APP_NAME,
         version="0.1.0",
         description="Scientific Football Intelligence & Probability Analysis System API",
-        debug=settings.DEBUG,
+        debug=settings.DEBUG and settings.APP_ENV.lower() in {"development", "test"},
         lifespan=lifespan,
     )
 

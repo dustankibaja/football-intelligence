@@ -26,7 +26,7 @@ def get_system_health(db: Session = Depends(get_db)):
     db_status = "unreachable"
     try:
         db.execute(text("SELECT 1"))
-        db_status = "connected"
+        db_status = "connected" if db.get_bind().dialect.name == "postgresql" else "development_sqlite"
     except Exception:
         db_status = "disconnected"
 

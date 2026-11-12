@@ -1,4 +1,5 @@
 from collections.abc import Generator
+import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -18,6 +19,12 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.close()
 
 def _init_engine():
+    # A production or CI database failure must not silently become a new local
+    # SQLite database. Only explicitly local development/test may fall back.
+    strict_db = (
+        settings.APP_ENV.lower() not in {"development", "test"}
+        or os.environ.get("RUNNING_IN_CI", "").lower() in {"1", "true", "yes"}
+    )
     try:
         eng = create_engine(
             settings.database_url,
@@ -25,10 +32,14 @@ def _init_engine():
             pool_size=10,
             max_overflow=20,
         )
+        if strict_db and eng.dialect.name != "postgresql":
+            raise RuntimeError("POSTGRESQL_REQUIRED")
         with eng.connect() as conn:
             conn.execute(text("SELECT 1"))
         return eng
     except Exception:
+        if strict_db:
+            raise RuntimeError("PostgreSQL is required and unavailable; refusing SQLite fallback.") from None
         db_path = (Path(__file__).resolve().parent.parent.parent / "football_dev.db").resolve()
         fallback_url = f"sqlite:///{db_path}"
         eng = create_engine(

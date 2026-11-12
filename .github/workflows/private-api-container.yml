@@ -1,0 +1,57 @@
+name: Private API Container Release Smoke
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'infrastructure/docker-compose.release.yml'
+      - '.github/workflows/private-api-container.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'backend/**'
+      - 'infrastructure/docker-compose.release.yml'
+      - '.github/workflows/private-api-container.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-container-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FI_POSTGRES_PASSWORD: ci-disposable-db-2026
+      FI_RESEARCH_READ_TOKEN: ci-disposable-test-token-0123456789abcdef
+      FI_API_PORT: "18765"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate composition, build image and migrate a clean PostgreSQL database
+        run: |
+          docker compose -f infrastructure/docker-compose.release.yml config --quiet
+          docker compose -f infrastructure/docker-compose.release.yml up --build -d
+      - name: Verify real health, authorization and private API contract
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:18765/api/v1/health > /tmp/fi-health.json; then
+              if python -c 'import json; d=json.load(open("/tmp/fi-health.json")); assert d["database"]=="connected" and d["status"]=="ok" and d["environment"]=="production"'; then
+                break
+              fi
+            fi
+            sleep 2
+          done
+          python -c 'import json; d=json.load(open("/tmp/fi-health.json")); assert d["database"]=="connected" and d["status"]=="ok" and d["environment"]=="production"'
+          for endpoint in matches predictions models evaluations; do
+            code="$(curl -sS -o /tmp/fi-denied.json -w '%{http_code}' http://127.0.0.1:18765/api/v1/$endpoint/)"
+            test "$code" = "401"
+            curl -fsS -H "Authorization: Bearer $FI_RESEARCH_READ_TOKEN" http://127.0.0.1:18765/api/v1/$endpoint/ > /tmp/fi-page.json
+            python -c 'import json; d=json.load(open("/tmp/fi-page.json")); assert d["scope"]=="PRIVATE_RESEARCH_READ_ONLY" and d["publication_eligible"] is False and d["returned"]==0 and d["items"]==[]'
+          done
+          echo "Clean PostgreSQL migrations and private read-only container verified."
+      - name: Inspect container logs on failure
+        if: failure()
+        run: docker compose -f infrastructure/docker-compose.release.yml logs --tail 100
+      - name: Clean disposable test environment
+        if: always()
+        run: docker compose -f infrastructure/docker-compose.release.yml down -v

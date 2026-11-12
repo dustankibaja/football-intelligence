@@ -14,7 +14,8 @@ on:
     paths:
       - '.github/workflows/prospective-results-reconciliation.yml'
   schedule:
-    - cron: '15 5 * 11,12,1 *'
+    # Weekly archive integrity/retention only; no scheduled provider downloads.
+    - cron: '15 5 * 11,12,1 1'
   workflow_dispatch:
 
 permissions:
@@ -108,22 +109,8 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
-      - name: Issue separate exact-score extension BEFORE fixture date
-        if: github.event_name == 'push' && steps.window.outputs.active == 'false'
-        working-directory: backend
-        run: |
-          python -m app.research.exact_score_extension \
-            --original-ledger ../research_outputs/original/prospective_shadow_2026_27.json \
-            --output ../research_outputs/locked_63_score_extension.json
-
-      - name: Archive pre-match exact-score extension as new immutable artifact
-        if: github.event_name == 'push' && steps.window.outputs.active == 'false'
-        uses: actions/upload-artifact@v4
-        with:
-          name: football-prospective-63-score-extension-locked
-          path: research_outputs/locked_63_score_extension.json
-          retention-days: 90
-          if-no-files-found: error
+      # The original pre-match extension is already archived. Never reissue
+      # it on a later code push; only retrieve the previously sealed artifact.
 
       - name: Retrieve original pre-match score extension (never regenerate after kickoff)
         if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
@@ -161,8 +148,14 @@ jobs:
           print("Original pre-match score extension SHA-256:", checksum)
           PY
 
+      - name: Report source permission gate
+        if: github.event_name != 'workflow_dispatch' || vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE == ''
+        run: echo 'Provider result downloads blocked; retained original ledger may still be verified.'
+
       - name: Obtain independent official current-season results
-        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != '' && steps.window.outputs.active == 'true'
+        env:
+          FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE: ${{ vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE }}
         working-directory: backend
         run: |
           python -m app.research.football_data_result_verifier \
@@ -170,7 +163,7 @@ jobs:
             --output ../research_outputs/prospective_63_real_result_audit.json
 
       - name: Verify independent metrics refer to original 63 forecasts
-        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != '' && steps.window.outputs.active == 'true'
         run: |
           python - <<'PY'
           import hashlib, json
@@ -190,7 +183,7 @@ jobs:
           PY
 
       - name: Evaluate exact scoreline likelihood against preissued score matrix
-        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != '' && steps.window.outputs.active == 'true'
         working-directory: backend
         run: |
           python -m app.research.exact_score_reconciliation \
@@ -199,7 +192,7 @@ jobs:
             --output ../research_outputs/prospective_63_exact_score_metrics.json
 
       - name: Confirm equal 1X2 and scoreline settlement sample counts
-        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != '' && steps.window.outputs.active == 'true'
         run: |
           python - <<'PY'
           import json
@@ -214,7 +207,7 @@ jobs:
           PY
 
       - name: Archive exact-score evaluation without altering either original ledger
-        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != '' && steps.window.outputs.active == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: football-prospective-63-exact-score-assessment
@@ -223,7 +216,7 @@ jobs:
           if-no-files-found: error
 
       - name: Archive read-only result assessment (no raw provider CSVs)
-        if: github.event_name != 'pull_request' && steps.window.outputs.active == 'true'
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != '' && steps.window.outputs.active == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: football-prospective-63-result-assessment

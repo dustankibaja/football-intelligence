@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +22,10 @@ class Settings(BaseSettings):
 
     # Optional Database DSN Override
     DATABASE_URL_OVERRIDE: str | None = None
+
+    # Private research reads are disabled unless a server-side token is configured.
+    # Never place this token in frontend assets, repository files, or public logs.
+    INTERNAL_RESEARCH_READ_TOKEN: SecretStr | None = None
 
     # Future Live Provider Config Placeholders (Unused in MVP-A)
     LIVE_DATA_API_KEY: str | None = None

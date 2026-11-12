@@ -2,8 +2,6 @@ name: Independently Score Sealed Paired 2026-27 Accuracy Forecasts
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 8 * * *'
   pull_request:
     paths:
       - 'backend/app/research/prospective_accuracy_evaluator.py'
@@ -60,7 +58,14 @@ jobs:
         working-directory: backend
         run: pytest -q tests/unit/test_prospective_accuracy_evaluator.py tests/unit/test_independent_result_verifier.py
 
+      - name: Report provider permission gate
+        if: github.event_name != 'workflow_dispatch' || vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE == ''
+        run: echo 'Offline regression only. External source fetch is disabled until documented permission is configured.'
+
       - name: Independently retrieve genuine current-season final scores and assess
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
+        env:
+          FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE: ${{ vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE }}
         working-directory: backend
         run: |
           python -m app.research.prospective_accuracy_evaluator \
@@ -68,6 +73,7 @@ jobs:
             --output ../research_outputs/verified_paired_prospective_1x2.json
 
       - name: Check full original denominator and reconciled report checksum
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         run: |
           python - <<'PY'
           import hashlib,json
@@ -109,6 +115,7 @@ jobs:
           PY
 
       - name: Archive independent reconciliation, not mutable prediction history
+        if: github.event_name == 'workflow_dispatch' && vars.FOOTBALL_DATA_NETWORK_APPROVAL_REFERENCE != ''
         uses: actions/upload-artifact@v4
         with:
           name: sealed-paired-2026-11-11-postmatch-assessment

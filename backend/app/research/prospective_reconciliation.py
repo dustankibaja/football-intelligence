@@ -160,6 +160,7 @@ def reconcile_prospective_results(
             "result_score": [home, away],
             "result_source_url": source,
             "result_source_sha256": raw_sha,
+            "result_source_collection_mode": record.get("source_collection_mode", "ORIGIN_UNVERIFIED"),
             "retrieved_at_utc": retrieved_at.isoformat(),
             **completion_receipt,
             "actual_1x2": outcome,
