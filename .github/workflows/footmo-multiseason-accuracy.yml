@@ -27,5 +27,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: footmo-multiseason-strength-report
-          path: live-web/research-output/multiseason-strength-report.json
+          path: live-web/research-output/*.json
           retention-days: 90
