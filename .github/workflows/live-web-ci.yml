@@ -1,0 +1,53 @@
+name: Football Intelligence Web Build and Tests
+
+on:
+  pull_request:
+    paths:
+      - 'live-web/**'
+      - '.github/workflows/live-web-ci.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'live-web/**'
+      - '.github/workflows/live-web-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  static-research-workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: live-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check probability conservation, ledger and assessment structure
+        run: npm test
+      - name: Build the deployable static application
+        run: npm run build
+      - name: Check browser module syntax and static HTTP assets
+        run: |
+          node --check dist/app.mjs
+          node --check dist/analysis.mjs
+          python -m http.server 8765 --directory dist > /tmp/football-web.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for n in $(seq 1 20); do
+            curl --fail --silent http://localhost:8765/index.html > /tmp/football-index.html && break
+            sleep 0.5
+          done
+          grep -q "Football Intelligence" /tmp/football-index.html
+          curl --fail --silent http://localhost:8765/app.mjs >/dev/null
+          curl --fail --silent http://localhost:8765/analysis.mjs >/dev/null
+          curl --fail --silent http://localhost:8765/styles.css >/dev/null
+      - name: Archive exact static build
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-intelligence-research-web
+          path: live-web/dist
+          retention-days: 30
