@@ -27,7 +27,7 @@ function node(tag, className, value) {
   return el;
 }
 function empty(message) { return node('div', 'empty', message); }
-function renderShadow(shadow, research) {
+function renderShadow(research) {
   const paired = research?.sampleSize || 0;
   const pending = research?.pendingUpcoming || 0;
   $('shadow-summary').textContent = paired
@@ -73,7 +73,7 @@ function renderMetrics(performance) {
     : performance.sampleSize < 50
       ? 'Only ' + performance.sampleSize + ' matches so far'
       : performance.sampleSize + ' matches checked';
-  renderShadow(data?.shadow, data?.accuracyResearch);
+  renderShadow(data?.accuracyResearch);
 }
 function fixtureCard(p) {
   const card = node('article', 'fixture');
@@ -201,13 +201,11 @@ function renderHistory() {
   const greenCorrect = green.filter(m => m.forecastStatus === 'CORRECT').length;
   const drawMisses = scored.filter(m =>
     m.forecastStatus === 'INCORRECT' && m.outcome === 'D').length;
-  const expectedCorrect = scored.reduce((sum, m) =>
-    sum + (m.predictedConfidence || 0), 0);
   const stats = [
     ['Finished matches', period.length],
     ['Predictions checked', evaluated],
-    ['Prediction rights', correct],
-    ['Prediction wrongs', incorrect],
+    ['Correct predictions', correct],
+    ['Incorrect predictions', incorrect],
     ['Success rate', accuracy],
     ['Stronger picks checked', green.length],
     ['Stronger picks right', greenCorrect],
