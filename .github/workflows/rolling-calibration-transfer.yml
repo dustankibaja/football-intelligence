@@ -1,0 +1,92 @@
+name: Real Three-Season Rolling Calibration Transfer
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/research/calibration_transfer.py'
+      - 'backend/tests/unit/test_calibration_transfer.py'
+      - '.github/workflows/rolling-calibration-transfer.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'backend/app/research/calibration_transfer.py'
+      - 'backend/tests/unit/test_calibration_transfer.py'
+      - '.github/workflows/rolling-calibration-transfer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-prior-season-only-calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install research dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend[dev]"
+
+      - name: Assert no test-year label leakage with offline tests
+        working-directory: backend
+        run: pytest -q tests/unit/test_calibration_transfer.py
+
+      - name: Download real 28 original historical CSVs and run 3 season-ahead calibration fits
+        working-directory: backend
+        run: |
+          python -m app.research.calibration_transfer \
+            --raw-dir ../data/research_football_data_raw \
+            --output ../research_outputs/rolling_prior_year_calibration_oos.json
+
+      - name: Certify 4,338 distinct season-ahead historical test fixtures
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          p = Path("research_outputs/rolling_prior_year_calibration_oos.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+          assert d["status"] == "RETROSPECTIVE_RESEARCH_CALIBRATION_NOT_PROSPECTIVE_CERTIFICATION"
+          assert d["challenger"] == "M1_DECAY_365"
+          assert d["test_seasons"] == ["2324","2425","2526"]
+          assert d["total_distinct_test_fixtures"] == 4338
+          assert len(d["folds"]) == 3
+          assert [f["training_count"] for f in d["folds"]] == [4338,5784,7230]
+          assert all(f["tune_count"] == f["test_count"] == 1446 for f in d["folds"])
+          assert all(
+              f["latest_training_date"] < f["earliest_tuning_date"]
+              <= f["latest_tuning_date"] < f["earliest_test_date"]
+              for f in d["folds"]
+          )
+          assert all(0.5 <= f["temperature_fitted_on_tuning_only"] <= 3.0 for f in d["folds"])
+          assert len(d["source_manifest"]) == 28
+          assert len({(f["season"],f["league"]) for f in d["source_manifest"]}) == 28
+          assert all(len(f["sha256"]) == 64 for f in d["source_manifest"])
+          assert all(d[k]["sample_size"] == 4338 for k in (
+              "pooled_training_prior","pooled_raw","pooled_calibrated"
+          ))
+          assert len(d["pooled_clustered_skill_interval_95"]) == 2
+          unsigned = dict(d)
+          digest = unsigned.pop("research_report_sha256")
+          assert hashlib.sha256(json.dumps(unsigned, sort_keys=True).encode()).hexdigest() == digest
+          print("Genuine calibrated OOS historical results with prior-year tuning only")
+          print("Yearwise calibrated minus raw LL:", [
+              (f["test_season"], f["calibrated_minus_raw_log_loss"]) for f in d["folds"]
+          ])
+          print("Retrospective results, NOT a new sealed/production claim")
+          PY
+
+      - name: Archive scientific calibration robustness evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-real-prior-season-calibration-transfer
+          path: research_outputs/rolling_prior_year_calibration_oos.json
+          retention-days: 90
+          if-no-files-found: error
